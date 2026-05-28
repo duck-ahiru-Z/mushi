@@ -3,6 +3,11 @@ import { useState, useEffect, useRef } from "react";
 import { Room, Trap } from "@/types/trap";
 import { saveTrapData, fetchTraps } from "@/lib/firebase/firestore";
 
+// 部屋の型に「階層(floor)」の情報を拡張
+type ExtendedRoom = Room & {
+  floor: number;
+};
+
 export default function MapPage() {
   // モード管理: 'place'(配置) または 'edit'(間取り編集)
   const [mode, setMode] = useState<"place" | "edit">("place");
@@ -10,8 +15,15 @@ export default function MapPage() {
   // キャンバスのサイズを取得するためのRef
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // 画面の初期読み込みが完了したかどうかのフラグ（Next.jsのエラー防止用）
+  // 画面の初期読み込みフラグ（Next.jsのハイドレーションエラー防止）
   const [isLoaded, setIsLoaded] = useState(false);
+
+  // 階層リスト（正の数は地上、負の数は地下。例: 1 = 1F, -1 = B1F）
+  const [floors, setFloors] = useState<number[]>([1, 2]);
+  const [currentFloor, setCurrentFloor] = useState<number>(1);
+
+  // 🏠 家全体のサイズ（ピクセル指定。デフォルトは 幅600px / 高さ600px）
+  const [houseSize, setHouseSize] = useState({ width: 600, height: 600 });
 
   // ドラッグ中の状態管理
   const [dragging, setDragging] = useState<{
@@ -24,34 +36,42 @@ export default function MapPage() {
     h: number;
   } | null>(null);
 
-  // 部屋のデータ（初期値は空にしておき、useEffectで読み込みます）
-  const [rooms, setRooms] = useState<Room[]>([]);
-
-  // 新規部屋作成用のフォーム状態
-  const [newRoomName, setNewRoomName] = useState("");
-  const [newRoomType, setNewRoomType] = useState("living");
-
-  // トラップ配置用の状態
+  // 部屋とトラップのデータ
+  const [rooms, setRooms] = useState<ExtendedRoom[]>([]);
   const [traps, setTraps] = useState<Trap[]>([]);
   const [trapName, setTrapName] = useState<string>("ゴキブリホイホイ");
   const [placedLocation, setPlacedLocation] = useState<string>("");
 
-  // ⏳ ページを開いたときにデータを復元する処理
+  // ✨【ここを修正！】消えていた新規部屋作成用のステートを追加
+  const [newRoomName, setNewRoomName] = useState("");
+  const [newRoomType, setNewRoomType] = useState("living");
+
+  // 階層の数値を分かりやすい表示名に変換する関数 (例: 1 -> "1F", -1 -> "B1F")
+  const getFloorName = (floor: number) => {
+    return floor > 0 ? `${floor}F` : `B${Math.abs(floor)}F`;
+  };
+
+  // ⏳ ページを開いたときにデータをローカルストレージから復元
   useEffect(() => {
-    // 1. 部屋データをブラウザの保存領域から読み込む
     const savedRooms = localStorage.getItem("map_rooms_data");
+    const savedFloors = localStorage.getItem("map_floors_data");
+    const savedHouseSize = localStorage.getItem("map_house_size_data");
+
     if (savedRooms) {
       setRooms(JSON.parse(savedRooms));
     } else {
-      // 過去の保存データがない場合のデフォルト配置
+      // 初回デフォルト配置
       setRooms([
-        { id: "room-1", name: "キッチン", type: "kitchen", x: 10, y: 10, w: 40, h: 40 },
-        { id: "room-2", name: "リビング", type: "living", x: 50, y: 10, w: 40, h: 60 },
+        { id: "room-1", name: "キッチン", type: "kitchen", x: 10, y: 10, w: 40, h: 40, floor: 1 },
+        { id: "room-2", name: "リビング", type: "living", x: 50, y: 10, w: 40, h: 60, floor: 1 },
       ]);
     }
-    setIsLoaded(true); // 部屋データの読み込み完了
 
-    // 2. トラップデータをFirebaseから読み込む（既存処理）
+    if (savedFloors) setFloors(JSON.parse(savedFloors));
+    if (savedHouseSize) setHouseSize(JSON.parse(savedHouseSize));
+
+    setIsLoaded(true);
+
     const loadData = async () => {
       const data = await fetchTraps(null);
       setTraps(data);
@@ -59,17 +79,62 @@ export default function MapPage() {
     loadData();
   }, []);
 
-  // 💾 部屋のデータ（位置や追加・削除）が変わるたびに自動で保存する処理
+  // 💾 変更時にすべて自動保存
   useEffect(() => {
     if (isLoaded) {
       localStorage.setItem("map_rooms_data", JSON.stringify(rooms));
+      localStorage.setItem("map_floors_data", JSON.stringify(floors));
+      localStorage.setItem("map_house_size_data", JSON.stringify(houseSize));
     }
-  }, [rooms, isLoaded]);
+  }, [rooms, floors, houseSize, isLoaded]);
+
+  // ➕ 上に階（地上）を追加
+  const handleAddUpperFloor = () => {
+    const upperFloors = floors.filter(f => f > 0);
+    const nextFloor = upperFloors.length > 0 ? Math.max(...upperFloors) + 1 : 1;
+    setFloors([...floors, nextFloor]);
+    setCurrentFloor(nextFloor);
+  };
+
+  // ➖ 下に階（地下）を追加
+  const handleAddLowerFloor = () => {
+    const lowerFloors = floors.filter(f => f < 0);
+    const nextFloor = lowerFloors.length > 0 ? Math.min(...lowerFloors) - 1 : -1;
+    setFloors([...floors, nextFloor]);
+    setCurrentFloor(nextFloor);
+  };
+
+  // 🗑️ 現在の階層を削除する関数
+  const handleDeleteCurrentFloor = () => {
+    if (floors.length <= 1) {
+      alert("これ以上階層を削除することはできません。");
+      return;
+    }
+
+    const floorName = getFloorName(currentFloor);
+    const isConfirmed = confirm(
+      `本当に ${floorName} を削除しますか？\n※この階にあるすべての部屋と配置されたグッズも削除されます。`
+    );
+
+    if (!isConfirmed) return;
+
+    // 現在の階にある部屋のIDリストを取得
+    const targetRoomIds = rooms.filter(r => r.floor === currentFloor).map(r => r.id);
+
+    // 階層・部屋・トラップをそれぞれフィルタリングして削除
+    setFloors(floors.filter(f => f !== currentFloor));
+    setRooms(rooms.filter(r => r.floor !== currentFloor));
+    setTraps(traps.filter(t => !targetRoomIds.includes(t.roomId || "")));
+
+    // 削除後、残った一番近い階層に自動移動
+    const remainingFloors = floors.filter(f => f !== currentFloor);
+    setCurrentFloor(remainingFloors[0]);
+  };
 
   // 部屋を追加する関数
   const handleAddRoom = () => {
     if (!newRoomName.trim()) return;
-    const room: Room = {
+    const room: ExtendedRoom = {
       id: `room-${Date.now()}`,
       name: newRoomName,
       type: newRoomType,
@@ -77,6 +142,7 @@ export default function MapPage() {
       y: 30,
       w: 30,
       h: 30,
+      floor: currentFloor,
     };
     setRooms([...rooms, room]);
     setNewRoomName("");
@@ -89,13 +155,13 @@ export default function MapPage() {
     setTraps(traps.filter((t) => t.roomId !== id));
   };
 
-  // 部屋の位置・サイズを更新する関数
-  const handleUpdateRoom = (id: string, field: keyof Room, value: number | string) => {
-    setRooms(rooms.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
+  // 部屋の位置・サイズ数値を更新する関数
+  const handleUpdateRoom = (id: string, field: keyof ExtendedRoom, value: number | string) => {
+    setRooms(rooms.map((r) => (r.id === id ? { ...r, [field]: value } : r)) as ExtendedRoom[]);
   };
 
   // --- ドラッグ&ドロップのハンドラー ---
-  const handlePointerDown = (room: Room, e: React.PointerEvent<HTMLDivElement>) => {
+  const handlePointerDown = (room: ExtendedRoom, e: React.PointerEvent<HTMLDivElement>) => {
     if (mode !== "edit") return;
     e.currentTarget.setPointerCapture(e.pointerId);
     setDragging({
@@ -140,8 +206,8 @@ export default function MapPage() {
   };
   // ------------------------------------
 
-  // 部屋クリック時の処理（配置モード時のみ動作）
-  const handleRoomClick = async (room: Room, e: React.MouseEvent<HTMLDivElement>) => {
+  // 部屋クリック時の処理（配置モード時）
+  const handleRoomClick = async (room: ExtendedRoom, e: React.MouseEvent<HTMLDivElement>) => {
     if (mode !== "place") return;
 
     const rect = e.currentTarget.getBoundingClientRect();
@@ -174,9 +240,8 @@ export default function MapPage() {
     alert(`${room.name}に「${trapName}」を配置しました！`);
   };
 
-  // 読み込みが完了するまではエラー防止のため真っ白な画面のバグを防ぐ
   if (!isLoaded) {
-    return <div className="p-4 text-slate-500 text-sm">間取りを読み込み中...</div>;
+    return <div className="p-4 text-slate-500 text-sm">データを読み込み中...</div>;
   }
 
   return (
@@ -203,9 +268,9 @@ export default function MapPage() {
         </button>
       </div>
 
-      {/* モードに応じたコントロールパネル */}
+      {/* コントロールパネル */}
       {mode === "place" ? (
-        <div className="bg-white p-4 rounded-xl shadow-sm mb-6 border border-slate-100 animate-fadeIn">
+        <div className="bg-white p-4 rounded-xl shadow-sm mb-6 border border-slate-100">
           <h2 className="text-sm font-bold text-slate-500 mb-3">🛠️ 配置するグッズを選択</h2>
           <div className="flex flex-col gap-3">
             <select
@@ -228,77 +293,180 @@ export default function MapPage() {
           </div>
         </div>
       ) : (
-        <div className="bg-white p-4 rounded-xl shadow-sm mb-6 border border-slate-100 animate-fadeIn">
-          <h2 className="text-sm font-bold text-slate-500 mb-3">➕ 新しい部屋を追加</h2>
-          <div className="flex gap-2 mb-4">
-            <input
-              type="text"
-              placeholder="部屋名 (例: 寝室)"
-              value={newRoomName}
-              onChange={(e) => setNewRoomName(e.target.value)}
-              className="flex-1 p-2 border rounded-lg text-sm bg-slate-50"
-            />
-            <button onClick={handleAddRoom} className="px-4 bg-indigo-600 text-white rounded-lg text-sm font-bold">
-              追加
-            </button>
+        <div className="bg-white p-4 rounded-xl shadow-sm mb-6 border border-slate-100 space-y-4">
+          {/* 📏 家全体のサイズ指定（長さ/px） */}
+          <div>
+            <h2 className="text-sm font-bold text-slate-500 mb-2">📐 家全体の大きさ（長さ・px単位）</h2>
+            <div className="flex items-center gap-4 text-xs bg-slate-50 p-2 rounded-lg w-fit">
+              <label className="flex items-center gap-1">
+                横幅:
+                <input 
+                  type="number" 
+                  min="200"
+                  step="50"
+                  value={houseSize.width} 
+                  onChange={(e) => setHouseSize({ ...houseSize, width: Math.max(200, Number(e.target.value)) })} 
+                  className="w-16 p-1 border rounded bg-white text-center font-mono" 
+                />
+                px
+              </label>
+              <label className="flex items-center gap-1">
+                高さ:
+                <input 
+                  type="number" 
+                  min="200"
+                  step="50"
+                  value={houseSize.height} 
+                  onChange={(e) => setHouseSize({ ...houseSize, height: Math.max(200, Number(e.target.value)) })} 
+                  className="w-16 p-1 border rounded bg-white text-center font-mono" 
+                />
+                px
+              </label>
+              <span className="text-slate-400">※数値を大きくすると、その長さの巨大なキャンバスになります。</span>
+            </div>
           </div>
 
-          <h2 className="text-sm font-bold text-slate-500 mb-2">📐 部屋の位置とサイズ調整</h2>
-          <div className="max-h-40 overflow-y-auto space-y-3 pr-1">
-            {rooms.map((room) => (
-              <div key={room.id} className="flex flex-wrap items-center gap-2 p-2 bg-slate-50 rounded-lg text-xs">
-                <span className="font-bold w-16 truncate">{room.name}</span>
-                <label>X:<input type="number" value={room.x} onChange={(e) => handleUpdateRoom(room.id, "x", Number(e.target.value))} className="w-10 p-1 border rounded ml-1" /></label>
-                <label>Y:<input type="number" value={room.y} onChange={(e) => handleUpdateRoom(room.id, "y", Number(e.target.value))} className="w-10 p-1 border rounded ml-1" /></label>
-                <label>幅:<input type="number" value={room.w} onChange={(e) => handleUpdateRoom(room.id, "w", Number(e.target.value))} className="w-10 p-1 border rounded ml-1" /></label>
-                <label>高:<input type="number" value={room.h} onChange={(e) => handleUpdateRoom(room.id, "h", Number(e.target.value))} className="w-10 p-1 border rounded ml-1" /></label>
-                <button onClick={(e) => handleDeleteRoom(room.id, e)} className="text-red-500 font-bold ml-auto">削除</button>
-              </div>
-            ))}
+          <hr className="border-slate-100" />
+
+          {/* 新しい部屋を追加 */}
+          <div>
+            <h2 className="text-sm font-bold text-slate-500 mb-2">➕ {getFloorName(currentFloor)} に新しい部屋を追加</h2>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="部屋名 (例: 寝室)"
+                value={newRoomName}
+                onChange={(e) => setNewRoomName(e.target.value)}
+                className="flex-1 p-2 border rounded-lg text-sm bg-slate-50"
+              />
+              <button onClick={handleAddRoom} className="px-4 bg-indigo-600 text-white rounded-lg text-sm font-bold">
+                追加
+              </button>
+            </div>
+          </div>
+
+          {/* 部屋の微調整 */}
+          <div>
+            <h2 className="text-sm font-bold text-slate-500 mb-2">⚙️ {getFloorName(currentFloor)} の部屋リスト・数値微調整</h2>
+            <div className="max-h-40 overflow-y-auto space-y-2 pr-1">
+              {rooms.filter(r => r.floor === currentFloor).length === 0 ? (
+                <p className="text-xs text-slate-400 p-2">この階にはまだ部屋がありません。</p>
+              ) : (
+                rooms.filter(r => r.floor === currentFloor).map((room) => (
+                  <div key={room.id} className="flex flex-wrap items-center gap-2 p-2 bg-slate-50 rounded-lg text-xs">
+                    <span className="font-bold w-16 truncate">{room.name}</span>
+                    <label>X(%):<input type="number" value={room.x} onChange={(e) => handleUpdateRoom(room.id, "x", Number(e.target.value))} className="w-10 p-1 border rounded bg-white ml-1" /></label>
+                    <label>Y(%):<input type="number" value={room.y} onChange={(e) => handleUpdateRoom(room.id, "y", Number(e.target.value))} className="w-10 p-1 border rounded bg-white ml-1" /></label>
+                    <label>幅(%):<input type="number" value={room.w} onChange={(e) => handleUpdateRoom(room.id, "w", Number(e.target.value))} className="w-10 p-1 border rounded bg-white ml-1" /></label>
+                    <label>高(%):<input type="number" value={room.h} onChange={(e) => handleUpdateRoom(room.id, "h", Number(e.target.value))} className="w-10 p-1 border rounded bg-white ml-1" /></label>
+                    <button onClick={(e) => handleDeleteRoom(room.id, e)} className="text-red-500 font-bold ml-auto">削除</button>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       )}
 
-      {/* キャンバス画面 */}
-      <div 
-        ref={containerRef}
-        className="relative w-full aspect-square bg-slate-200 rounded-2xl border-2 border-dashed border-slate-300 overflow-hidden shadow-inner"
-      >
-        {rooms.map((room) => (
-          <div
-            key={room.id}
-            data-room-id={room.id}
-            onClick={(e) => handleRoomClick(room, e)}
-            onPointerDown={(e) => handlePointerDown(room, e)}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            className={`absolute border-2 rounded-lg shadow-sm transition-colors flex items-center justify-center ${
-              mode === "edit"
-                ? "bg-indigo-50 border-indigo-500/40 cursor-move select-none touch-none"
-                : "bg-teal-50 border-teal-600/40 hover:bg-teal-100/70 cursor-crosshair"
-            }`}
-            style={{ left: `${room.x}%`, top: `${room.y}%`, width: `${room.w}%`, height: `${room.h}%` }}
-          >
-            <span className={`text-xs font-bold select-none ${mode === "edit" ? "text-indigo-800" : "text-teal-800"}`}>
-              {room.name}
-            </span>
+      {/* 🏢 階層管理バー */}
+      <div className="flex flex-wrap items-center gap-2 mb-3 bg-slate-100 p-2 rounded-xl">
+        <button
+          onClick={handleAddLowerFloor}
+          className="px-2 py-1 rounded-lg text-xs font-bold bg-sky-600 text-white hover:bg-sky-700 transition"
+          title="現在の最下層の下に、さらに地下を追加します"
+        >
+          ⬇️ 地下を追加
+        </button>
 
-            {/* トラップの描画 */}
-            {traps
-              .filter((t) => t.roomId === room.id && t.isActive)
-              .map((trap) => (
-                <div
-                  key={trap.id}
-                  className="absolute w-5 h-5 bg-red-500 border border-white rounded-full flex items-center justify-center text-[10px] text-white shadow handle-bounce"
-                  style={{ left: `${trap.x * 100}%`, top: `${trap.y * 100}%`, transform: "translate(-50%, -50%)" }}
-                  title={`${trap.name} (${trap.placedLocation})`}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  📍
-                </div>
-              ))}
-          </div>
-        ))}
+        <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 overflow-x-auto max-w-full">
+          {floors
+            .sort((a, b) => a - b)
+            .map((floor) => (
+              <button
+                key={floor}
+                onClick={() => setCurrentFloor(floor)}
+                className={`px-3 py-1 rounded-md text-xs font-bold transition shrink-0 ${
+                  currentFloor === floor
+                    ? "bg-slate-800 text-white shadow-sm"
+                    : "bg-transparent text-slate-500 hover:bg-slate-100"
+                }`}
+              >
+                {getFloorName(floor)}
+              </button>
+            ))}
+        </div>
+
+        <button
+          onClick={handleAddUpperFloor}
+          className="px-2 py-1 rounded-lg text-xs font-bold bg-orange-600 text-white hover:bg-orange-700 transition"
+          title="現在の最上層の上に、さらに階を追加します"
+        >
+          ⬆️ 階を追加
+        </button>
+
+        {/* 階層の削除ボタン */}
+        <button
+          onClick={handleDeleteCurrentFloor}
+          disabled={floors.length <= 1}
+          className={`ml-auto px-2 py-1 rounded-lg text-xs font-bold transition ${
+            floors.length <= 1 
+              ? "bg-slate-200 text-slate-400 cursor-not-allowed" 
+              : "bg-red-100 text-red-600 hover:bg-red-200"
+          }`}
+        >
+          🗑️ この階({getFloorName(currentFloor)})を消す
+        </button>
+      </div>
+
+      {/* キャンバス画面 */}
+      <div className="w-full overflow-auto border-2 border-slate-300 bg-slate-200 rounded-2xl p-4 max-h-[75vh] shadow-inner">
+        <div 
+          ref={containerRef}
+          className="relative bg-white rounded-lg border border-slate-300 shadow transition-all duration-200 mx-auto"
+          style={{ 
+            width: `${houseSize.width}px`, 
+            height: `${houseSize.height}px` 
+          }}
+        >
+          {/* 現在の階層の部屋だけを描画 */}
+          {rooms
+            .filter((room) => room.floor === currentFloor)
+            .map((room) => (
+              <div
+                key={room.id}
+                data-room-id={room.id}
+                onClick={(e) => handleRoomClick(room, e)}
+                onPointerDown={(e) => handlePointerDown(room, e)}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                className={`absolute border-2 rounded-lg shadow-sm flex items-center justify-center ${
+                  mode === "edit"
+                    ? "bg-indigo-50 border-indigo-500/40 cursor-move select-none touch-none"
+                    : "bg-teal-50 border-teal-600/40 hover:bg-teal-100/70 cursor-crosshair"
+                }`}
+                style={{ left: `${room.x}%`, top: `${room.y}%`, width: `${room.w}%`, height: `${room.h}%` }}
+              >
+                <span className={`text-xs font-bold select-none ${mode === "edit" ? "text-indigo-800" : "text-teal-800"}`}>
+                  {room.name}
+                </span>
+
+                {/* トラップの描画 */}
+                {traps
+                  .filter((t) => t.roomId === room.id && t.isActive)
+                  .map((trap) => (
+                    <div
+                      key={trap.id}
+                      className="absolute w-5 h-5 bg-red-500 border border-white rounded-full flex items-center justify-center text-[10px] text-white shadow handle-bounce"
+                      style={{ left: `${trap.x * 100}%`, top: `${trap.y * 100}%`, transform: "translate(-50%, -50%)" }}
+                      title={`${trap.name} (${trap.placedLocation})`}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      📍
+                    </div>
+                  ))}
+              </div>
+            ))}
+        </div>
       </div>
     </div>
   );
