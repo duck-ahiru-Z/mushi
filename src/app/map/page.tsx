@@ -10,6 +10,9 @@ export default function MapPage() {
   // キャンバスのサイズを取得するためのRef
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // 画面の初期読み込みが完了したかどうかのフラグ（Next.jsのエラー防止用）
+  const [isLoaded, setIsLoaded] = useState(false);
+
   // ドラッグ中の状態管理
   const [dragging, setDragging] = useState<{
     id: string;
@@ -21,11 +24,8 @@ export default function MapPage() {
     h: number;
   } | null>(null);
 
-  // 部屋のデータ
-  const [rooms, setRooms] = useState<Room[]>([
-    { id: "room-1", name: "キッチン", type: "kitchen", x: 10, y: 10, w: 40, h: 40 },
-    { id: "room-2", name: "リビング", type: "living", x: 50, y: 10, w: 40, h: 60 },
-  ]);
+  // 部屋のデータ（初期値は空にしておき、useEffectで読み込みます）
+  const [rooms, setRooms] = useState<Room[]>([]);
 
   // 新規部屋作成用のフォーム状態
   const [newRoomName, setNewRoomName] = useState("");
@@ -36,13 +36,35 @@ export default function MapPage() {
   const [trapName, setTrapName] = useState<string>("ゴキブリホイホイ");
   const [placedLocation, setPlacedLocation] = useState<string>("");
 
+  // ⏳ ページを開いたときにデータを復元する処理
   useEffect(() => {
+    // 1. 部屋データをブラウザの保存領域から読み込む
+    const savedRooms = localStorage.getItem("map_rooms_data");
+    if (savedRooms) {
+      setRooms(JSON.parse(savedRooms));
+    } else {
+      // 過去の保存データがない場合のデフォルト配置
+      setRooms([
+        { id: "room-1", name: "キッチン", type: "kitchen", x: 10, y: 10, w: 40, h: 40 },
+        { id: "room-2", name: "リビング", type: "living", x: 50, y: 10, w: 40, h: 60 },
+      ]);
+    }
+    setIsLoaded(true); // 部屋データの読み込み完了
+
+    // 2. トラップデータをFirebaseから読み込む（既存処理）
     const loadData = async () => {
       const data = await fetchTraps(null);
       setTraps(data);
     };
     loadData();
   }, []);
+
+  // 💾 部屋のデータ（位置や追加・削除）が変わるたびに自動で保存する処理
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem("map_rooms_data", JSON.stringify(rooms));
+    }
+  }, [rooms, isLoaded]);
 
   // 部屋を追加する関数
   const handleAddRoom = () => {
@@ -75,10 +97,7 @@ export default function MapPage() {
   // --- ドラッグ&ドロップのハンドラー ---
   const handlePointerDown = (room: Room, e: React.PointerEvent<HTMLDivElement>) => {
     if (mode !== "edit") return;
-    
-    // ドラッグ開始（ポインターの動きをこの要素にロックする）
     e.currentTarget.setPointerCapture(e.pointerId);
-    
     setDragging({
       id: room.id,
       startX: e.clientX,
@@ -92,30 +111,23 @@ export default function MapPage() {
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!dragging || !containerRef.current) return;
-
-    // イベントが発生した要素が、現在ドラッグ中の部屋と一致しているか確認
     if (dragging.id !== e.currentTarget.dataset.roomId) return;
 
     const container = containerRef.current;
     const rect = container.getBoundingClientRect();
 
-    // 移動距離（ピクセル）を計算
     const deltaX = e.clientX - dragging.startX;
     const deltaY = e.clientY - dragging.startY;
 
-    // ピクセルからパーセンテージに変換
     const deltaXPercent = (deltaX / rect.width) * 100;
     const deltaYPercent = (deltaY / rect.height) * 100;
 
-    // 新しい位置を計算（四捨五入してきれいな数値に）
     let newX = Math.round(dragging.roomX + deltaXPercent);
     let newY = Math.round(dragging.roomY + deltaYPercent);
 
-    // キャンバス外にはみ出さないように制限 (0% 〜 100% - 部屋の幅/高さ)
     newX = Math.max(0, Math.min(100 - dragging.w, newX));
     newY = Math.max(0, Math.min(100 - dragging.h, newY));
 
-    // 部屋の位置を更新
     setRooms((prev) =>
       prev.map((r) => (r.id === dragging.id ? { ...r, x: newX, y: newY } : r))
     );
@@ -123,7 +135,6 @@ export default function MapPage() {
 
   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!dragging) return;
-    // ポインターのロックを解除
     e.currentTarget.releasePointerCapture(e.pointerId);
     setDragging(null);
   };
@@ -162,6 +173,11 @@ export default function MapPage() {
     setPlacedLocation("");
     alert(`${room.name}に「${trapName}」を配置しました！`);
   };
+
+  // 読み込みが完了するまではエラー防止のため真っ白な画面のバグを防ぐ
+  if (!isLoaded) {
+    return <div className="p-4 text-slate-500 text-sm">間取りを読み込み中...</div>;
+  }
 
   return (
     <div className="p-4 flex flex-col min-h-screen bg-slate-50 text-slate-800">
@@ -245,20 +261,20 @@ export default function MapPage() {
 
       {/* キャンバス画面 */}
       <div 
-        ref={containerRef} // Refをここにバインド
+        ref={containerRef}
         className="relative w-full aspect-square bg-slate-200 rounded-2xl border-2 border-dashed border-slate-300 overflow-hidden shadow-inner"
       >
         {rooms.map((room) => (
           <div
             key={room.id}
-            data-room-id={room.id} // PointerMoveでどの部屋かを識別するために追加
+            data-room-id={room.id}
             onClick={(e) => handleRoomClick(room, e)}
             onPointerDown={(e) => handlePointerDown(room, e)}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             className={`absolute border-2 rounded-lg shadow-sm transition-colors flex items-center justify-center ${
               mode === "edit"
-                ? "bg-indigo-50 border-indigo-500/40 cursor-move select-none touch-none" // ドラッグしやすくスタイル変更
+                ? "bg-indigo-50 border-indigo-500/40 cursor-move select-none touch-none"
                 : "bg-teal-50 border-teal-600/40 hover:bg-teal-100/70 cursor-crosshair"
             }`}
             style={{ left: `${room.x}%`, top: `${room.y}%`, width: `${room.w}%`, height: `${room.h}%` }}
