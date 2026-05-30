@@ -24,6 +24,7 @@ export default function MapPage() {
     allTrapTypes,
     getTrapIcon,
     addCustomTrapType,
+    updateTrapPosition,
     isInitialized,
   } = useTraps(null);
 
@@ -63,7 +64,7 @@ export default function MapPage() {
   // ドラッグ状態管理
   const [dragState, setDragState] = useState<{
     id: string;
-    action: "move" | "resize";
+    action: "move" | "resize" | "drag_trap";
     direction?: ResizeDirection;
     startX: number;
     startY: number;
@@ -71,7 +72,12 @@ export default function MapPage() {
     initialY: number;
     initialW: number;
     initialH: number;
+    roomId?: string;
   } | null>(null);
+
+  // 📱 タッチによるピンチズーム用状態
+  const [touchStartDist, setTouchStartDist] = useState<number | null>(null);
+  const [touchStartZoom, setTouchStartZoom] = useState<number>(1);
 
   const dragStateRef = useRef(dragState);
   useEffect(() => {
@@ -125,6 +131,26 @@ export default function MapPage() {
       // 📐 ズーム時のドラッグズレを完全に修正するため、移動量をズーム倍率で除算します！
       const deltaX = (((e.clientX - state.startX) / zoom) / 600) * 100;
       const deltaY = (((e.clientY - state.startY) / zoom) / 600) * 100;
+
+      if (state.action === "drag_trap") {
+        const room = rooms.find((r) => r.id === state.roomId);
+        if (!room) return;
+
+        const deltaX_px = (e.clientX - state.startX) / zoom;
+        const deltaY_px = (e.clientY - state.startY) / zoom;
+
+        const room_w_px = (room.w / 100) * 600;
+        const room_h_px = (room.h / 100) * 600;
+
+        let newX = state.initialX + (deltaX_px / room_w_px);
+        let newY = state.initialY + (deltaY_px / room_h_px);
+
+        newX = Math.max(0.02, Math.min(0.98, newX));
+        newY = Math.max(0.02, Math.min(0.98, newY));
+
+        updateTrapPosition(state.id, newX, newY);
+        return;
+      }
 
       setRooms((prev) =>
         prev.map((r) => {
@@ -260,6 +286,24 @@ export default function MapPage() {
     });
   };
 
+  const handleTrapPointerDown = (trap: Trap, roomId: string, e: React.PointerEvent<HTMLButtonElement>) => {
+    // 💡 指やマウスでのピン（トラップ）ドラッグ移動を開始
+    e.stopPropagation();
+    e.preventDefault();
+    
+    setDragState({
+      id: trap.id,
+      action: "drag_trap",
+      startX: e.clientX,
+      startY: e.clientY,
+      initialX: trap.x,
+      initialY: trap.y,
+      initialW: 0,
+      initialH: 0,
+      roomId: roomId,
+    });
+  };
+
   const handleHandlePointerDown = (room: ExtendedRoom, dir: ResizeDirection, e: React.PointerEvent<HTMLDivElement>) => {
     if (mode !== "edit") return;
     e.stopPropagation();
@@ -338,6 +382,35 @@ export default function MapPage() {
     } else {
       alert("そのグッズ名はすでに登録されています。");
     }
+  };
+
+  // 📱 スマホ用マルチタッチ・ピンチズームジェスチャーのハンドラー
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      setTouchStartDist(dist);
+      setTouchStartZoom(zoom);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2 && touchStartDist !== null) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const ratio = dist / touchStartDist;
+      let newZoom = touchStartZoom * ratio;
+      newZoom = Math.max(0.4, Math.min(1.6, Number(newZoom.toFixed(2))));
+      setZoom(newZoom);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setTouchStartDist(null);
   };
 
   if (!isInitialized) {
@@ -645,8 +718,13 @@ export default function MapPage() {
         </div>
       </div>
 
-      {/* キャンバス外周スクロール枠 (ズーム対応) */}
-      <div className="w-full overflow-auto border border-slate-300 bg-slate-200/60 rounded-3xl p-4 max-h-[62vh] shadow-inner flex justify-center items-start min-h-[300px]">
+      {/* キャンバス外周スクロール枠 (ズーム＆マルチタッチピンチジェスチャー対応) */}
+      <div 
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        className="w-full overflow-auto border border-slate-300 bg-slate-200/60 rounded-3xl p-4 max-h-[62vh] shadow-inner flex justify-center items-start min-h-[300px]"
+      >
         {/* 📐 拡縮を適用するためのコンテナ */}
         <div
           style={{
@@ -728,6 +806,7 @@ export default function MapPage() {
                     <button
                       key={trap.id}
                       onClick={(e) => handleTrapClick(trap, e)}
+                      onPointerDown={(e) => handleTrapPointerDown(trap, room.id, e)}
                       className="trap-marker absolute w-7 h-7 bg-white border border-slate-200 rounded-full flex items-center justify-center text-sm shadow hover:scale-125 hover:shadow-md transition-all active:scale-95 cursor-pointer pointer-events-auto z-20"
                       style={{
                         left: `${trap.x * 100}%`,

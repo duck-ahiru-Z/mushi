@@ -275,6 +275,35 @@ export function useTraps(userId: string | null = null) {
     return found ? found.icon : "🛡️";
   }, [allTrapTypes]);
 
+  // 9. グッズ位置の更新（ドラッグ＆ドロップ対応）
+  const updateTrapPosition = useCallback(async (trapId: string, x: number, y: number) => {
+    setTraps((prev) =>
+      prev.map((t) => (t.id === trapId ? { ...t, x, y } : t))
+    );
+    
+    // ローカルストレージまたはデータベースの同期
+    if (!userId) {
+      const localTrapsStr = localStorage.getItem("bug_guard_traps");
+      if (localTrapsStr) {
+        const localTraps: Trap[] = JSON.parse(localTrapsStr);
+        const idx = localTraps.findIndex((t) => t.id === trapId);
+        if (idx >= 0) {
+          localTraps[idx] = { ...localTraps[idx], x, y };
+          localStorage.setItem("bug_guard_traps", JSON.stringify(localTraps));
+        }
+      }
+    } else {
+      // データベース同期
+      setTraps((prev) => {
+        const found = prev.find((t) => t.id === trapId);
+        if (found) {
+          saveTrapData(found, userId);
+        }
+        return prev;
+      });
+    }
+  }, [userId]);
+
   return {
     rooms,
     setRooms,
@@ -295,5 +324,6 @@ export function useTraps(userId: string | null = null) {
     canUndo: !!lastDeletedRoom,
     addTrap,
     deleteTrap,
+    updateTrapPosition,
   };
 }
