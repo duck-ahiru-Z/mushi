@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { auth } from "@/lib/firebase/config";
-import { signInWithAnonymously, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, User } from "firebase/auth";
+import { signInAnonymously, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, User } from "firebase/auth";
 import { migrateLocalDataToFirebase } from "@/lib/firebase/firestore";
 
 const REGIONS = [
