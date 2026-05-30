@@ -7,12 +7,7 @@ type ExtendedRoom = Room & {
   floor: number;
 };
 
-// 💡 初期表示用のデフォルト部屋データ（1階に配置）
-const DEFAULT_ROOMS: ExtendedRoom[] = [
-  { id: "room-1", name: "キッチン", type: "kitchen", x: 10, y: 10, w: 35, h: 40, floor: 1 },
-  { id: "room-2", name: "リビング", type: "living", x: 50, y: 10, w: 40, h: 60, floor: 1 },
-];
-
+// ユニークなIDを生成するヘルパー関数
 const generateId = (prefix: string) => {
   return `${prefix}-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`;
 };
@@ -20,6 +15,8 @@ const generateId = (prefix: string) => {
 export default function MapPage() {
   const [mode, setMode] = useState<"place" | "edit">("place");
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // ハイドレーション＆初期化完了フラグ
   const [isInitialized, setIsInitialized] = useState(false);
 
   const [floors, setFloors] = useState<number[]>([1, 2]);
@@ -39,7 +36,7 @@ export default function MapPage() {
   const [rooms, setRooms] = useState<ExtendedRoom[]>([]);
   const [traps, setTraps] = useState<Trap[]>([]);
   const [trapName, setTrapName] = useState<string>("ゴキブリホイホイ");
-  const [placedLocation, setPlacedLocation] = useState<string>("");
+  const [placedLocation, setPlacedLocation] = useState<string>("🗺️");
 
   const [newRoomName, setNewRoomName] = useState("");
   const [newRoomType, setNewRoomType] = useState("living");
@@ -48,7 +45,7 @@ export default function MapPage() {
     return floor > 0 ? `${floor}F` : `B${Math.abs(floor)}F`;
   };
 
-  // ⏳ ページロード時にデータを復元
+  // 1. ⏳ ページロード時にローカルストレージとFirebaseから一括復元
   useEffect(() => {
     const initializeData = async () => {
       const savedRooms = localStorage.getItem("map_rooms_data");
@@ -56,25 +53,13 @@ export default function MapPage() {
       const savedHouseSize = localStorage.getItem("map_house_size_data");
 
       if (savedRooms) {
-        try {
-          const parsedRooms = JSON.parse(savedRooms);
-          if (Array.isArray(parsedRooms) && parsedRooms.length > 0) {
-            // 💡 【超重要】古いデータ（floorプロパティがない部屋）があれば、自動で1階(floor: 1)を設定して救済する
-            const validatedRooms = parsedRooms.map((room: any) => ({
-              ...room,
-              floor: typeof room.floor === "number" ? room.floor : 1,
-            }));
-            setRooms(validatedRooms);
-          } else {
-            setRooms(DEFAULT_ROOMS);
-          }
-        } catch (e) {
-          setRooms(DEFAULT_ROOMS);
-        }
+        setRooms(JSON.parse(savedRooms));
       } else {
-        setRooms(DEFAULT_ROOMS);
+        setRooms([
+          { id: "room-1", name: "キッチン", type: "kitchen", x: 10, y: 10, w: 40, h: 40, floor: 1 },
+          { id: "room-2", name: "リビング", type: "living", x: 50, y: 10, w: 40, h: 60, floor: 1 },
+        ]);
       }
-
       if (savedFloors) setFloors(JSON.parse(savedFloors));
       if (savedHouseSize) setHouseSize(JSON.parse(savedHouseSize));
 
@@ -82,16 +67,17 @@ export default function MapPage() {
         const data = await fetchTraps(null);
         setTraps(data);
       } catch (error) {
-        console.error("データ取得失敗:", error);
+        console.error("トラップデータの取得に失敗しました:", error);
       }
 
+      // すべてのデータ展開が確実に終わってからフラグを true にする
       setIsInitialized(true);
     };
 
     initializeData();
   }, []);
 
-  // 💾 自動保存
+  // 2. 💾 初期化が完了した「後」の変更時のみ自動保存が走るように制限
   useEffect(() => {
     if (isInitialized) {
       localStorage.setItem("map_rooms_data", JSON.stringify(rooms));
@@ -100,10 +86,11 @@ export default function MapPage() {
     }
   }, [rooms, floors, houseSize, isInitialized]);
 
-  // 現在の階層の部屋をフィルタリング
+  // 現在の階層の部屋だけを予めフィルタリング（パフォーマンス最適化）
   const currentFloorRooms = useMemo(() => {
     return rooms.filter((r) => r.floor === currentFloor);
   }, [rooms, currentFloor]);
+
 
   const handleAddUpperFloor = () => {
     const upperFloors = floors.filter(f => f > 0);
@@ -124,11 +111,16 @@ export default function MapPage() {
       alert("これ以上階層を削除することはできません。");
       return;
     }
+
     const floorName = getFloorName(currentFloor);
-    const isConfirmed = confirm(`本当に ${floorName} を削除しますか？\n※この階にある部屋とグッズも削除されます。`);
+    const isConfirmed = confirm(
+      `本当に ${floorName} を削除しますか？\n※この階にあるすべての部屋と配置されたグッズも削除されます。`
+    );
+
     if (!isConfirmed) return;
 
     const targetRoomIds = rooms.filter(r => r.floor === currentFloor).map(r => r.id);
+
     setFloors(floors.filter(f => f !== currentFloor));
     setRooms(rooms.filter(r => r.floor !== currentFloor));
     setTraps(traps.filter(t => !targetRoomIds.includes(t.roomId || "")));
@@ -140,10 +132,13 @@ export default function MapPage() {
   const handleAddRoom = () => {
     if (!newRoomName.trim()) return;
     const room: ExtendedRoom = {
-      id: generateId("room"),
+      id: generateId("room"), // 安全なID生成
       name: newRoomName,
       type: newRoomType,
-      x: 30, y: 30, w: 30, h: 30,
+      x: 30,
+      y: 30,
+      w: 30,
+      h: 30,
       floor: currentFloor,
     };
     setRooms([...rooms, room]);
@@ -160,14 +155,18 @@ export default function MapPage() {
     setRooms(rooms.map((r) => (r.id === id ? { ...r, [field]: value } : r)) as ExtendedRoom[]);
   };
 
+  // --- ドラッグ&ドロップのハンドラー ---
   const handlePointerDown = (room: ExtendedRoom, e: React.PointerEvent<HTMLDivElement>) => {
     if (mode !== "edit") return;
     e.currentTarget.setPointerCapture(e.pointerId);
     setDragging({
       id: room.id,
-      startX: e.clientX, startY: e.clientY,
-      roomX: room.x, roomY: room.y,
-      w: room.w, h: room.h,
+      startX: e.clientX,
+      startY: e.clientY,
+      roomX: room.x,
+      roomY: room.y,
+      w: room.w,
+      h: room.h,
     });
   };
 
@@ -177,15 +176,22 @@ export default function MapPage() {
 
     const container = containerRef.current;
     const rect = container.getBoundingClientRect();
-    const deltaXPercent = ((e.clientX - dragging.startX) / rect.width) * 100;
-    const deltaYPercent = ((e.clientY - dragging.startY) / rect.height) * 100;
+
+    const deltaX = e.clientX - dragging.startX;
+    const deltaY = e.clientY - dragging.startY;
+
+    const deltaXPercent = (deltaX / rect.width) * 100;
+    const deltaYPercent = (deltaY / rect.height) * 100;
 
     let newX = Math.round(dragging.roomX + deltaXPercent);
     let newY = Math.round(dragging.roomY + deltaYPercent);
+
     newX = Math.max(0, Math.min(100 - dragging.w, newX));
     newY = Math.max(0, Math.min(100 - dragging.h, newY));
 
-    setRooms((prev) => prev.map((r) => (r.id === dragging.id ? { ...r, x: newX, y: newY } : r)));
+    setRooms((prev) =>
+      prev.map((r) => (r.id === dragging.id ? { ...r, x: newX, y: newY } : r))
+    );
   };
 
   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -194,8 +200,10 @@ export default function MapPage() {
     setDragging(null);
   };
 
+  // 部屋クリック時の処理（配置モード時）
   const handleRoomClick = async (room: ExtendedRoom, e: React.MouseEvent<HTMLDivElement>) => {
     if (mode !== "place") return;
+
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = (e.clientX - rect.left) / rect.width;
     const clickY = (e.clientY - rect.top) / rect.height;
@@ -208,24 +216,29 @@ export default function MapPage() {
     expDate.setMonth(expDate.getMonth() + months);
 
     const newTrap: Trap = {
-      id: generateId("trap"),
+      id: generateId("trap"), // 安全なID生成
       userId: null,
       name: trapName,
       placedLocation: placedLocation || `${room.name}の隅`,
       roomId: room.id,
-      x: clickX, y: clickY,
+      x: clickX,
+      y: clickY,
       placedDate: new Date().toISOString().split("T")[0],
       expirationDate: expDate.toISOString().split("T")[0],
       isActive: true,
     };
 
+    // 先にステートを更新（楽観的UIアップデート）
     setTraps((prev) => [...prev, newTrap]);
+
     try {
       await saveTrapData(newTrap, null);
       alert(`${room.name}に「${trapName}」を配置しました！`);
       setPlacedLocation("");
     } catch (error) {
-      alert("データの保存に失敗しました。");
+      console.error("Firebaseへの保存に失敗しました:", error);
+      alert("データの保存に失敗しました。もう一度お試しください。");
+      // 失敗したら追加したトラップをロールバック（削除）
       setTraps((prev) => prev.filter((t) => t.id !== newTrap.id));
     }
   };
@@ -290,21 +303,28 @@ export default function MapPage() {
               <label className="flex items-center gap-1">
                 横幅:
                 <input 
-                  type="number" min="200" step="50"
+                  type="number" 
+                  min="200"
+                  step="50"
                   value={houseSize.width} 
                   onChange={(e) => setHouseSize({ ...houseSize, width: Math.max(200, Number(e.target.value)) })} 
                   className="w-16 p-1 border rounded bg-white text-center font-mono" 
-                /> px
+                />
+                px
               </label>
               <label className="flex items-center gap-1">
                 高さ:
                 <input 
-                  type="number" min="200" step="50"
+                  type="number" 
+                  min="200"
+                  step="50"
                   value={houseSize.height} 
                   onChange={(e) => setHouseSize({ ...houseSize, height: Math.max(200, Number(e.target.value)) })} 
                   className="w-16 p-1 border rounded bg-white text-center font-mono" 
-                /> px
+                />
+                px
               </label>
+              <span className="text-slate-400">※数値を大きくすると、その長さの巨大なキャンバスになります。</span>
             </div>
           </div>
 
@@ -355,6 +375,7 @@ export default function MapPage() {
         <button
           onClick={handleAddLowerFloor}
           className="px-2 py-1 rounded-lg text-xs font-bold bg-sky-600 text-white hover:bg-sky-700 transition"
+          title="現在の最下層の下に、さらに地下を追加します"
         >
           ⬇️ 地下を追加
         </button>
@@ -367,7 +388,9 @@ export default function MapPage() {
                 key={floor}
                 onClick={() => setCurrentFloor(floor)}
                 className={`px-3 py-1 rounded-md text-xs font-bold transition shrink-0 ${
-                  currentFloor === floor ? "bg-slate-800 text-white shadow-sm" : "bg-transparent text-slate-500 hover:bg-slate-100"
+                  currentFloor === floor
+                    ? "bg-slate-800 text-white shadow-sm"
+                    : "bg-transparent text-slate-500 hover:bg-slate-100"
                 }`}
               >
                 {getFloorName(floor)}
@@ -378,6 +401,7 @@ export default function MapPage() {
         <button
           onClick={handleAddUpperFloor}
           className="px-2 py-1 rounded-lg text-xs font-bold bg-orange-600 text-white hover:bg-orange-700 transition"
+          title="現在の最上層の上に、さらに階を追加します"
         >
           ⬆️ 階を追加
         </button>
@@ -386,7 +410,9 @@ export default function MapPage() {
           onClick={handleDeleteCurrentFloor}
           disabled={floors.length <= 1}
           className={`ml-auto px-2 py-1 rounded-lg text-xs font-bold transition ${
-            floors.length <= 1 ? "bg-slate-200 text-slate-400 cursor-not-allowed" : "bg-red-100 text-red-600 hover:bg-red-200"
+            floors.length <= 1 
+              ? "bg-slate-200 text-slate-400 cursor-not-allowed" 
+              : "bg-red-100 text-red-600 hover:bg-red-200"
           }`}
         >
           🗑️ この階({getFloorName(currentFloor)})を消す
@@ -398,8 +424,12 @@ export default function MapPage() {
         <div 
           ref={containerRef}
           className="relative bg-white rounded-lg border border-slate-300 shadow transition-all duration-200 mx-auto"
-          style={{ width: `${houseSize.width}px`, height: `${houseSize.height}px` }}
+          style={{ 
+            width: `${houseSize.width}px`, 
+            height: `${houseSize.height}px` 
+          }}
         >
+          {/* フィルタリング済みの部屋をマッピング */}
           {currentFloorRooms.map((room) => (
             <div
               key={room.id}
