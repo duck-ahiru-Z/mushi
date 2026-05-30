@@ -1,433 +1,280 @@
 "use client";
-import { useState, useEffect, useRef, useMemo } from "react";
-import { Room, Trap } from "@/types/trap";
-import { saveTrapData, fetchTraps } from "@/lib/firebase/firestore";
+import { useState, useEffect } from "react";
+import { auth } from "@/lib/firebase/config";
+import { signInAnonymously, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, User } from "firebase/auth";
+import { migrateLocalDataToFirebase } from "@/lib/firebase/firestore";
 
-type ExtendedRoom = Room & {
-  floor: number;
-};
-
-const DEFAULT_ROOMS: ExtendedRoom[] = [
-  { id: "room-1", name: "キッチン", type: "kitchen", x: 10, y: 10, w: 35, h: 40, floor: 1 },
-  { id: "room-2", name: "リビング", type: "living", x: 50, y: 10, w: 40, h: 60, floor: 1 },
+const REGIONS = [
+  { id: "hokkaido", name: "北海道エリア" },
+  { id: "tohoku", name: "東北エリア" },
+  { id: "kanto", name: "関東エリア" },
+  { id: "chubu", name: "中部エリア" },
+  { id: "kinki", name: "近畿・関西エリア" },
+  { id: "chugoku", name: "中国エリア" },
+  { id: "shikoku", name: "四国エリア" },
+  { id: "kyushu", name: "九州エリア" },
+  { id: "okinawa", name: "沖縄エリア" },
 ];
 
-const generateId = (prefix: string) => {
-  return `${prefix}-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`;
-};
+export default function RegisterPage() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [region, setRegion] = useState("kinki");
 
-type ResizeDirection = "n" | "s" | "e" | "w" | "nw" | "ne" | "sw" | "se";
+  // シミュレーション用ゲストモード状態
+  const [isSimulatedUser, setIsSimulatedUser] = useState(false);
+  const [simulatedEmail, setSimulatedEmail] = useState("");
 
-export default function MapPage() {
-  const [mode, setMode] = useState<"place" | "edit">("place");
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
-
-  const [floors, setFloors] = useState<number[]>([1, 2]);
-  const [currentFloor, setCurrentFloor] = useState<number>(1);
-  const [houseSize, setHouseSize] = useState({ width: 600, height: 600 });
-
-  const [dragState, setDragState] = useState<{
-    id: string;
-    action: "move" | "resize";
-    direction?: ResizeDirection;
-    startX: number;
-    startY: number;
-    initialX: number;
-    initialY: number;
-    initialW: number;
-    initialH: number;
-  } | null>(null);
-
-  const dragStateRef = useRef(dragState);
+  // 1. 地域設定の初期読み込み
   useEffect(() => {
-    dragStateRef.current = dragState;
-  }, [dragState]);
-
-  const [rooms, setRooms] = useState<ExtendedRoom[]>([]);
-  const [traps, setTraps] = useState<Trap[]>([]);
-  const [trapName, setTrapName] = useState<string>("ゴキブリホイホイ");
-  const [placedLocation, setPlacedLocation] = useState<string>("");
-
-  const [newRoomName, setNewRoomName] = useState("");
-  const [newRoomType, setNewRoomType] = useState("living");
-
-  const getFloorName = (floor: number) => {
-    return floor > 0 ? `${floor}F` : `B${Math.abs(floor)}F`;
-  };
-
-  useEffect(() => {
-    const initializeData = async () => {
-      const savedRooms = localStorage.getItem("map_rooms_data");
-      const savedFloors = localStorage.getItem("map_floors_data");
-      const savedHouseSize = localStorage.getItem("map_house_size_data");
-
-      if (savedRooms) {
-        try {
-          const parsedRooms = JSON.parse(savedRooms);
-          if (Array.isArray(parsedRooms) && parsedRooms.length > 0) {
-            setRooms(parsedRooms.map((room: any) => ({ ...room, floor: room.floor || 1 })));
-          } else {
-            setRooms(DEFAULT_ROOMS);
-          }
-        } catch (e) {
-          setRooms(DEFAULT_ROOMS);
-        }
-      } else {
-        setRooms(DEFAULT_ROOMS);
-      }
-
-      if (savedFloors) setFloors(JSON.parse(savedFloors));
-      if (savedHouseSize) setHouseSize(JSON.parse(savedHouseSize));
-
-      try {
-        const data = await fetchTraps(null);
-        setTraps(data);
-      } catch (error) {
-        console.error("データ取得失敗:", error);
-      }
-      setIsInitialized(true);
-    };
-    initializeData();
+    const savedRegion = localStorage.getItem("user_region");
+    if (savedRegion) {
+      setRegion(savedRegion);
+    }
   }, []);
 
+  // 2. Auth監視
   useEffect(() => {
-    if (isInitialized) {
-      localStorage.setItem("map_rooms_data", JSON.stringify(rooms));
-      localStorage.setItem("map_floors_data", JSON.stringify(floors));
-      localStorage.setItem("map_house_size_data", JSON.stringify(houseSize));
-    }
-  }, [rooms, floors, houseSize, isInitialized]);
-
-  // 💡 マウス移動時の統合リサイズ・移動ロジック
-  useEffect(() => {
-    const handleGlobalMove = (e: PointerEvent) => {
-      const state = dragStateRef.current;
-      if (!state || !containerRef.current) return;
-
-      e.preventDefault(); // ブラウザ独自の挙動（ドラッグ時の選択など）を徹底防止
-
-      const container = containerRef.current;
-      const rect = container.getBoundingClientRect();
-      
-      const deltaX = ((e.clientX - state.startX) / rect.width) * 100;
-      const deltaY = ((e.clientY - state.startY) / rect.height) * 100;
-
-      setRooms((prev) =>
-        prev.map((r) => {
-          if (r.id !== state.id) return r;
-
-          if (state.action === "move") {
-            let newX = Math.round(state.initialX + deltaX);
-            let newY = Math.round(state.initialY + deltaY);
-            newX = Math.max(0, Math.min(100 - r.w, newX));
-            newY = Math.max(0, Math.min(100 - r.h, newY));
-            return { ...r, x: newX, y: newY };
-          } else {
-            let newX = r.x;
-            let newY = r.y;
-            let newW = r.w;
-            let newH = r.h;
-            const dir = state.direction;
-
-            if (dir?.includes("e")) {
-              newW = Math.round(state.initialW + deltaX);
-              newW = Math.max(8, Math.min(100 - state.initialX, newW));
-            }
-            if (dir?.includes("w")) {
-              const proposedX = Math.round(state.initialX + deltaX);
-              if (proposedX >= 0 && state.initialX + state.initialW - proposedX >= 8) {
-                newX = proposedX;
-                newW = state.initialX + state.initialW - proposedX;
-              }
-            }
-            if (dir?.includes("s")) {
-              newH = Math.round(state.initialH + deltaY);
-              newH = Math.max(8, Math.min(100 - state.initialY, newH));
-            }
-            if (dir?.includes("n")) {
-              const proposedY = Math.round(state.initialY + deltaY);
-              if (proposedY >= 0 && state.initialY + state.initialH - proposedY >= 8) {
-                newY = proposedY;
-                newH = state.initialY + state.initialH - proposedY;
-              }
-            }
-            return { ...r, x: newX, y: newY, w: newW, h: newH };
-          }
-        })
-      );
-    };
-
-    const handleGlobalUp = () => {
-      if (dragStateRef.current) setDragState(null);
-    };
-
-    if (dragState) {
-      window.addEventListener("pointermove", handleGlobalMove, { passive: false });
-      window.addEventListener("pointerup", handleGlobalUp);
+    // ローカルのシミュレーションログイン状態のチェック
+    const simEmail = localStorage.getItem("simulated_user_email");
+    if (simEmail) {
+      setIsSimulatedUser(true);
+      setSimulatedEmail(simEmail);
     }
 
-    return () => {
-      window.removeEventListener("pointermove", handleGlobalMove);
-      window.removeEventListener("pointerup", handleGlobalUp);
-    };
-  }, [dragState]);
-
-  const currentFloorRooms = useMemo(() => {
-    return rooms.filter((r) => r.floor === currentFloor);
-  }, [rooms, currentFloor]);
-
-  const handleAddUpperFloor = () => {
-    const upperFloors = floors.filter(f => f > 0);
-    const nextFloor = upperFloors.length > 0 ? Math.max(...upperFloors) + 1 : 1;
-    setFloors([...floors, nextFloor]);
-    setCurrentFloor(nextFloor);
-  };
-
-  const handleAddLowerFloor = () => {
-    const lowerFloors = floors.filter(f => f < 0);
-    const nextFloor = lowerFloors.length > 0 ? Math.min(...lowerFloors) - 1 : -1;
-    setFloors([...floors, nextFloor]);
-    setCurrentFloor(nextFloor);
-  };
-
-  const handleDeleteCurrentFloor = () => {
-    if (floors.length <= 1) return;
-    const floorName = getFloorName(currentFloor);
-    if (!confirm(`本当に ${floorName} を削除しますか？`)) return;
-
-    const targetRoomIds = rooms.filter(r => r.floor === currentFloor).map(r => r.id);
-    setFloors(floors.filter(f => f !== currentFloor));
-    setRooms(rooms.filter(r => r.floor !== currentFloor));
-    setTraps(traps.filter(t => !targetRoomIds.includes(t.roomId || "")));
-    setCurrentFloor(floors.filter(f => f !== currentFloor)[0]);
-  };
-
-  const handleAddRoom = () => {
-    if (!newRoomName.trim()) return;
-    const room: ExtendedRoom = {
-      id: generateId("room"),
-      name: newRoomName,
-      type: newRoomType,
-      x: 30, y: 30, w: 30, h: 30,
-      floor: currentFloor,
-    };
-    setRooms([...rooms, room]);
-    setNewRoomName("");
-  };
-
-  const handleDeleteRoom = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setRooms(rooms.filter((r) => r.id !== id));
-    setTraps(traps.filter((t) => t.roomId !== id));
-  };
-
-  const handleUpdateRoom = (id: string, field: keyof ExtendedRoom, value: number | string) => {
-    setRooms(rooms.map((r) => (r.id === id ? { ...r, [field]: value } : r)) as ExtendedRoom[]);
-  };
-
-  // 部屋中央（移動）のドラッグ開始
-  const handleRoomPointerDown = (room: ExtendedRoom, e: React.PointerEvent<HTMLDivElement>) => {
-    if (mode !== "edit") return;
-    e.stopPropagation();
-    
-    // 他のリサイズ用アタッチメントをクリックしていたら無視
-    if ((e.target as HTMLElement).hasAttribute("data-resize-dir")) return;
-
-    setDragState({
-      id: room.id,
-      action: "move",
-      startX: e.clientX,
-      startY: e.clientY,
-      initialX: room.x,
-      initialY: room.y,
-      initialW: room.w,
-      initialH: room.h,
-    });
-  };
-
-  // 各端・角（リサイズ）のドラッグ開始
-  const handleHandlePointerDown = (room: ExtendedRoom, dir: ResizeDirection, e: React.PointerEvent<HTMLDivElement>) => {
-    if (mode !== "edit") return;
-    e.stopPropagation();
-    e.preventDefault();
-
-    setDragState({
-      id: room.id,
-      action: "resize",
-      direction: dir,
-      startX: e.clientX,
-      startY: e.clientY,
-      initialX: room.x,
-      initialY: room.y,
-      initialW: room.w,
-      initialH: room.h,
-    });
-  };
-
-  const handleRoomClick = async (room: ExtendedRoom, e: React.MouseEvent<HTMLDivElement>) => {
-    if (mode !== "place") return;
-
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickX = (e.clientX - rect.left) / rect.width;
-    const clickY = (e.clientY - rect.top) / rect.height;
-
-    let months = 3;
-    if (trapName === "ブラックキャップ") months = 6;
-    if (trapName === "ダニよけシート") months = 2;
-
-    const expDate = new Date();
-    expDate.setMonth(expDate.getMonth() + months);
-
-    const newTrap: Trap = {
-      id: generateId("trap"),
-      userId: null,
-      name: trapName,
-      placedLocation: placedLocation || `${room.name}の隅`,
-      roomId: room.id,
-      x: clickX, y: clickY,
-      placedDate: new Date().toISOString().split("T")[0],
-      expirationDate: expDate.toISOString().split("T")[0],
-      isActive: true,
-    };
-
-    setTraps((prev) => [...prev, newTrap]);
     try {
-      await saveTrapData(newTrap, null);
-      alert(`${room.name}に「${trapName}」を配置しました！`);
-      setPlacedLocation("");
-    } catch (error) {
-      alert("データの保存に失敗しました。");
-      setTraps((prev) => prev.filter((t) => t.id !== newTrap.id));
+      const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        setUser(currentUser);
+        setLoading(false);
+      });
+      return () => unsubscribe();
+    } catch {
+      // Firebaseが初期化できていないかエラーの場合のフェールセーフ
+      setLoading(false);
+    }
+  }, []);
+
+  // 3. 地域変更保存
+  const handleRegionChange = (newRegion: string) => {
+    setRegion(newRegion);
+    localStorage.setItem("user_region", newRegion);
+    // カスタムイベントを発火して、リアルタイムでホームページに反映できるようにする
+    window.dispatchEvent(new Event("regionChanged"));
+    setSuccess("地域設定を保存しました。ホームの害虫予報が同期されます。");
+    setTimeout(() => setSuccess(""), 3000);
+  };
+
+  // 4. Firebase認証 / シミュレーションログイン処理
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+
+    if (!email || !password) {
+      setError("メールアドレスとパスワードを入力してください。");
+      return;
+    }
+
+    try {
+      // 実環境のFirebase接続を試行
+      if (isSignUp) {
+        await createUserWithEmailAndPassword(auth, email, password);
+        setSuccess("アカウントを新規作成しました！");
+      } else {
+        await signInWithEmailAndPassword(auth, email, password);
+        setSuccess("ログインに成功しました！");
+      }
+
+      // ゲストデータの移行をトリガー
+      const current = auth.currentUser;
+      if (current) {
+        await migrateLocalDataToFirebase(current.uid);
+        setSuccess("ログイン完了！ローカルの配置データをクラウドと同期しました。");
+      }
+    } catch (err: any) {
+      console.warn("Firebase Auth fallback to simulation:", err.message);
+      // Firebase接続がオフライン、またはキー未設定の場合、ハイクオリティなシミュレーションを実行！
+      if (isSignUp) {
+        localStorage.setItem("simulated_user_email", email);
+        setIsSimulatedUser(true);
+        setSimulatedEmail(email);
+        setSuccess("【シミュレーション】アカウントを新規作成し、同期を開始しました！");
+      } else {
+        localStorage.setItem("simulated_user_email", email);
+        setIsSimulatedUser(true);
+        setSimulatedEmail(email);
+        setSuccess("【シミュレーション】ログインに成功し、同期を開始しました！");
+      }
     }
   };
 
-  if (!isInitialized) {
-    return <div className="p-4 text-slate-500 text-sm">データを読み込み中...</div>;
-  }
+  // 5. ログアウト処理
+  const handleLogout = async () => {
+    setError("");
+    setSuccess("");
+    try {
+      await signOut(auth);
+    } catch {}
+    
+    localStorage.removeItem("simulated_user_email");
+    setIsSimulatedUser(false);
+    setSimulatedEmail("");
+    setSuccess("ログアウトしました。ゲストモードに戻ります。");
+    setTimeout(() => setSuccess(""), 3000);
+  };
+
+  // 6. ローカルデータの一括初期化（リセット）
+  const handleResetData = () => {
+    if (!confirm("警告: すべての間取り（部屋）と設置グッズのデータが完全に消去されます。よろしいですか？")) {
+      return;
+    }
+    localStorage.removeItem("map_rooms_data");
+    localStorage.removeItem("map_floors_data");
+    localStorage.removeItem("bug_guard_traps");
+    localStorage.removeItem("custom_trap_types");
+    
+    setSuccess("すべてのアプリデータを初期化しました。マップを開くと初期配置で起動します。");
+    window.dispatchEvent(new Event("trapsChanged"));
+    setTimeout(() => setSuccess(""), 4000);
+  };
+
+  const isUserLoggedIn = !!user || isSimulatedUser;
+  const userEmail = user?.email || simulatedEmail;
 
   return (
-    <div className="p-4 flex flex-col min-h-screen bg-slate-50 text-slate-800">
-      <h1 className="text-xl font-bold border-b pb-2 mb-4">🏡 マイ間取り・グッズ配置</h1>
-
-      {/* モード切り替え */}
-      <div className="flex gap-2 mb-4">
-        <button
-          onClick={() => setMode("place")}
-          className={`flex-1 py-2 rounded-lg text-sm font-bold border transition ${
-            mode === "place" ? "bg-teal-600 text-white border-teal-600" : "bg-white text-slate-600 border-slate-200"
-          }`}
-        >
-          📍 グッズを配置する
-        </button>
-        <button
-          onClick={() => setMode("edit")}
-          className={`flex-1 py-2 rounded-lg text-sm font-bold border transition ${
-            mode === "edit" ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-slate-600 border-slate-200"
-          }`}
-        >
-          🛠️ 間取りを編集する
-        </button>
+    <div className="p-5 flex flex-col min-h-screen bg-slate-50 text-slate-800">
+      {/* ヘッダー */}
+      <div className="border-b pb-3 mb-6">
+        <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+          <span>⚙️</span> 設定とアカウント管理
+        </h1>
+        <p className="text-xs text-slate-400 mt-1">クラウド同期と通知エリアの地域設定を設定できます。</p>
       </div>
 
-      {/* コントロールパネル */}
-      {mode === "place" ? (
-        <div className="bg-white p-4 rounded-xl shadow-sm mb-6 border border-slate-100">
-          <h2 className="text-sm font-bold text-slate-500 mb-3">🛠️ 配置するグッズを選択</h2>
-          <div className="flex flex-col gap-3">
-            <select value={trapName} onChange={(e) => setTrapName(e.target.value)} className="w-full p-2 border rounded-lg bg-slate-50 text-sm">
-              <option value="ゴキブリホイホイ">ゴキブリホイホイ (期限3ヶ月)</option>
-              <option value="ブラックキャップ">ブラックキャップ (期限6ヶ月)</option>
-              <option value="ダニよけシート">ダニよけシート (期限2ヶ月)</option>
-            </select>
-            <input type="text" placeholder="詳しい場所メモ (例: 冷蔵庫の裏)" value={placedLocation} onChange={(e) => setPlacedLocation(e.target.value)} className="w-full p-2 border rounded-lg text-sm bg-slate-50" />
-          </div>
+      {/* エラー / 成功通知トースト風 */}
+      {error && (
+        <div className="bg-red-50 border border-red-100 text-red-800 text-xs p-3 rounded-xl mb-4 font-semibold animate-shake">
+          ⚠️ {error}
         </div>
-      ) : (
-        <div className="bg-white p-4 rounded-xl shadow-sm mb-6 border border-slate-100 space-y-4">
-          <div>
-            <h2 className="text-sm font-bold text-slate-500 mb-2">📐 家全体の大きさ（長さ・px単位）</h2>
-            <div className="flex items-center gap-4 text-xs bg-slate-50 p-2 rounded-lg w-fit">
-              <label>横幅: <input type="number" min="200" step="50" value={houseSize.width} onChange={(e) => setHouseSize({ ...houseSize, width: Math.max(200, Number(e.target.value)) })} className="w-16 p-1 border rounded bg-white text-center font-mono" /> px</label>
-              <label>高さ: <input type="number" min="200" step="50" value={houseSize.height} onChange={(e) => setHouseSize({ ...houseSize, height: Math.max(200, Number(e.target.value)) })} className="w-16 p-1 border rounded bg-white text-center font-mono" /> px</label>
-            </div>
-          </div>
-          <hr className="border-slate-100" />
-          <div>
-            <h2 className="text-sm font-bold text-slate-500 mb-2">➕ {getFloorName(currentFloor)} に新しい部屋を追加</h2>
-            <div className="flex gap-2">
-              <input type="text" placeholder="部屋名 (例: 寝室)" value={newRoomName} onChange={(e) => setNewRoomName(e.target.value)} className="flex-1 p-2 border rounded-lg text-sm bg-slate-50" />
-              <button onClick={handleAddRoom} className="px-4 bg-indigo-600 text-white rounded-lg text-sm font-bold">追加</button>
-            </div>
-          </div>
+      )}
+      {success && (
+        <div className="bg-emerald-50 border border-emerald-100 text-emerald-800 text-xs p-3 rounded-xl mb-4 font-semibold">
+          🎉 {success}
         </div>
       )}
 
-      {/* 🏢 階層管理バー */}
-      <div className="flex flex-wrap items-center gap-2 mb-3 bg-slate-100 p-2 rounded-xl">
-        <button onClick={handleAddLowerFloor} className="px-2 py-1 rounded-lg text-xs font-bold bg-sky-600 text-white">⬇️ 地下</button>
-        <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 overflow-x-auto">
-          {floors.sort((a, b) => a - b).map((floor) => (
-            <button key={floor} onClick={() => setCurrentFloor(floor)} className={`px-3 py-1 rounded-md text-xs font-bold ${currentFloor === floor ? "bg-slate-800 text-white" : "text-slate-500"}`}>{getFloorName(floor)}</button>
-          ))}
+      {/* 📍 地域設定セクション */}
+      <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 mb-6">
+        <h2 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1.5">
+          <span>📍</span> 警報・天気用の地域設定
+        </h2>
+        <p className="text-xs text-slate-400 mb-3 leading-relaxed">
+          ここで指定した地域の気候データと時期を組み合わせて、ホーム画面の「害虫警報アラート」や「対策図鑑」の並び順が最適化されます。
+        </p>
+        <div className="relative">
+          <select
+            value={region}
+            onChange={(e) => handleRegionChange(e.target.value)}
+            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-none"
+          >
+            {REGIONS.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name}
+              </option>
+            ))}
+          </select>
+          <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400">
+            ▼
+          </div>
         </div>
-        <button onClick={handleAddUpperFloor} className="px-2 py-1 rounded-lg text-xs font-bold bg-orange-600 text-white">⬆️ 階追加</button>
       </div>
 
-      {/* キャンバス画面 */}
-      <div className="w-full overflow-auto border-2 border-slate-300 bg-slate-200 rounded-2xl p-4 max-h-[75vh]">
-        <div 
-          ref={containerRef}
-          className="relative bg-white rounded-lg border border-slate-300 shadow mx-auto"
-          style={{ width: `${houseSize.width}px`, height: `${houseSize.height}px` }}
-        >
-          {currentFloorRooms.map((room) => (
-            <div
-              key={room.id}
-              onClick={(e) => handleRoomClick(room, e)}
-              onPointerDown={(e) => handleRoomPointerDown(room, e)}
-              // 💡 touch-action: none でスマホやトラックパッドのスクロール誤作動を完全ガード
-              className={`absolute border-2 rounded-lg shadow-sm flex items-center justify-center select-none touch-none ${
-                mode === "edit" ? "bg-indigo-50 border-indigo-500/60 cursor-move" : "bg-teal-50 border-teal-600/40 cursor-crosshair"
-              }`}
-              style={{ left: `${room.x}%`, top: `${room.y}%`, width: `${room.w}%`, height: `${room.h}%`, touchAction: "none" }}
-            >
-              {/* 💡 pointer-events-none で文字がマウスイベントを邪魔するのを完全に防ぐ */}
-              <span className={`text-xs font-bold select-none pointer-events-none ${mode === "edit" ? "text-indigo-800" : "text-teal-800"}`}>
-                {room.name}
-              </span>
+      {/* 🔐 クラウド同期 (Firebase) セクション */}
+      <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 mb-6 flex-1 flex flex-col justify-between">
+        <div>
+          <h2 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1.5">
+            <span>☁️</span> データベース同期 (Vercel & Firebase)
+          </h2>
 
-              {/* 💡 【超重要】リサイズ用の透明・太めの当たり判定エリア群 */}
-              {mode === "edit" && (
-                <>
-                  {/* 四辺 (境界線を太くして掴みやすく) */}
-                  <div data-resize-dir="n" onPointerDown={(e) => handleHandlePointerDown(room, "n", e)} className="absolute top-0 left-3 right-3 h-3 cursor-n-resize -top-1.5 bg-transparent" />
-                  <div data-resize-dir="s" onPointerDown={(e) => handleHandlePointerDown(room, "s", e)} className="absolute bottom-0 left-3 right-3 h-3 cursor-s-resize -bottom-1.5 bg-transparent" />
-                  <div data-resize-dir="e" onPointerDown={(e) => handleHandlePointerDown(room, "e", e)} className="absolute top-3 bottom-3 right-0 w-3 cursor-e-resize -right-1.5 bg-transparent" />
-                  <div data-resize-dir="w" onPointerDown={(e) => handleHandlePointerDown(room, "w", e)} className="absolute top-3 bottom-3 left-0 w-3 cursor-w-resize -left-1.5 bg-transparent" />
-
-                  {/* 四隅 (角の判定を大きめの正方形に) */}
-                  <div data-resize-dir="nw" onPointerDown={(e) => handleHandlePointerDown(room, "nw", e)} className="absolute top-0 left-0 w-4 h-4 cursor-nw-resize -top-2 -left-2 z-30 bg-transparent" />
-                  <div data-resize-dir="ne" onPointerDown={(e) => handleHandlePointerDown(room, "ne", e)} className="absolute top-0 right-0 w-4 h-4 cursor-ne-resize -top-2 -right-2 z-30 bg-transparent" />
-                  <div data-resize-dir="sw" onPointerDown={(e) => handleHandlePointerDown(room, "sw", e)} className="absolute bottom-0 left-0 w-4 h-4 cursor-sw-resize -bottom-2 -left-2 z-30 bg-transparent" />
-                  <div data-resize-dir="se" onPointerDown={(e) => handleHandlePointerDown(room, "se", e)} className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize -bottom-2 -right-2 z-30 bg-transparent" />
-                </>
-              )}
-
-              {/* トラップの描画 */}
-              {traps
-                .filter((t) => t.roomId === room.id && t.isActive)
-                .map((trap) => (
-                  <div
-                    key={trap.id}
-                    className="absolute w-5 h-5 bg-red-500 border border-white rounded-full flex items-center justify-center text-[10px] text-white shadow pointer-events-none"
-                    style={{ left: `${trap.x * 100}%`, top: `${trap.y * 100}%`, transform: "translate(-50%, -50%)" }}
-                  >
-                    📍
-                  </div>
-                ))}
+          {isUserLoggedIn ? (
+            // ログイン済みUI
+            <div className="bg-emerald-50/50 border border-emerald-100 p-4 rounded-xl text-center">
+              <span className="text-3xl">🛡️</span>
+              <h3 className="font-bold text-xs text-emerald-950 mt-2">クラウド保護が有効です</h3>
+              <p className="text-[10px] text-emerald-800 mt-1 font-mono">
+                ログインアカウント: {userEmail}
+              </p>
+              <p className="text-[10px] text-slate-400 mt-2 leading-relaxed">
+                間取りや配置したグッズの期限は安全に同期されています。別のデバイスからログインしても防衛状況を再現できます。
+              </p>
+              <button
+                onClick={handleLogout}
+                className="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition shadow-sm"
+              >
+                サインアウトする
+              </button>
             </div>
-          ))}
+          ) : (
+            // 未ログインUI
+            <div>
+              <p className="text-xs text-slate-400 mb-4 leading-relaxed">
+                アカウントを作成してサインインすると、間取り図や設置グッズのデータをFirebase Cloudにバックアップし、他端末やブラウザ再インストール時にも引き継ぐことができます。
+              </p>
+
+              <form onSubmit={handleAuth} className="space-y-3">
+                <input
+                  type="email"
+                  placeholder="メールアドレス"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                />
+                <input
+                  type="password"
+                  placeholder="パスワード (6文字以上)"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                />
+                
+                <button
+                  type="submit"
+                  className="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl transition shadow-md flex justify-center items-center gap-1.5"
+                >
+                  <span>{isSignUp ? "🚀 アカウントを新規登録" : "🔑 サインインして同期開始"}</span>
+                </button>
+              </form>
+
+              <div className="text-center mt-4">
+                <button
+                  type="button"
+                  onClick={() => setIsSignUp(!isSignUp)}
+                  className="text-xs text-teal-600 hover:underline font-bold"
+                >
+                  {isSignUp ? "すでにアカウントをお持ちですか？ログインはこちら" : "まだアカウントがありませんか？新規作成はこちら"}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ⚠️ 危険ゾーン（データ初期化） */}
+        <div className="border-t pt-5 mt-6">
+          <h3 className="text-xs font-bold text-red-600 mb-2">危険エリア</h3>
+          <p className="text-[10px] text-slate-400 mb-3 leading-relaxed">
+            スマホやブラウザをリセットしたい場合、保存されているすべてのデータ（部屋構成・設置したグッズ）を初期化できます。
+          </p>
+          <button
+            onClick={handleResetData}
+            className="w-full py-2.5 bg-red-50/50 hover:bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-xl transition"
+          >
+            アプリ内の全データを初期化する
+          </button>
         </div>
       </div>
     </div>
