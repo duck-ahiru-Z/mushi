@@ -70,7 +70,7 @@ export function useFcmToken() {
 
     // ネイティブ通知オプション
     const title = "🛡️ BugGuard 防衛アラート";
-    const options: NotificationOptions = {
+    const options: any = {
       body: "【警告】ゴキブリホイホイの交換期限（あと7日）が近づいています！設置マップを確認してください。",
       icon: "/favicon.ico", // 実装上のプレースホルダー、アイコン指定
       badge: "/favicon.ico",
@@ -99,7 +99,7 @@ export function useFcmToken() {
     // ここでは10秒後にリマインダーが届く「擬似体験タイマー」を仕掛けることができます
     setTimeout(() => {
       const title = "⏰ 防衛グッズの交換リマインダー";
-      const options: NotificationOptions = {
+      const options: any = {
         body: `「${trapName}」の回収期限まで残り ${daysLeft} 日です。家全体の防衛効果が弱まる前に交換しましょう！`,
         icon: "/favicon.ico",
         tag: "bugguard-reminder",
