@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
+import { detectJapanRegion } from "@/lib/utils";
 
 interface BugProfile {
   id: string;
@@ -165,11 +166,28 @@ export default function EncyclopediaPage() {
   const [currentMonth, setCurrentMonth] = useState<number>(new Date().getMonth() + 1);
   const [region, setRegion] = useState<string>("kinki");
 
-  // アカウント画面等で設定された地域設定があれば同期して初期値にする
+  // アカウント画面等で設定された地域設定があれば同期して初期値にする、なければ自動位置判定
   useEffect(() => {
     const saved = localStorage.getItem("user_region");
     if (saved) {
       setRegion(saved);
+      return;
+    }
+
+    if (typeof navigator !== "undefined" && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          const detected = detectJapanRegion(lat, lon);
+          setRegion(detected);
+          localStorage.setItem("user_region", detected);
+          window.dispatchEvent(new Event("regionChanged"));
+        },
+        (error) => {
+          console.warn("Geolocation fallback in encyclopedia:", error);
+        }
+      );
     }
   }, []);
 

@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useTraps } from "@/hooks/usetraps";
 import { useFcmToken } from "@/hooks/useFcmToken";
+import { detectJapanRegion } from "@/lib/utils";
 
 const REGION_NAMES: Record<string, string> = {
   hokkaido: "北海道エリア",
@@ -33,21 +34,54 @@ export default function HomePage() {
   } = useFcmToken();
 
   const [region, setRegion] = useState("kinki");
+  const [locationLabel, setLocationLabel] = useState<string>("位置情報：未取得");
   const [currentMonth] = useState<number>(new Date().getMonth() + 1);
 
-  // 1. 地域設定の読み込み＆アカウント変更監視
-  const loadUserRegion = () => {
+  // 1. 地域設定の読み込み＆自動位置情報取得
+  const loadUserRegionAndDetect = () => {
     const saved = localStorage.getItem("user_region");
     if (saved) {
       setRegion(saved);
+      setLocationLabel(`📍 ${REGION_NAMES[saved]}`);
+      return;
+    }
+
+    // 保存されていない場合は、GPSから自動取得を試みる
+    if (typeof navigator !== "undefined" && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          const detected = detectJapanRegion(lat, lon);
+          
+          setRegion(detected);
+          localStorage.setItem("user_region", detected);
+          setLocationLabel(`📍 ${REGION_NAMES[detected]} (GPS自動判定)`);
+          // 他のコンポーネントへイベント通知
+          window.dispatchEvent(new Event("regionChanged"));
+        },
+        (error) => {
+          console.warn("Geolocation error, using default region:", error);
+          setLocationLabel("📍 近畿・関西エリア (デフォルト)");
+        }
+      );
     }
   };
 
   useEffect(() => {
-    loadUserRegion();
-    // アカウント画面で地域が変更されたことを検知するカスタムイベント
-    window.addEventListener("regionChanged", loadUserRegion);
-    return () => window.removeEventListener("regionChanged", loadUserRegion);
+    loadUserRegionAndDetect();
+    
+    // GPSの手動再取得用イベントハンドラや、アカウント画面変更検知
+    const handleRegionChangeEv = () => {
+      const saved = localStorage.getItem("user_region");
+      if (saved) {
+        setRegion(saved);
+        setLocationLabel(`📍 ${REGION_NAMES[saved]}`);
+      }
+    };
+
+    window.addEventListener("regionChanged", handleRegionChangeEv);
+    return () => window.removeEventListener("regionChanged", handleRegionChangeEv);
   }, []);
 
   // 2. 地域と言動シーズンに合わせたリアルタイム害虫活動指数
@@ -136,7 +170,7 @@ export default function HomePage() {
           href="/register"
           className="text-[11px] bg-white border hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-full transition-all flex items-center gap-1 font-extrabold shadow-sm"
         >
-          📍 {REGION_NAMES[region] || "未設定"}
+          {locationLabel}
         </Link>
       </div>
 
