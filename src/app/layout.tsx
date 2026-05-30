@@ -11,6 +11,8 @@ export const metadata: Metadata = {
   manifest: "/manifest.json", // PWA用のマニフェスト紐付け
 };
 
+import Link from "next/link";
+
 export default function RootLayout({
   children,
 }: {
@@ -24,14 +26,36 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
-      <body className={`${inter.className} bg-slate-50 text-slate-900 min-h-screen flex flex-col pb-16 antialiased`}>
+      <body className={`${inter.className} bg-slate-50 text-slate-900 min-h-screen flex flex-col antialiased`}>
+        {/* PC用ヘッダーナビゲーション */}
+        <header className="hidden md:block bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+          <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div className="flex items-center gap-8">
+              <span className="text-xl font-black text-teal-600 tracking-tight flex items-center gap-1.5 select-none">
+                <span>🛡️</span> BugGuard
+              </span>
+              <nav className="flex items-center gap-6 text-sm font-bold text-slate-500">
+                <Link href="/" className="hover:text-teal-600 transition-colors py-2">ホーム</Link>
+                <Link href="/map" className="hover:text-teal-600 transition-colors py-2">配置マップ</Link>
+                <Link href="/encyclopedia" className="hover:text-teal-600 transition-colors py-2">対策図鑑</Link>
+                <Link href="/register" className="hover:text-teal-600 transition-colors py-2">アカウント連携</Link>
+              </nav>
+            </div>
+            <div className="text-xs font-bold text-slate-400 bg-slate-100 px-3 py-1.5 rounded-full">
+              防衛システム稼働中
+            </div>
+          </div>
+        </header>
+
         {/* メインコンテンツエリア */}
-        <main className="flex-1 w-full max-w-md mx-auto bg-white shadow-md min-h-screen overflow-y-auto">
+        <main className="flex-1 w-full max-w-md md:max-w-5xl mx-auto bg-white md:shadow-xl md:rounded-3xl md:my-6 md:border md:border-slate-100 min-h-screen md:min-h-[calc(100vh-8rem)] flex flex-col overflow-hidden pb-16 md:pb-0">
           {children}
         </main>
 
         {/* スマホ用ボトムナビゲーションバー */}
-        <BottomNav />
+        <div className="md:hidden">
+          <BottomNav />
+        </div>
       </body>
     </html>
   );
