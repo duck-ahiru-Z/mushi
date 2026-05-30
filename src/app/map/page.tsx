@@ -81,6 +81,15 @@ export default function MapPage() {
   // 配置するグッズの選択状態
   const [selectedTrapType, setSelectedTrapType] = useState<string>("ゴキブリホイホイ");
   const [placedLocation, setPlacedLocation] = useState<string>("");
+  const [placementMonths, setPlacementMonths] = useState<number>(3);
+
+  // プリセットが選択されたらデフォルト有効期間を自動でセット
+  useEffect(() => {
+    const foundType = allTrapTypes.find((t) => t.name === selectedTrapType);
+    if (foundType) {
+      setPlacementMonths(foundType.months);
+    }
+  }, [selectedTrapType, allTrapTypes]);
 
   // 新規部屋追加
   const [newRoomName, setNewRoomName] = useState("");
@@ -281,8 +290,7 @@ export default function MapPage() {
     const clickY = (e.clientY - rect.top) / rect.height;
 
     // 選択されたグッズの有効期限（月数）を取得
-    const foundType = allTrapTypes.find((t) => t.name === selectedTrapType);
-    const months = foundType ? foundType.months : 3;
+    const months = placementMonths;
 
     try {
       await addTrap(
@@ -516,17 +524,34 @@ export default function MapPage() {
             >
               {allTrapTypes.map((type) => (
                 <option key={type.name} value={type.name}>
-                  {type.icon} {type.name} (有効期限: {type.months}ヶ月)
+                  {type.icon} {type.name} (基本: {type.months}ヶ月)
                 </option>
               ))}
             </select>
-            <input
-              type="text"
-              placeholder="詳しい設置場所のメモ (例: 冷蔵庫の裏の隙間)"
-              value={placedLocation}
-              onChange={(e) => setPlacedLocation(e.target.value)}
-              className="w-full p-2.5 border rounded-xl text-xs bg-slate-50"
-            />
+            
+            <div className="grid grid-cols-3 gap-2">
+              <div className="col-span-2">
+                <input
+                  type="text"
+                  placeholder="設置場所メモ (例: 冷蔵庫の裏)"
+                  value={placedLocation}
+                  onChange={(e) => setPlacedLocation(e.target.value)}
+                  className="w-full p-2.5 border rounded-xl text-xs bg-slate-50 font-medium"
+                />
+              </div>
+              <div className="relative flex items-center">
+                <input
+                  type="number"
+                  min="1"
+                  max="36"
+                  value={placementMonths}
+                  onChange={(e) => setPlacementMonths(Math.max(1, Number(e.target.value)))}
+                  className="w-full p-2.5 pr-8 border rounded-xl text-xs bg-slate-50 font-black text-center focus:outline-none"
+                  title="有効期限を指定した月数で上書きします"
+                />
+                <span className="absolute right-2.5 text-[9px] font-black text-slate-400 pointer-events-none">ヶ月</span>
+              </div>
+            </div>
           </div>
           <p className="text-[10px] text-teal-600 font-bold bg-teal-50/50 p-2 rounded-lg leading-normal">
             💡 <strong>配置方法:</strong> 上のリストから設置したいグッズを選び、下の部屋マップの<strong>「置きたい場所」を直接タップ</strong>してください！
