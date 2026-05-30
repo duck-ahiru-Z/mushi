@@ -16,7 +16,6 @@ const generateId = (prefix: string) => {
   return `${prefix}-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`;
 };
 
-// リサイズの方向の定義
 type ResizeDirection = "n" | "s" | "e" | "w" | "nw" | "ne" | "sw" | "se";
 
 export default function MapPage() {
@@ -26,9 +25,9 @@ export default function MapPage() {
 
   const [floors, setFloors] = useState<number[]>([1, 2]);
   const [currentFloor, setCurrentFloor] = useState<number>(1);
-  const [houseSize, setHouseSize] = useState({ width: 600, height: 600 });
+  // 表示サイズは固定（必要に応じてここで調整可能）
+  const [houseSize] = useState({ width: 600, height: 600 });
 
-  // ドラッグ・リサイズ状態管理
   const [dragState, setDragState] = useState<{
     id: string;
     action: "move" | "resize";
@@ -52,28 +51,21 @@ export default function MapPage() {
   const [placedLocation, setPlacedLocation] = useState<string>("");
 
   const [newRoomName, setNewRoomName] = useState("");
-  const [newRoomType, setNewRoomType] = useState("living");
 
   const getFloorName = (floor: number) => {
     return floor > 0 ? `${floor}F` : `B${Math.abs(floor)}F`;
   };
 
-  // ⏳ ページロード時にデータを復元
   useEffect(() => {
     const initializeData = async () => {
       const savedRooms = localStorage.getItem("map_rooms_data");
       const savedFloors = localStorage.getItem("map_floors_data");
-      const savedHouseSize = localStorage.getItem("map_house_size_data");
 
       if (savedRooms) {
         try {
           const parsedRooms = JSON.parse(savedRooms);
           if (Array.isArray(parsedRooms) && parsedRooms.length > 0) {
-            const validatedRooms = parsedRooms.map((room: any) => ({
-              ...room,
-              floor: typeof room.floor === "number" ? room.floor : 1,
-            }));
-            setRooms(validatedRooms);
+            setRooms(parsedRooms.map((room: any) => ({ ...room, floor: room.floor || 1 })));
           } else {
             setRooms(DEFAULT_ROOMS);
           }
@@ -85,7 +77,6 @@ export default function MapPage() {
       }
 
       if (savedFloors) setFloors(JSON.parse(savedFloors));
-      if (savedHouseSize) setHouseSize(JSON.parse(savedHouseSize));
 
       try {
         const data = await fetchTraps(null);
@@ -93,32 +84,28 @@ export default function MapPage() {
       } catch (error) {
         console.error("データ取得失敗:", error);
       }
-
       setIsInitialized(true);
     };
-
     initializeData();
   }, []);
 
-  // 💾 自動保存
   useEffect(() => {
     if (isInitialized) {
       localStorage.setItem("map_rooms_data", JSON.stringify(rooms));
       localStorage.setItem("map_floors_data", JSON.stringify(floors));
-      localStorage.setItem("map_house_size_data", JSON.stringify(houseSize));
     }
-  }, [rooms, floors, houseSize, isInitialized]);
+  }, [rooms, floors, isInitialized]);
 
-  // 💡 マウス移動時の「移動・リサイズ」統合計算ロジック
   useEffect(() => {
     const handleGlobalMove = (e: PointerEvent) => {
       const state = dragStateRef.current;
       if (!state || !containerRef.current) return;
 
+      e.preventDefault();
+
       const container = containerRef.current;
       const rect = container.getBoundingClientRect();
       
-      // マウスの移動量を％換算
       const deltaX = ((e.clientX - state.startX) / rect.width) * 100;
       const deltaY = ((e.clientY - state.startY) / rect.height) * 100;
 
@@ -127,47 +114,40 @@ export default function MapPage() {
           if (r.id !== state.id) return r;
 
           if (state.action === "move") {
-            // 【移動】
             let newX = Math.round(state.initialX + deltaX);
             let newY = Math.round(state.initialY + deltaY);
             newX = Math.max(0, Math.min(100 - r.w, newX));
             newY = Math.max(0, Math.min(100 - r.h, newY));
             return { ...r, x: newX, y: newY };
           } else {
-            // 【端・角のドラッグによる伸縮】
             let newX = r.x;
             let newY = r.y;
             let newW = r.w;
             let newH = r.h;
             const dir = state.direction;
 
-            // 東 (右端)
             if (dir?.includes("e")) {
               newW = Math.round(state.initialW + deltaX);
-              newW = Math.max(5, Math.min(100 - state.initialX, newW));
+              newW = Math.max(8, Math.min(100 - state.initialX, newW));
             }
-            // 西 (左端)
             if (dir?.includes("w")) {
               const proposedX = Math.round(state.initialX + deltaX);
-              if (proposedX >= 0 && state.initialX + state.initialW - proposedX >= 5) {
+              if (proposedX >= 0 && state.initialX + state.initialW - proposedX >= 8) {
                 newX = proposedX;
                 newW = state.initialX + state.initialW - proposedX;
               }
             }
-            // 南 (下端)
             if (dir?.includes("s")) {
               newH = Math.round(state.initialH + deltaY);
-              newH = Math.max(5, Math.min(100 - state.initialY, newH));
+              newH = Math.max(8, Math.min(100 - state.initialY, newH));
             }
-            // 北 (上端)
             if (dir?.includes("n")) {
               const proposedY = Math.round(state.initialY + deltaY);
-              if (proposedY >= 0 && state.initialY + state.initialH - proposedY >= 5) {
+              if (proposedY >= 0 && state.initialY + state.initialH - proposedY >= 8) {
                 newY = proposedY;
                 newH = state.initialY + state.initialH - proposedY;
               }
             }
-
             return { ...r, x: newX, y: newY, w: newW, h: newH };
           }
         })
@@ -179,7 +159,7 @@ export default function MapPage() {
     };
 
     if (dragState) {
-      window.addEventListener("pointermove", handleGlobalMove);
+      window.addEventListener("pointermove", handleGlobalMove, { passive: false });
       window.addEventListener("pointerup", handleGlobalUp);
     }
 
@@ -207,51 +187,24 @@ export default function MapPage() {
     setCurrentFloor(nextFloor);
   };
 
-  const handleDeleteCurrentFloor = () => {
-    if (floors.length <= 1) {
-      alert("これ以上階層を削除することはできません。");
-      return;
-    }
-    const floorName = getFloorName(currentFloor);
-    const isConfirmed = confirm(`本当に ${floorName} を削除しますか？\n※この階にある部屋とグッズも削除されます。`);
-    if (!isConfirmed) return;
-
-    const targetRoomIds = rooms.filter(r => r.floor === currentFloor).map(r => r.id);
-    setFloors(floors.filter(f => f !== currentFloor));
-    setRooms(rooms.filter(r => r.floor !== currentFloor));
-    setTraps(traps.filter(t => !targetRoomIds.includes(t.roomId || "")));
-
-    const remainingFloors = floors.filter(f => f !== currentFloor);
-    setCurrentFloor(remainingFloors[0]);
-  };
-
   const handleAddRoom = () => {
     if (!newRoomName.trim()) return;
     const room: ExtendedRoom = {
       id: generateId("room"),
       name: newRoomName,
-      type: newRoomType,
-      x: 30, y: 30, w: 30, h: 30,
+      type: "living",
+      x: 35, y: 35, w: 30, h: 30,
       floor: currentFloor,
     };
     setRooms([...rooms, room]);
     setNewRoomName("");
   };
 
-  const handleDeleteRoom = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setRooms(rooms.filter((r) => r.id !== id));
-    setTraps(traps.filter((t) => t.roomId !== id));
-  };
-
-  const handleUpdateRoom = (id: string, field: keyof ExtendedRoom, value: number | string) => {
-    setRooms(rooms.map((r) => (r.id === id ? { ...r, [field]: value } : r)) as ExtendedRoom[]);
-  };
-
-  // 部屋中央（移動）のドラッグ開始
   const handleRoomPointerDown = (room: ExtendedRoom, e: React.PointerEvent<HTMLDivElement>) => {
     if (mode !== "edit") return;
     e.stopPropagation();
+    
+    if ((e.target as HTMLElement).hasAttribute("data-resize-dir")) return;
 
     setDragState({
       id: room.id,
@@ -265,10 +218,10 @@ export default function MapPage() {
     });
   };
 
-  // 各端・角（リサイズ）のドラッグ開始
   const handleHandlePointerDown = (room: ExtendedRoom, dir: ResizeDirection, e: React.PointerEvent<HTMLDivElement>) => {
     if (mode !== "edit") return;
-    e.stopPropagation(); // 部屋の移動イベントを発火させない
+    e.stopPropagation();
+    e.preventDefault();
 
     setDragState({
       id: room.id,
@@ -353,86 +306,21 @@ export default function MapPage() {
         <div className="bg-white p-4 rounded-xl shadow-sm mb-6 border border-slate-100">
           <h2 className="text-sm font-bold text-slate-500 mb-3">🛠️ 配置するグッズを選択</h2>
           <div className="flex flex-col gap-3">
-            <select
-              value={trapName}
-              onChange={(e) => setTrapName(e.target.value)}
-              className="w-full p-2 border rounded-lg bg-slate-50 text-sm"
-            >
+            <select value={trapName} onChange={(e) => setTrapName(e.target.value)} className="w-full p-2 border rounded-lg bg-slate-50 text-sm">
               <option value="ゴキブリホイホイ">ゴキブリホイホイ (期限3ヶ月)</option>
               <option value="ブラックキャップ">ブラックキャップ (期限6ヶ月)</option>
               <option value="ダニよけシート">ダニよけシート (期限2ヶ月)</option>
             </select>
-            <input
-              type="text"
-              placeholder="詳しい場所メモ (例: 冷蔵庫の裏)"
-              value={placedLocation}
-              onChange={(e) => setPlacedLocation(e.target.value)}
-              className="w-full p-2 border rounded-lg text-sm bg-slate-50"
-            />
-            <p className="text-xs text-slate-400">※下の間取りの、置きたい場所を直接タップして配置します。</p>
+            <input type="text" placeholder="詳しい場所メモ (例: 冷蔵庫の裏)" value={placedLocation} onChange={(e) => setPlacedLocation(e.target.value)} className="w-full p-2 border rounded-lg text-sm bg-slate-50" />
           </div>
         </div>
       ) : (
         <div className="bg-white p-4 rounded-xl shadow-sm mb-6 border border-slate-100 space-y-4">
           <div>
-            <h2 className="text-sm font-bold text-slate-500 mb-2">📐 家全体の大きさ（長さ・px単位）</h2>
-            <div className="flex items-center gap-4 text-xs bg-slate-50 p-2 rounded-lg w-fit">
-              <label className="flex items-center gap-1">
-                横幅:
-                <input 
-                  type="number" min="200" step="50"
-                  value={houseSize.width} 
-                  onChange={(e) => setHouseSize({ ...houseSize, width: Math.max(200, Number(e.target.value)) })} 
-                  className="w-16 p-1 border rounded bg-white text-center font-mono" 
-                /> px
-              </label>
-              <label className="flex items-center gap-1">
-                高さ:
-                <input 
-                  type="number" min="200" step="50"
-                  value={houseSize.height} 
-                  onChange={(e) => setHouseSize({ ...houseSize, height: Math.max(200, Number(e.target.value)) })} 
-                  className="w-16 p-1 border rounded bg-white text-center font-mono" 
-                /> px
-              </label>
-            </div>
-          </div>
-
-          <hr className="border-slate-100" />
-
-          <div>
             <h2 className="text-sm font-bold text-slate-500 mb-2">➕ {getFloorName(currentFloor)} に新しい部屋を追加</h2>
             <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="部屋名 (例: 寝室)"
-                value={newRoomName}
-                onChange={(e) => setNewRoomName(e.target.value)}
-                className="flex-1 p-2 border rounded-lg text-sm bg-slate-50"
-              />
-              <button onClick={handleAddRoom} className="px-4 bg-indigo-600 text-white rounded-lg text-sm font-bold">
-                追加
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <h2 className="text-sm font-bold text-slate-500 mb-2">⚙️ {getFloorName(currentFloor)} の部屋リスト・数値微調整</h2>
-            <div className="max-h-40 overflow-y-auto space-y-2 pr-1">
-              {currentFloorRooms.length === 0 ? (
-                <p className="text-xs text-slate-400 p-2">この階にはまだ部屋がありません。</p>
-              ) : (
-                currentFloorRooms.map((room) => (
-                  <div key={room.id} className="flex flex-wrap items-center gap-2 p-2 bg-slate-50 rounded-lg text-xs">
-                    <span className="font-bold w-16 truncate">{room.name}</span>
-                    <label>X(%):<input type="number" value={room.x} onChange={(e) => handleUpdateRoom(room.id, "x", Number(e.target.value))} className="w-10 p-1 border rounded bg-white ml-1" /></label>
-                    <label>Y(%):<input type="number" value={room.y} onChange={(e) => handleUpdateRoom(room.id, "y", Number(e.target.value))} className="w-10 p-1 border rounded bg-white ml-1" /></label>
-                    <label>幅(%):<input type="number" value={room.w} onChange={(e) => handleUpdateRoom(room.id, "w", Number(e.target.value))} className="w-10 p-1 border rounded bg-white ml-1" /></label>
-                    <label>高(%):<input type="number" value={room.h} onChange={(e) => handleUpdateRoom(room.id, "h", Number(e.target.value))} className="w-10 p-1 border rounded bg-white ml-1" /></label>
-                    <button onClick={(e) => handleDeleteRoom(room.id, e)} className="text-red-500 font-bold ml-auto">削除</button>
-                  </div>
-                ))
-              )}
+              <input type="text" placeholder="部屋名 (例: 寝室)" value={newRoomName} onChange={(e) => setNewRoomName(e.target.value)} className="flex-1 p-2 border rounded-lg text-sm bg-slate-50" />
+              <button onClick={handleAddRoom} className="px-4 bg-indigo-600 text-white rounded-lg text-sm font-bold">追加</button>
             </div>
           </div>
         </div>
@@ -440,44 +328,20 @@ export default function MapPage() {
 
       {/* 🏢 階層管理バー */}
       <div className="flex flex-wrap items-center gap-2 mb-3 bg-slate-100 p-2 rounded-xl">
-        <button onClick={handleAddLowerFloor} className="px-2 py-1 rounded-lg text-xs font-bold bg-sky-600 text-white hover:bg-sky-700 transition">
-          ⬇️ 地下を追加
-        </button>
-
-        <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 overflow-x-auto max-w-full">
+        <button onClick={handleAddLowerFloor} className="px-2 py-1 rounded-lg text-xs font-bold bg-sky-600 text-white">⬇️ 地下</button>
+        <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 overflow-x-auto">
           {floors.sort((a, b) => a - b).map((floor) => (
-            <button
-              key={floor}
-              onClick={() => setCurrentFloor(floor)}
-              className={`px-3 py-1 rounded-md text-xs font-bold transition shrink-0 ${
-                currentFloor === floor ? "bg-slate-800 text-white shadow-sm" : "bg-transparent text-slate-500 hover:bg-slate-100"
-              }`}
-            >
-              {getFloorName(floor)}
-            </button>
+            <button key={floor} onClick={() => setCurrentFloor(floor)} className={`px-3 py-1 rounded-md text-xs font-bold ${currentFloor === floor ? "bg-slate-800 text-white" : "text-slate-500"}`}>{getFloorName(floor)}</button>
           ))}
         </div>
-
-        <button onClick={handleAddUpperFloor} className="px-2 py-1 rounded-lg text-xs font-bold bg-orange-600 text-white hover:bg-orange-700 transition">
-          ⬆️ 階を追加
-        </button>
-
-        <button
-          onClick={handleDeleteCurrentFloor}
-          disabled={floors.length <= 1}
-          className={`ml-auto px-2 py-1 rounded-lg text-xs font-bold transition ${
-            floors.length <= 1 ? "bg-slate-200 text-slate-400 cursor-not-allowed" : "bg-red-100 text-red-600 hover:bg-red-200"
-          }`}
-        >
-          🗑️ この階({getFloorName(currentFloor)})を消す
-        </button>
+        <button onClick={handleAddUpperFloor} className="px-2 py-1 rounded-lg text-xs font-bold bg-orange-600 text-white">⬆️ 階追加</button>
       </div>
 
       {/* キャンバス画面 */}
-      <div className="w-full overflow-auto border-2 border-slate-300 bg-slate-200 rounded-2xl p-4 max-h-[75vh] shadow-inner">
+      <div className="w-full overflow-auto border-2 border-slate-300 bg-slate-200 rounded-2xl p-4 max-h-[75vh]">
         <div 
           ref={containerRef}
-          className="relative bg-white rounded-lg border border-slate-300 shadow transition-all duration-200 mx-auto"
+          className="relative bg-white rounded-lg border border-slate-300 shadow mx-auto"
           style={{ width: `${houseSize.width}px`, height: `${houseSize.height}px` }}
         >
           {currentFloorRooms.map((room) => (
@@ -485,31 +349,29 @@ export default function MapPage() {
               key={room.id}
               onClick={(e) => handleRoomClick(room, e)}
               onPointerDown={(e) => handleRoomPointerDown(room, e)}
-              className={`absolute border-2 rounded-lg shadow-sm flex items-center justify-center select-none touch-none transition-colors ${
-                mode === "edit"
-                  ? "bg-indigo-50 border-indigo-500/40 cursor-move"
-                  : "bg-teal-50 border-teal-600/40 hover:bg-teal-100/70 cursor-crosshair"
+              className={`absolute border-2 rounded-lg shadow-sm flex items-center justify-center select-none touch-none ${
+                mode === "edit" ? "bg-indigo-50 border-indigo-500/60 cursor-move" : "bg-teal-50 border-teal-600/40 cursor-crosshair"
               }`}
-              style={{ left: `${room.x}%`, top: `${room.y}%`, width: `${room.w}%`, height: `${room.h}%` }}
+              style={{ left: `${room.x}%`, top: `${room.y}%`, width: `${room.w}%`, height: `${room.h}%`, touchAction: "none" }}
             >
               <span className={`text-xs font-bold select-none pointer-events-none ${mode === "edit" ? "text-indigo-800" : "text-teal-800"}`}>
                 {room.name}
               </span>
 
-              {/* 💡 【大改造】編集モードの時だけ、全方向（4辺・4隅）にリサイズ用のアタッチメントを配置 */}
+              {/* リサイズ用の当たり判定エリア群 */}
               {mode === "edit" && (
                 <>
-                  {/* 四辺 (上下左右) */}
-                  <div onPointerDown={(e) => handleHandlePointerDown(room, "n", e)} className="absolute top-0 left-1 right-1 h-2 cursor-n-resize -mt-1" />
-                  <div onPointerDown={(e) => handleHandlePointerDown(room, "s", e)} className="absolute bottom-0 left-1 right-1 h-2 cursor-s-resize -mb-1" />
-                  <div onPointerDown={(e) => handleHandlePointerDown(room, "e", e)} className="absolute top-1 bottom-1 right-0 w-2 cursor-e-resize -mr-1" />
-                  <div onPointerDown={(e) => handleHandlePointerDown(room, "w", e)} className="absolute top-1 bottom-1 left-0 w-2 cursor-w-resize -ml-1" />
+                  {/* 四辺 */}
+                  <div data-resize-dir="n" onPointerDown={(e) => handleHandlePointerDown(room, "n", e)} className="absolute top-0 left-3 right-3 h-3 cursor-n-resize -top-1.5 bg-transparent" />
+                  <div data-resize-dir="s" onPointerDown={(e) => handleHandlePointerDown(room, "s", e)} className="absolute bottom-0 left-3 right-3 h-3 cursor-s-resize -bottom-1.5 bg-transparent" />
+                  <div data-resize-dir="e" onPointerDown={(e) => handleHandlePointerDown(room, "e", e)} className="absolute top-3 bottom-3 right-0 w-3 cursor-e-resize -right-1.5 bg-transparent" />
+                  <div data-resize-dir="w" onPointerDown={(e) => handleHandlePointerDown(room, "w", e)} className="absolute top-3 bottom-3 left-0 w-3 cursor-w-resize -left-1.5 bg-transparent" />
 
-                  {/* 四隅 (角) */}
-                  <div onPointerDown={(e) => handleHandlePointerDown(room, "nw", e)} className="absolute top-0 left-0 w-3 h-3 cursor-nw-resize -mt-1 -ml-1 z-20" />
-                  <div onPointerDown={(e) => handleHandlePointerDown(room, "ne", e)} className="absolute top-0 right-0 w-3 h-3 cursor-ne-resize -mt-1 -mr-1 z-20" />
-                  <div onPointerDown={(e) => handleHandlePointerDown(room, "sw", e)} className="absolute bottom-0 left-0 w-3 h-3 cursor-sw-resize -mb-1 -ml-1 z-20" />
-                  <div onPointerDown={(e) => handleHandlePointerDown(room, "se", e)} className="absolute bottom-0 right-0 w-3 h-3 cursor-se-resize -mb-1 -mr-1 z-20" />
+                  {/* 四隅 */}
+                  <div data-resize-dir="nw" onPointerDown={(e) => handleHandlePointerDown(room, "nw", e)} className="absolute top-0 left-0 w-4 h-4 cursor-nw-resize -top-2 -left-2 z-30 bg-transparent" />
+                  <div data-resize-dir="ne" onPointerDown={(e) => handleHandlePointerDown(room, "ne", e)} className="absolute top-0 right-0 w-4 h-4 cursor-ne-resize -top-2 -right-2 z-30 bg-transparent" />
+                  <div data-resize-dir="sw" onPointerDown={(e) => handleHandlePointerDown(room, "sw", e)} className="absolute bottom-0 left-0 w-4 h-4 cursor-sw-resize -bottom-2 -left-2 z-30 bg-transparent" />
+                  <div data-resize-dir="se" onPointerDown={(e) => handleHandlePointerDown(room, "se", e)} className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize -bottom-2 -right-2 z-30 bg-transparent" />
                 </>
               )}
 
