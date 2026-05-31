@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useTraps } from "@/hooks/usetraps";
 import { useFcmToken } from "@/hooks/useFcmToken";
 import { detectJapanRegion } from "@/lib/utils";
+import { TrapIcon, PestIcon } from "@/components/vector-icons";
 
 const REGION_NAMES: Record<string, string> = {
   hokkaido: "北海道エリア",
@@ -175,23 +176,42 @@ export default function HomePage() {
       </div>
 
       {/* 1. 日本防虫気象協会風 リアルタイム害虫警報 */}
-      <div className={`bg-gradient-to-br border p-4.5 rounded-2xl shadow-sm mb-5 ${pestAlertInfo.bg}`}>
-        <div className="flex items-center gap-2 mb-1.5">
-          <h2 className="font-extrabold text-xs tracking-tight">{pestAlertInfo.title}</h2>
+      <div className={`bg-gradient-to-br border p-5 rounded-3xl shadow-md mb-5 flex items-center justify-between gap-4 transition-all duration-300 hover:shadow-lg ${pestAlertInfo.bg}`}>
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1.5">
+            <h2 className="font-extrabold text-sm tracking-tight">{pestAlertInfo.title}</h2>
+          </div>
+          <p className="text-[11px] leading-relaxed font-medium opacity-90 text-slate-700">
+            {pestAlertInfo.desc}
+          </p>
+          <Link
+            href="/encyclopedia"
+            className="inline-flex items-center mt-3 text-[10px] font-black text-teal-700 bg-white/80 hover:bg-white px-3 py-1.5 rounded-xl border border-teal-200/50 shadow-sm transition"
+          >
+            {pestAlertInfo.btnText} →
+          </Link>
         </div>
-        <p className="text-[11px] leading-relaxed font-medium opacity-90">
-          {pestAlertInfo.desc}
-        </p>
-        <Link
-          href="/encyclopedia"
-          className="inline-flex items-center mt-3 text-[10px] font-black text-teal-700 bg-white/70 hover:bg-white px-2.5 py-1 rounded-lg border border-teal-100 transition"
-        >
-          {pestAlertInfo.btnText} →
-        </Link>
+        
+        {/* 大型ベクターアイコンイラストの挿入（絵文字を完全排除） */}
+        <div className="bg-white/40 p-2.5 rounded-2xl border border-white/60 shadow-inner flex-shrink-0">
+          <PestIcon 
+            id={
+              region === "hokkaido" 
+                ? "mosquito" 
+                : region === "okinawa" 
+                ? "cockroach" 
+                : currentMonth >= 6 && currentMonth <= 9 
+                ? "tick" 
+                : "stinkbug"
+            } 
+            size={56} 
+            className="animate-wiggle"
+          />
+        </div>
       </div>
 
       {/* 2. 📱 ネイティブ風プッシュ通知テスト */}
-      <div className="bg-white p-4.5 rounded-2xl shadow-sm border border-slate-100 mb-5">
+      <div className="bg-white/80 backdrop-blur-md p-5 rounded-3xl shadow-sm border border-slate-200/60 mb-5">
         <h2 className="text-xs font-bold text-slate-700 mb-2 flex items-center gap-1.5">
           <span>🔔</span> スマホ・PC プッシュ通知機能
         </h2>
@@ -233,16 +253,16 @@ export default function HomePage() {
           <span>🚨</span> 要交換のグッズ ({alertTraps.length})
         </h2>
         {alertTraps.length === 0 ? (
-          <div className="bg-white p-5 rounded-2xl text-center border border-slate-100 shadow-sm text-xs text-slate-400 leading-relaxed">
+          <div className="bg-white p-6 rounded-3xl text-center border border-slate-200/60 shadow-sm text-xs text-slate-400 leading-relaxed">
             現在、期限が切れている、または7日以内に切れるグッズはありません。<br />家の中は安全に防衛されています。
           </div>
         ) : (
           <div className="flex flex-col gap-2">
             {alertTraps.map((trap) => (
-              <div key={trap.id} className="bg-red-50/70 border border-red-100/50 p-3 rounded-2xl flex justify-between items-center shadow-sm hover:bg-red-50 transition">
-                <div className="flex items-center gap-2.5">
-                  <span className="text-2xl p-1 bg-white rounded-xl shadow-sm border select-none">
-                    {getTrapIcon(trap.name)}
+              <div key={trap.id} className="bg-red-50/50 border border-red-100 p-3.5 rounded-2xl flex justify-between items-center shadow-sm hover:bg-red-50/80 transition-all duration-200">
+                <div className="flex items-center gap-3">
+                  <span className="p-1 bg-white rounded-xl shadow-inner border border-red-100/50 flex items-center justify-center flex-shrink-0">
+                    <TrapIcon id={trap.name} size={32} />
                   </span>
                   <div>
                     <p className="text-xs font-black text-red-950">{trap.name}</p>
@@ -296,13 +316,13 @@ export default function HomePage() {
               const isClose = diffDays <= 7;
 
               return (
-                <div key={trap.id} className="p-3.5 flex justify-between items-center text-xs hover:bg-slate-50 transition">
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-2xl p-1 bg-slate-50 border rounded-xl select-none">
-                      {getTrapIcon(trap.name)}
+                <div key={trap.id} className="p-3.5 flex justify-between items-center text-xs hover:bg-slate-50/50 transition-all duration-150">
+                  <div className="flex items-center gap-3">
+                    <span className="p-1 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-center flex-shrink-0 shadow-inner">
+                      <TrapIcon id={trap.name} size={32} />
                     </span>
                     <div>
-                      <p className="font-extrabold text-slate-800">{trap.name}</p>
+                      <p className="font-extrabold text-slate-800 text-[12px]">{trap.name}</p>
                       <p className="text-slate-400 text-[10px] font-bold">
                         場所: {getRoomName(trap.roomId)} ({trap.placedLocation})
                       </p>
