@@ -38,7 +38,7 @@ export default function MapPage() {
   // マップ表示ベースサイズ
   const [houseSize, setHouseSize] = useState({ width: 600, height: 600 });
 
-  // 🔍 モバイル端末か判定し、デフォルトズームを自動フィットさせる
+  // 🔍 モバイル端末か判定し、デフォルトズームを自動フィットさせる（URLクエリ連動も対応）
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedHouseSize = localStorage.getItem("map_house_size_data");
@@ -52,6 +52,12 @@ export default function MapPage() {
       if (screenWidth < 640) {
         // モバイル画面ならデフォルトを 0.6x に縮小してはみ出しを防ぐ！
         setZoom(0.55);
+      }
+
+      // クエリパラメータをチェックして、カスタムグッズ登録モーダルを自動表示
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("createCustom") === "true") {
+        setShowCustomModal(true);
       }
     }
   }, []);
@@ -582,14 +588,17 @@ export default function MapPage() {
       {mode === "place" ? (
         <div className="bg-white p-4 rounded-2xl shadow-sm mb-4 border border-slate-100 flex flex-col gap-3">
           <div className="flex justify-between items-center">
-            <h2 className="text-xs font-bold text-slate-400">🛠️ 配置するグッズを選択</h2>
-            <button
-              onClick={() => setShowCustomModal(true)}
-              className="text-[10px] font-black text-teal-600 bg-teal-50 px-2 py-1 rounded-lg border border-teal-100 hover:bg-teal-100 transition"
-            >
-              ＋ オリジナルグッズを登録
-            </button>
+            <h2 className="text-xs font-extrabold text-slate-400">🛠️ 配置するグッズを選択</h2>
           </div>
+
+          {/* ✨ オリジナルカスタムグッズ作製の大アピールプレミアムボタン */}
+          <button
+            onClick={() => setShowCustomModal(true)}
+            className="w-full py-3 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white rounded-xl text-xs font-black shadow-md transition flex items-center justify-center gap-1.5 active:scale-[0.98] animate-pulse-subtle"
+          >
+            <span>✨</span> 自分専用のオリジナル防衛グッズを作製する
+          </button>
+
           <div className="flex flex-col gap-2">
             <select
               value={selectedTrapType}
