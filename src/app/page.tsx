@@ -9,15 +9,15 @@ import { auth } from "@/lib/firebase/config";
 import { onAuthStateChanged } from "firebase/auth";
 
 const REGION_NAMES: Record<string, string> = {
-  hokkaido: "北海道防衛管区",
-  tohoku: "東北防衛管区",
-  kanto: "関東防衛管区",
-  chubu: "中部防衛管区",
-  kinki: "近畿防衛管区",
-  chugoku: "中国防衛管区",
-  shikoku: "四国防衛管区",
-  kyushu: "九州防衛管区",
-  okinawa: "沖縄防衛管区",
+  hokkaido: "北海道エリア",
+  tohoku: "東北エリア",
+  kanto: "関東エリア",
+  chubu: "中部エリア",
+  kinki: "近畿・関西エリア",
+  chugoku: "中国エリア",
+  shikoku: "四国エリア",
+  kyushu: "九州エリア",
+  okinawa: "沖縄エリア",
 };
 
 export default function HomePage() {
@@ -99,13 +99,13 @@ export default function HomePage() {
           
           setRegion(detected);
           localStorage.setItem("user_region", detected);
-          setLocationLabel(`${REGION_NAMES[detected]} (GPS判定)`);
+          setLocationLabel(`${REGION_NAMES[detected]} (GPS自動判定)`);
           setGeoPermission("granted");
           window.dispatchEvent(new Event("regionChanged"));
         },
         (error) => {
           console.warn("Geolocation error, using default region:", error);
-          setLocationLabel("近畿防衛管区 (デフォルト)");
+          setLocationLabel("近畿・関西エリア (デフォルト)");
           setGeoPermission("denied");
         }
       );
@@ -141,35 +141,35 @@ export default function HomePage() {
     setShowWelcomeModal(false);
   };
 
-  // 2. 地域に合わせたリアルタイム害虫活動指数 (サイバーミリタリー仕様)
+  // 2. 地域と言動シーズンに合わせたリアルタイム害虫活動指数
   const pestAlertInfo = useMemo(() => {
     if (region === "hokkaido") {
       return {
-        title: "アカイエカ・コバエ活動期 (冷涼地域)",
-        desc: "防衛管区情報：気温上昇により局所的なモスキートおよびコバエの活動を確認。排水溝および生ゴミ貯蔵エリアの封鎖（密閉）を推奨します。",
-        bg: "from-sky-950/40 to-cyan-950/40 border-cyan-900/60 text-cyan-200",
-        btnText: "管区対策データを開く",
+        title: "アカイエカ・コバエ活動期 (北海道)",
+        desc: "北海道エリア：気温上昇に伴い、蚊やコバエが発生しやすい環境になります。生ゴミの密閉や水回りのこまめな換気が有効です。",
+        bg: "from-sky-50 to-blue-50 border-sky-100 text-sky-900",
+        btnText: "対策情報を確認",
       };
     } else if (region === "okinawa") {
       return {
-        title: "ゴキブリ・ムカデ超活性期 (熱帯警戒地域)",
-        desc: "最警戒管区情報：高温多湿の持続により、大型害虫の活動値が最大レベルを記録中。侵入口（配管隙間・サッシ）の防護シールド強化を最優先で実施してください。",
-        bg: "from-red-950/40 to-orange-950/40 border-red-900/60 text-red-200",
-        btnText: "即時防衛プロトコルを起動",
+        title: "ゴキブリ・ムカデ活性期 (沖縄)",
+        desc: "沖縄エリア：温暖な気候のため通年で害虫発生リスクがあります。キッチン下や浴室配管の隙間など、侵入口の点検と防虫グッズの再配置を行ってください。",
+        bg: "from-red-50 to-orange-50 border-red-150 text-red-950",
+        btnText: "対策情報を確認",
       };
     } else if (currentMonth >= 6 && currentMonth <= 9) {
       return {
-        title: "夏期害虫活発化 最大警戒アラート",
-        desc: "熱帯夜警報：ダニ・ゴキブリの繁殖係数がピークに達しています。設置済みの毒餌剤・防虫シートの有効期限を再点検し、防衛ラインを死守してください。",
-        bg: "from-amber-950/40 to-red-950/40 border-amber-900/60 text-amber-200",
-        btnText: "緊急交換推奨データ",
+        title: "梅雨・夏季の害虫活動警戒アラート",
+        desc: "夏季警戒アラート：高温多湿の環境に入りました。ダニやゴキブリの活動期になりますので、寝具や水回りの対策グッズの設置・交換をお勧めします。",
+        bg: "from-amber-50 to-orange-50 border-amber-100 text-amber-950",
+        btnText: "推奨対策を確認",
       };
     } else {
       return {
-        title: "秋冬季・温暖隙間侵入予防警戒",
-        desc: "防湿予防警報：外気温の低下に伴い、害虫が暖房の効いた室内へと侵入するリスクが急増。エアコン配管口、サッシ周りの最終障壁を構築してください。",
-        bg: "from-zinc-900/60 to-zinc-950/60 border-zinc-800 text-zinc-300",
-        btnText: "予防侵入阻止データ",
+        title: "秋冬の隙間侵入予防アラート",
+        desc: "秋冬予防アラート：外気温の低下に伴い、暖かい室内への害虫の侵入が増加します。エアコン配管口やサッシの隙間の点検が有効です。",
+        bg: "from-slate-50 to-zinc-50 border-slate-200 text-slate-900",
+        btnText: "予防対策を確認",
       };
     }
   }, [region, currentMonth]);
@@ -185,7 +185,7 @@ export default function HomePage() {
 
   // 4. グッズ回収（削除）処理
   const handleRemoveTrap = async (id: string, name: string) => {
-    if (confirm(`「${name}」の耐用限界が到達したため回収しますか？設置マップから自動で抹消されます。`)) {
+    if (confirm(`「${name}」を回収しますか？設置マップ側からも自動で削除されます。`)) {
       await deleteTrap(id);
     }
   };
@@ -197,65 +197,52 @@ export default function HomePage() {
       try {
         const parsed = JSON.parse(savedRooms);
         const room = parsed.find((r: any) => r.id === roomId);
-        return room ? room.name : "不明なエリア";
+        return room ? room.name : "不明な部屋";
       } catch {}
     }
-    return "未特定の防衛区画";
+    return "部屋の隅";
   };
 
-  // 6. 全部屋にグッズが設置完了しているかの判定 (完璧な防壁からくり)
-  const isPerfectDefense = useMemo(() => {
-    if (rooms.length === 0) return false;
-    const roomIds = rooms.map((r) => r.id);
-    const placedRoomIds = new Set(traps.map((t) => t.roomId));
-    return roomIds.every((id) => placedRoomIds.has(id));
-  }, [rooms, traps]);
-
   if (!isInitialized) {
-    return (
-      <div className="p-5 flex flex-col min-h-screen bg-slate-950 text-cyan-400 font-mono text-xs items-center justify-center gap-3">
-        <div className="animate-spin rounded-full h-5 w-5 border border-cyan-500 border-t-transparent"></div>
-        <span>LAUNCHING DEFENSE SYSTEM / 防衛システム起動中...</span>
-      </div>
-    );
+    return <div className="p-5 text-slate-500 text-sm">防衛システム起動中...</div>;
   }
 
   return (
-    <div className="p-5 flex flex-col min-h-screen bg-slate-950 text-zinc-100">
+    <div className="p-5 flex flex-col min-h-screen bg-slate-50 text-slate-800">
       
-      {/* 🛡️ 初回起動時ウェルカム・イラスト非表示選択モーダル (サイバー調) */}
+      {/* 🛡️ 初回起動時ウェルカム・イラスト非表示選択モーダル */}
       {showWelcomeModal && (
-        <div className="fixed inset-0 bg-slate-950/90 z-50 flex items-center justify-center p-5 backdrop-blur-md">
-          <div className="bg-zinc-900 w-full max-w-md rounded-3xl shadow-2xl p-6 border border-zinc-800 flex flex-col gap-5 text-zinc-200">
-            <div className="text-center space-y-2 border-b border-zinc-800 pb-3">
-              <h2 className="text-sm font-black text-cyan-400 uppercase tracking-wider">WELCOME TO G-END</h2>
-              <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">対虫最終防衛システム・ライセンス認証</p>
+        <div className="fixed inset-0 bg-slate-950/60 z-50 flex items-center justify-center p-5 backdrop-blur-md">
+          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-6 border border-slate-100 flex flex-col gap-5 text-slate-800 animate-scale-up">
+            <div className="text-center space-y-2">
+              <h2 className="text-sm font-black text-slate-900">G-End へお越しいただきありがとうございます</h2>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">安心で快適な暮らしの防衛パートナー</p>
             </div>
             
-            <div className="bg-zinc-950 p-4 rounded-2xl text-[11px] space-y-3 leading-relaxed text-zinc-400 font-mono border border-zinc-900">
+            <div className="bg-slate-50 p-4 rounded-2xl text-[11px] space-y-3 leading-relaxed text-slate-600">
               <p>
-                本システムでは、家屋内の対虫戦闘力をマップ上で視覚的にマッピング・管理するため、各種害虫のグラフィックデータを使用します。
+                本アプリでは、家の中の防虫効果をマップ上で視覚的に可視化・管理するため、各種害虫のイラストを使用しています。
               </p>
-              <p className="font-bold text-amber-500">
-                ■ 虫のグラフィック表示を規制（非表示化）しますか？
+              <p className="font-bold text-slate-800">
+                虫のイラストや画像が苦手ですか？
               </p>
               <p>
-                規制（セーフシールド）を有効にすると、すべての虫グラフィックが<strong>「緑色の強固な防衛シールド」</strong>アイコンに置換されます。この設定は設定コアルームからいつでも変更可能です。
+                苦手な場合、「セーフシールド（非表示）」をお選びいただくと、アプリ内のすべての虫アイコンが<strong>優しい緑色の盾マーク</strong>に変更されます。この設定は設定画面からいつでも変更できます。
               </p>
             </div>
 
             <div className="flex flex-col gap-2 mt-2">
               <button
                 onClick={() => handleWelcomeSelection(true)}
-                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-zinc-950 rounded-2xl text-[11px] font-black shadow-md transition flex items-center justify-center gap-2"
+                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-[11px] font-black shadow-md transition flex items-center justify-center gap-2"
               >
-                セーフシールド有効 (精神保護・マイルドモード)
+                優しいシールドで表示する (マイルドモード)
               </button>
               <button
                 onClick={() => handleWelcomeSelection(false)}
-                className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-2xl text-[11px] font-bold transition flex items-center justify-center gap-2 border border-zinc-700"
+                className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl text-[11px] font-bold transition flex items-center justify-center gap-2"
               >
-                標準戦闘モード (グラフィックの全表示)
+                そのまま表示する (標準モード)
               </button>
             </div>
           </div>
@@ -263,112 +250,103 @@ export default function HomePage() {
       )}
 
       {/* ヘッダー */}
-      <div className="flex justify-between items-center border-b border-zinc-800 pb-3 mb-5">
+      <div className="flex justify-between items-center border-b pb-3 mb-5">
         <div>
-          <h1 className="text-2xl font-black text-cyan-400 tracking-tight flex items-center gap-1.5 uppercase font-mono">
+          <h1 className="text-2xl font-black text-teal-600 tracking-tight flex items-center gap-1">
             G-End
           </h1>
-          <p className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">
-            Defensive Command Dashboard • 2026 / M0{currentMonth}
+          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+            管理ダッシュボード • 2026年 {currentMonth}月
           </p>
         </div>
         
-        {/* 地域表示管区 */}
+        {/* 地域表示ショートカット */}
         <Link
           href="/register"
-          className="text-[10px] bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 px-3 py-1.5 rounded-full transition-all flex items-center gap-1 font-bold font-mono"
+          className="text-[11px] bg-white border hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-full transition-all flex items-center gap-1 font-extrabold shadow-sm"
         >
           {locationLabel}
         </Link>
       </div>
 
-      {/* 📡 高級コントロールパネル: 最終防衛システムステータス */}
-      <div className="bg-zinc-900/60 backdrop-blur-md border border-zinc-800/80 p-4 rounded-3xl mb-5 shadow-sm">
-        <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">
-          🛰️ SYSTEM PERMISSIONS STATUS / 最終防衛システムステータス
+      {/* 📡 高級コントロールパネル: 位置情報と通知の許可設定 */}
+      <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-200/60 mb-5 text-slate-800">
+        <h2 className="text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+          位置情報と通知の設定
         </h2>
+        <p className="text-[10px] text-slate-400 mb-3 leading-normal">
+          アプリの天気予報や交換期限のリマインダー通知を正しく受け取るため、許可設定を有効にしてください。
+        </p>
         
         <div className="grid grid-cols-2 gap-3">
           {/* 位置情報パーミッション */}
-          <div className="bg-zinc-950/80 border border-zinc-800 p-3 rounded-2xl flex flex-col justify-between">
+          <div className="bg-slate-50 border border-slate-100 p-3 rounded-xl flex flex-col justify-between">
             <div>
-              <span className="text-[9px] text-zinc-500 uppercase tracking-wider block font-bold font-mono">LOCATION GPS</span>
-              <span className={`text-xs font-bold font-mono ${geoPermission === "granted" ? "text-emerald-400" : "text-amber-500"}`}>
-                {geoPermission === "granted" ? "ONLINE / 測位中" : "OFFLINE / 未許可"}
+              <span className="text-[9px] text-slate-400 font-bold block">位置情報 (GPS)</span>
+              <span className={`text-xs font-black mt-0.5 block ${geoPermission === "granted" ? "text-emerald-600" : "text-amber-600"}`}>
+                {geoPermission === "granted" ? "許可済み" : "未許可"}
               </span>
             </div>
             {geoPermission !== "granted" ? (
               <button
                 onClick={requestGeoPermission}
-                className="mt-2.5 w-full py-1.5 bg-cyan-950/40 hover:bg-cyan-900/60 border border-cyan-800 text-cyan-400 text-[10px] font-black rounded-lg transition"
+                className="mt-3 w-full py-1.5 bg-teal-600 hover:bg-teal-700 text-white text-[10px] font-bold rounded-lg transition shadow"
               >
-                測位許可をアクティベート
+                許可する
               </button>
             ) : (
-              <span className="text-[8px] text-zinc-500 mt-2 font-bold font-mono text-right block">SECURE CONNECTION</span>
+              <span className="text-[8px] text-slate-400 mt-3 font-bold text-right block">自動測位中</span>
             )}
           </div>
 
           {/* 通知パーミッション */}
-          <div className="bg-zinc-950/80 border border-zinc-800 p-3 rounded-2xl flex flex-col justify-between">
+          <div className="bg-slate-50 border border-slate-100 p-3 rounded-xl flex flex-col justify-between">
             <div>
-              <span className="text-[9px] text-zinc-500 uppercase tracking-wider block font-bold font-mono">PUSH WARNINGS</span>
-              <span className={`text-xs font-bold font-mono ${permission === "granted" ? "text-emerald-400" : "text-amber-500"}`}>
-                {permission === "granted" ? "ONLINE / 受信可能" : "OFFLINE / 未許可"}
+              <span className="text-[9px] text-slate-400 font-bold block">プッシュ通知</span>
+              <span className={`text-xs font-black mt-0.5 block ${permission === "granted" ? "text-emerald-600" : "text-amber-600"}`}>
+                {permission === "granted" ? "受信可能" : "未許可"}
               </span>
             </div>
             {permission === "default" ? (
               <button
                 onClick={requestNotificationPermission}
-                className="mt-2.5 w-full py-1.5 bg-cyan-950/40 hover:bg-cyan-900/60 border border-cyan-800 text-cyan-400 text-[10px] font-black rounded-lg transition"
+                className="mt-3 w-full py-1.5 bg-teal-600 hover:bg-teal-700 text-white text-[10px] font-bold rounded-lg transition shadow"
               >
-                プッシュ通信を有効化
+                通知を許可
               </button>
             ) : permission === "granted" ? (
               <button
                 onClick={triggerTestNotification}
-                className="mt-2.5 w-full py-1.5 bg-zinc-850 hover:bg-zinc-700 text-zinc-300 text-[10px] font-bold rounded-lg transition border border-zinc-750"
+                className="mt-3 w-full py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-[10px] font-bold rounded-lg transition shadow"
               >
-                テスト警告弾発射
+                テスト通知を発火
               </button>
             ) : (
-              <span className="text-[8px] text-red-500 mt-2 font-bold font-semibold">ブラウザ設定でブロック中</span>
+              <span className="text-[8px] text-red-600 mt-3 font-bold text-right block">ブロック中</span>
             )}
           </div>
         </div>
       </div>
 
-      {/* 🛡️ 完璧な防壁イースターエッグからくりメッセージ */}
-      {isPerfectDefense && (
-        <div className="bg-gradient-to-br from-emerald-950/50 to-zinc-950/50 border border-emerald-800/80 p-5 rounded-3xl shadow-lg mb-5 animate-pulse-subtle">
-          <div className="flex items-center gap-2 mb-1.5 text-emerald-400">
-            <span className="text-xs font-black tracking-widest font-mono">[BARRIER ACTIVE / 完璧なる絶対防衛障壁]</span>
-          </div>
-          <p className="text-[11px] leading-relaxed text-emerald-300/90 font-mono">
-            <strong>全区画の絶対防衛を完了：</strong>家屋内の全指定区画への抗重力・対害虫薬剤展開が100%確立されました。現在、害虫が物理的および次元空間的に侵入できる確率は <strong>0.00001% 未満</strong> です。人類の強固な防衛戦勝利がここに確定しました。警戒稼働を維持してください。
-          </p>
-        </div>
-      )}
-
-      {/* 1. 管区害虫脅威警報 */}
+      {/* 1. 日本防虫気象協会風 リアルタイム害虫警報 */}
       <div className={`bg-gradient-to-br border p-5 rounded-3xl shadow-md mb-5 flex items-center justify-between gap-4 transition-all duration-300 hover:shadow-lg ${pestAlertInfo.bg}`}>
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1.5">
-            <h2 className="font-extrabold text-sm tracking-tight text-zinc-100">{pestAlertInfo.title}</h2>
+            <h2 className="font-extrabold text-sm tracking-tight">{pestAlertInfo.title}</h2>
           </div>
-          <p className="text-[11px] leading-relaxed font-medium opacity-90 text-zinc-300 font-mono">
+          <p className="text-[11px] leading-relaxed font-medium opacity-90 text-slate-700">
             {pestAlertInfo.desc}
           </p>
           <Link
             href="/encyclopedia"
-            className="inline-flex items-center mt-3 text-[10px] font-black text-cyan-400 bg-zinc-950/80 hover:bg-zinc-900 px-3 py-1.5 rounded-xl border border-cyan-800/50 shadow-sm transition"
+            className="inline-flex items-center mt-3 text-[10px] font-black text-teal-700 bg-white/80 hover:bg-white px-3 py-1.5 rounded-xl border border-teal-200/50 shadow-sm transition"
           >
             {pestAlertInfo.btnText} →
           </Link>
         </div>
         
         {/* 大型ベクターアイコンイラストの挿入（絵文字を完全排除） */}
-        <div className="bg-zinc-950/80 p-2.5 rounded-2xl border border-zinc-800 shadow-inner flex-shrink-0">
+        <div className="bg-white/40 p-2.5 rounded-2xl border border-white/60 shadow-inner flex-shrink-0">
           <PestIcon 
             id={
               region === "hokkaido" 
@@ -386,54 +364,54 @@ export default function HomePage() {
       </div>
 
       {/* 🛠️ オリジナルグッズ作製アピール */}
-      <div className="bg-gradient-to-r from-cyan-950/40 to-emerald-950/40 border border-cyan-900/40 p-5 rounded-3xl shadow-sm mb-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="bg-gradient-to-r from-teal-500/10 to-emerald-500/10 border border-teal-200/50 p-5 rounded-3xl shadow-sm mb-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex-1">
-          <h2 className="text-xs font-black text-cyan-400 mb-1 tracking-wider uppercase">
-            🛡️ DEFENSE ARSENAL / オリジナル防衛装備の調合
+          <h2 className="text-xs font-extrabold text-teal-800 mb-1 flex items-center gap-1.5">
+            自分専用の防衛グッズを作製
           </h2>
-          <p className="text-[10px] text-zinc-400 leading-relaxed font-medium">
-            市販の特注シートやご自宅固有の防虫トラップを、カスタム名称および任意の有効稼働限界（月数）で登録し、防衛線（間取り）上に戦略配置可能です。
+          <p className="text-[10px] text-teal-950/80 leading-relaxed font-medium">
+            市販の防虫シートや独自の対策グッズをオリジナル名・持続期間で登録し、マイ間取りに美しく設置して一元管理できます。
           </p>
         </div>
         <Link
           href="/map?createCustom=true"
-          className="w-full sm:w-auto px-4 py-2.5 bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-600 hover:to-emerald-600 text-zinc-950 text-[11px] font-black rounded-xl text-center shadow-md transition-all whitespace-nowrap active:scale-[0.98]"
+          className="w-full sm:w-auto px-4 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white text-[11px] font-black rounded-xl text-center shadow-md transition-all whitespace-nowrap active:scale-[0.98]"
         >
-          オリジナル防衛装備を調合する
+          オリジナルグッズを作製する
         </Link>
       </div>
 
       {/* 要交換グッズ */}
       <div className="mb-5">
-        <h2 className="text-[10px] font-black text-red-500 mb-2 tracking-widest uppercase font-mono">
-          🚨 CRITICAL LIMITS / 耐用限界限界区画 ({alertTraps.length})
+        <h2 className="text-xs font-extrabold text-slate-400 mb-2 tracking-wider uppercase flex items-center gap-1">
+          要交換のグッズ ({alertTraps.length})
         </h2>
         {alertTraps.length === 0 ? (
-          <div className="bg-zinc-900/60 backdrop-blur-md p-6 rounded-3xl text-center border border-zinc-800/80 shadow-sm text-xs text-zinc-500 leading-relaxed font-mono">
-            現在、耐用限界を迎えた、または7日以内に限界に達する装備はありません。<br />家屋内の全障壁は極めて健全に維持されています。
+          <div className="bg-white p-6 rounded-3xl text-center border border-slate-200/60 shadow-sm text-xs text-slate-400 leading-relaxed">
+            現在、期限が切れている、または7日以内に切れるグッズはありません。<br />家の中は安全に防衛されています。
           </div>
         ) : (
           <div className="flex flex-col gap-2">
             {alertTraps.map((trap) => (
-              <div key={trap.id} className="bg-red-950/20 border border-red-900/60 p-3.5 rounded-2xl flex justify-between items-center shadow-sm hover:bg-red-950/40 transition-all duration-200">
+              <div key={trap.id} className="bg-red-50/50 border border-red-100 p-3.5 rounded-2xl flex justify-between items-center shadow-sm hover:bg-red-50/80 transition-all duration-200">
                 <div className="flex items-center gap-3">
-                  <span className="p-1 bg-zinc-950 rounded-xl shadow-inner border border-red-900/40 flex items-center justify-center flex-shrink-0">
+                  <span className="p-1 bg-white rounded-xl shadow-inner border border-red-100/50 flex items-center justify-center flex-shrink-0">
                     <TrapIcon id={trap.name} size={32} />
                   </span>
                   <div>
-                    <p className="text-xs font-black text-red-400">{trap.name}</p>
-                    <p className="text-[10px] text-zinc-400 font-bold">
-                      区画: {getRoomName(trap.roomId)} ({trap.placedLocation})
+                    <p className="text-xs font-black text-red-950">{trap.name}</p>
+                    <p className="text-[10px] text-red-800 font-bold">
+                      場所: {getRoomName(trap.roomId)} ({trap.placedLocation})
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[9px] font-black text-red-400 bg-red-950 border border-red-800 px-2 py-1 rounded-lg animate-pulse font-mono">
-                    耐用限界！
+                  <span className="text-[9px] font-black text-red-600 bg-white px-2 py-1 rounded-lg border border-red-200 animate-pulse">
+                    期限切れ間近！
                   </span>
                   <button
                     onClick={() => handleRemoveTrap(trap.id, trap.name)}
-                    className="p-1.5 px-3 bg-zinc-900 hover:bg-red-950 text-red-400 rounded-xl border border-red-900/40 hover:border-red-800 transition text-[10px] font-bold shadow-sm"
+                    className="p-1.5 px-3 bg-white hover:bg-red-50 text-red-600 hover:text-red-700 rounded-xl border border-red-200 hover:border-red-300 transition text-[10px] font-bold shadow-sm"
                   >
                     回収
                   </button>
@@ -446,53 +424,53 @@ export default function HomePage() {
 
       {/* 4. 現在設置中の全グッズリスト */}
       <div className="flex-1 mb-6">
-        <h2 className="text-[10px] font-black text-zinc-500 mb-2 tracking-widest uppercase font-mono">
-          🛡️ STRATEGIC PLACEMENTS / 防衛布陣 ({traps.length}個配備中)
+        <h2 className="text-xs font-extrabold text-slate-400 mb-2 tracking-wider uppercase flex items-center gap-1">
+          現在の防衛状況 ({traps.length}個設置中)
         </h2>
         {traps.length === 0 ? (
-          <div className="bg-zinc-900/60 backdrop-blur-md p-8 rounded-2xl text-center border border-zinc-800/80 shadow-sm flex flex-col items-center gap-3">
-            <p className="text-xs text-zinc-500 leading-normal max-w-xs font-mono">
-              現在、防御ライン上に防衛装備が配備されていません。戦略配置マップから配備を実行してください。
+          <div className="bg-white p-8 rounded-2xl text-center border border-slate-100 shadow-sm flex flex-col items-center gap-3">
+            <p className="text-xs text-slate-400 leading-normal max-w-xs">
+              現在、家の中に防衛グッズが配置されていません。間取りマップから配置しましょう。
             </p>
             <Link
               href="/map"
-              className="inline-block bg-cyan-500 hover:bg-cyan-600 text-zinc-950 text-xs font-black px-4 py-2.5 rounded-xl shadow-md transition active:scale-[0.98]"
+              className="inline-block bg-teal-600 hover:bg-teal-700 text-white text-xs font-black px-4 py-2.5 rounded-xl shadow-md transition"
             >
-              戦略配置マップを開く
+              配置マップを開いて設置する
             </Link>
           </div>
         ) : (
-          <div className="bg-zinc-900/60 backdrop-blur-md rounded-2xl shadow-sm border border-zinc-800/80 divide-y divide-zinc-800/60 overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 divide-y divide-slate-50 overflow-hidden">
             {traps.map((trap) => {
               const diffTime = new Date(trap.expirationDate).getTime() - new Date().getTime();
               const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
               const isClose = diffDays <= 7;
 
               return (
-                <div key={trap.id} className="p-3.5 flex justify-between items-center text-xs hover:bg-zinc-850/30 transition-all duration-150">
+                <div key={trap.id} className="p-3.5 flex justify-between items-center text-xs hover:bg-slate-50/50 transition-all duration-150">
                   <div className="flex items-center gap-3">
-                    <span className="p-1 bg-zinc-950 rounded-xl border border-zinc-800 flex items-center justify-center flex-shrink-0 shadow-inner">
+                    <span className="p-1 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-center flex-shrink-0 shadow-inner">
                       <TrapIcon id={trap.name} size={32} />
                     </span>
                     <div>
-                      <p className="font-bold text-zinc-100 text-[12px]">{trap.name}</p>
-                      <p className="text-zinc-500 text-[10px] font-medium font-mono">
-                        区画: {getRoomName(trap.roomId)} ({trap.placedLocation})
+                      <p className="font-extrabold text-slate-800 text-[12px]">{trap.name}</p>
+                      <p className="text-slate-400 text-[10px] font-bold">
+                        場所: {getRoomName(trap.roomId)} ({trap.placedLocation})
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 text-right">
                     <div>
-                      <p className="text-zinc-400 font-mono text-[10px]">
-                        限界日: {trap.expirationDate}
+                      <p className="text-slate-500 font-mono text-[10px]">
+                        期限: {trap.expirationDate}
                       </p>
-                      <p className={`text-[9px] font-black mt-0.5 font-mono ${isClose ? "text-red-400 animate-pulse" : "text-zinc-500"}`}>
-                        {diffDays <= 0 ? "限界超過！" : `残り稼働: ${diffDays}日`}
+                      <p className={`text-[9px] font-black mt-0.5 ${isClose ? "text-red-500 animate-pulse" : "text-slate-400"}`}>
+                        {diffDays <= 0 ? "期限切れ！" : `残り ${diffDays}日`}
                       </p>
                     </div>
                     <button
                       onClick={() => handleRemoveTrap(trap.id, trap.name)}
-                      className="p-1.5 px-3 hover:bg-red-950/40 text-zinc-400 hover:text-red-400 rounded-xl border border-zinc-800 hover:border-red-900/50 transition text-[10px] font-bold shadow-sm bg-zinc-950/60"
+                      className="p-1.5 px-3 hover:bg-red-50 text-slate-500 hover:text-red-600 rounded-xl border border-slate-100 hover:border-red-200 transition text-[10px] font-bold shadow-sm bg-slate-50/50"
                     >
                       回収
                     </button>
