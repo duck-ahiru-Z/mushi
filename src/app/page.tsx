@@ -27,17 +27,11 @@ export default function HomePage() {
   useEffect(() => {
     try {
       const unsubscribe = onAuthStateChanged(auth, (user) => {
-        if (user) {
-          setUserId(user.uid);
-        } else {
-          const simEmail = localStorage.getItem("simulated_user_email");
-          setUserId(simEmail ? `sim-${simEmail}` : null);
-        }
+        setUserId(user ? user.uid : null);
       });
       return () => unsubscribe();
     } catch {
-      const simEmail = localStorage.getItem("simulated_user_email");
-      setUserId(simEmail ? `sim-${simEmail}` : null);
+      setUserId(null);
     }
   }, []);
 
@@ -304,25 +298,20 @@ export default function HomePage() {
             <div>
               <span className="text-[9px] text-slate-400 font-bold block">プッシュ通知</span>
               <span className={`text-xs font-black mt-0.5 block ${permission === "granted" ? "text-emerald-600" : "text-amber-600"}`}>
-                {permission === "granted" ? "受信可能" : "未許可"}
+                {permission === "granted" ? "受信可能" : "未設定"}
               </span>
             </div>
-            {permission === "default" ? (
-              <button
-                onClick={requestNotificationPermission}
-                className="mt-3 w-full py-1.5 bg-teal-600 hover:bg-teal-700 text-white text-[10px] font-bold rounded-lg transition shadow"
-              >
-                通知を許可
-              </button>
-            ) : permission === "granted" ? (
+            {permission === "denied" ? (
+              <span className="text-[8px] text-red-600 mt-3 font-bold text-right block">ブラウザでブロック中</span>
+            ) : (
               <button
                 onClick={triggerTestNotification}
-                className="mt-3 w-full py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-[10px] font-bold rounded-lg transition shadow"
+                className={`mt-3 w-full py-1.5 text-white text-[10px] font-bold rounded-lg transition shadow ${
+                  permission === "granted" ? "bg-slate-800 hover:bg-slate-900" : "bg-teal-600 hover:bg-teal-700"
+                }`}
               >
-                テスト通知を送信する
+                {permission === "granted" ? "テスト通知を送信" : "通知を設定してテスト"}
               </button>
-            ) : (
-              <span className="text-[8px] text-red-600 mt-3 font-bold text-right block">ブロック中</span>
             )}
           </div>
         </div>

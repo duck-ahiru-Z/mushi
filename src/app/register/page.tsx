@@ -26,10 +26,6 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState("");
   const [region, setRegion] = useState("kinki");
 
-  // シミュレーション用ゲストモード状態
-  const [isSimulatedUser, setIsSimulatedUser] = useState(false);
-  const [simulatedEmail, setSimulatedEmail] = useState("");
-
   // 表示・通知の追加ステート
   const [bugIllustrationsDisabled, setBugIllustrationsDisabled] = useState(false);
   const [notifyOnDay, setNotifyOnDay] = useState(true);
@@ -78,12 +74,6 @@ export default function RegisterPage() {
 
   // 2. Auth監視
   useEffect(() => {
-    const simEmail = localStorage.getItem("simulated_user_email");
-    if (simEmail) {
-      setIsSimulatedUser(true);
-      setSimulatedEmail(simEmail);
-    }
-
     try {
       const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
         setUser(currentUser);
@@ -135,7 +125,33 @@ export default function RegisterPage() {
     setTimeout(() => setSuccess(""), 3000);
   };
 
-  // 4. Firebase認証 / シミュレーションログイン処理
+  // Firebase Authのエラーコードを分かりやすい日本語メッセージに変換
+  const getAuthErrorMessage = (errorCode: string): string => {
+    switch (errorCode) {
+      case "auth/invalid-email":
+        return "メールアドレスの形式が正しくありません。";
+      case "auth/user-disabled":
+        return "このアカウントは現在無効化されています。";
+      case "auth/user-not-found":
+        return "アカウントが見つかりません。メールアドレスを確認するか、新規作成からアカウントを登録してください。";
+      case "auth/wrong-password":
+        return "パスワードが正しくありません。";
+      case "auth/invalid-credential":
+        return "ログイン情報（メールアドレスまたはパスワード）が正しくありません。仮アカウントでお試しの場合は、新規登録を行っているか再度ご確認ください。";
+      case "auth/email-already-in-use":
+        return "このメールアドレスは既に登録されています。サインインするか、別のメールアドレスをお試しください。";
+      case "auth/weak-password":
+        return "パスワードは6文字以上で入力してください。";
+      case "auth/operation-not-allowed":
+        return "メール/パスワード認証が有効になっていません。Firebase管理画面を確認してください。";
+      case "auth/network-request-failed":
+        return "ネットワーク接続に失敗しました。インターネット回線の接続状況をご確認ください。";
+      default:
+        return `認証エラーが発生しました。 (${errorCode})`;
+    }
+  };
+
+  // 4. Firebase認証 / ログイン・新規登録処理
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -158,15 +174,12 @@ export default function RegisterPage() {
       const current = auth.currentUser;
       if (current) {
         await migrateLocalDataToFirebase(current.uid);
-        setSuccess("同期完了。ローカルの部屋・グッズデータをクラウドと完全に同期しました。");
+        setSuccess("同期完了。ローカルの部屋・グッズデータをクラウドと完全に同期しました！");
       }
     } catch (err: any) {
-      console.warn("Firebase Auth fallback to simulation:", err.message);
-      // ローカルシミュレーションログインを実行（デモ用）
-      localStorage.setItem("simulated_user_email", email);
-      setIsSimulatedUser(true);
-      setSimulatedEmail(email);
-      setSuccess("サインインしました。間取りと期限データは同期モードで動作しています。");
+      console.error("Firebase Auth Error:", err);
+      const friendlyMessage = getAuthErrorMessage(err.code || err.message);
+      setError(friendlyMessage);
     }
   };
 
@@ -176,13 +189,11 @@ export default function RegisterPage() {
     setSuccess("");
     try {
       await signOut(auth);
-    } catch {}
-    
-    localStorage.removeItem("simulated_user_email");
-    setIsSimulatedUser(false);
-    setSimulatedEmail("");
-    setSuccess("ログアウトしました。ゲスト（オフライン）モードに移行しました。");
-    setTimeout(() => setSuccess(""), 3000);
+      setSuccess("ログアウトしました。ゲスト（オフライン）モードに移行しました。");
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err: any) {
+      setError("ログアウトに失敗しました。");
+    }
   };
 
   // 6. ローカルデータの一括初期化（リセット）
@@ -200,8 +211,8 @@ export default function RegisterPage() {
     setTimeout(() => setSuccess(""), 4000);
   };
 
-  const isUserLoggedIn = !!user || isSimulatedUser;
-  const userEmail = user?.email || simulatedEmail;
+  const isUserLoggedIn = !!user;
+  const userEmail = user?.email || "";
 
   return (
     <div className="p-5 flex flex-col min-h-screen bg-slate-50 text-slate-800">

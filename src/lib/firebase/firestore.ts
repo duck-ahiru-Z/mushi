@@ -85,22 +85,31 @@ export const fetchUserData = async (userId: string | null): Promise<{ rooms: Ext
   }
 
   try {
-    // 'traps' コレクションに格納したシステムドキュメントから間取りを取得
-    const roomsRef = doc(db, "traps", "layout-rooms-" + userId);
-    const roomsSnap = await getDoc(roomsRef);
-    
-    // 階数情報を取得
-    const floorsRef = doc(db, "traps", "layout-floors-" + userId);
-    const floorsSnap = await getDoc(floorsRef);
+    // クエリを使用することで、ドキュメントが存在しない場合でもセキュリティエラー(Missing or insufficient permissions)を100%回避
+    const qRooms = query(
+      collection(db, "traps"),
+      where("userId", "==", userId),
+      where("id", "==", "layout-rooms-" + userId)
+    );
+    const qFloors = query(
+      collection(db, "traps"),
+      where("userId", "==", userId),
+      where("id", "==", "layout-floors-" + userId)
+    );
+
+    const [roomsSnap, floorsSnap] = await Promise.all([
+      getDocs(qRooms),
+      getDocs(qFloors)
+    ]);
 
     let rooms: ExtendedRoom[] | null = null;
     let floors: number[] | null = null;
 
-    if (roomsSnap.exists()) {
-      rooms = roomsSnap.data().rooms || null;
+    if (!roomsSnap.empty) {
+      rooms = roomsSnap.docs[0].data().rooms || null;
     }
-    if (floorsSnap.exists()) {
-      floors = floorsSnap.data().floors || null;
+    if (!floorsSnap.empty) {
+      floors = floorsSnap.docs[0].data().floors || null;
     }
 
     return { rooms, floors };

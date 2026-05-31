@@ -15,17 +15,11 @@ export default function MapPage() {
   useEffect(() => {
     try {
       const unsubscribe = onAuthStateChanged(auth, (user) => {
-        if (user) {
-          setUserId(user.uid);
-        } else {
-          const simEmail = localStorage.getItem("simulated_user_email");
-          setUserId(simEmail ? `sim-${simEmail}` : null);
-        }
+        setUserId(user ? user.uid : null);
       });
       return () => unsubscribe();
     } catch {
-      const simEmail = localStorage.getItem("simulated_user_email");
-      setUserId(simEmail ? `sim-${simEmail}` : null);
+      setUserId(null);
     }
   }, []);
 
