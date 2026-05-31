@@ -84,12 +84,12 @@ export function useFcmToken() {
     const alertsText = activeAlerts.length > 0 ? activeAlerts.join(", ") : "なし";
 
     // ネイティブ通知オプション
-    const title = "BugGuard 防衛アラート";
+    const title = "G-End アラート";
     const options: any = {
       body: `対策グッズの交換期限が近づいています。設置マップを確認して交換してください。(有効な通知設定: ${alertsText})`,
       icon: "/favicon.ico",
       badge: "/favicon.ico",
-      tag: "bugguard-alert",
+      tag: "g-end-alert",
       requireInteraction: true,
       vibrate: [200, 100, 200],
     };
@@ -110,11 +110,11 @@ export function useFcmToken() {
 
     // ハッカソン・PWAデモ用のタイマーシミュレーション
     setTimeout(() => {
-      const title = "BugGuard 交換リマインダー";
+      const title = "G-End 交換リマインダー";
       const options: any = {
         body: `「${trapName}」の交換期限まで残り ${daysLeft} 日です。家全体の防衛効果を維持するために交換しましょう。`,
         icon: "/favicon.ico",
-        tag: "bugguard-reminder",
+        tag: "g-end-reminder",
         vibrate: [100, 50, 100],
       };
       
