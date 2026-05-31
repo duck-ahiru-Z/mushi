@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useTraps, ExtendedRoom } from "@/hooks/usetraps";
 import { Trap } from "@/types/trap";
+import { TrapIcon } from "@/components/vector-icons";
 
 type ResizeDirection = "n" | "s" | "e" | "w" | "nw" | "ne" | "sw" | "se";
 
@@ -439,8 +440,8 @@ export default function MapPage() {
           <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-5 border border-slate-100 flex flex-col gap-4 animate-scale-up">
             <div className="flex justify-between items-start">
               <div className="flex items-center gap-2">
-                <span className="text-3xl p-1.5 bg-slate-100 rounded-2xl">
-                  {getTrapIcon(selectedTrap.name)}
+                <span className="p-1.5 bg-slate-100 rounded-2xl flex items-center justify-center flex-shrink-0">
+                  <TrapIcon id={selectedTrap.name} size={40} />
                 </span>
                 <div>
                   <h3 className="font-black text-sm text-slate-900">{selectedTrap.name}</h3>
@@ -807,7 +808,7 @@ export default function MapPage() {
                       key={trap.id}
                       onClick={(e) => handleTrapClick(trap, e)}
                       onPointerDown={(e) => handleTrapPointerDown(trap, room.id, e)}
-                      className="trap-marker absolute w-7 h-7 bg-white border border-slate-200 rounded-full flex items-center justify-center text-sm shadow hover:scale-125 hover:shadow-md transition-all active:scale-95 cursor-pointer pointer-events-auto z-20"
+                      className="trap-marker absolute w-8 h-8 bg-white border-2 border-teal-500 rounded-full flex items-center justify-center shadow-md hover:scale-125 hover:border-red-500 hover:shadow-lg transition-all active:scale-95 cursor-grab pointer-events-auto z-20"
                       style={{
                         left: `${trap.x * 100}%`,
                         top: `${trap.y * 100}%`,
@@ -815,7 +816,7 @@ export default function MapPage() {
                       }}
                       title={`${trap.name}: ${trap.placedLocation}`}
                     >
-                      {getTrapIcon(trap.name)}
+                      <TrapIcon id={trap.name} size={20} />
                     </button>
                   ))}
               </div>
