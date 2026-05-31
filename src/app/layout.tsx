@@ -26,29 +26,29 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
-      <body className={`${inter.className} bg-zinc-950 text-zinc-100 min-h-screen flex flex-col antialiased`}>
+      <body className={`${inter.className} bg-slate-50 text-slate-900 min-h-screen flex flex-col antialiased`}>
         {/* PC用ヘッダーナビゲーション */}
-        <header className="hidden md:block bg-zinc-950 border-b border-zinc-900 sticky top-0 z-40 shadow-sm backdrop-blur-md">
+        <header className="hidden md:block bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
           <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
             <div className="flex items-center gap-8">
-              <span className="text-xl font-black text-cyan-400 tracking-tight flex items-center gap-1.5 select-none font-mono">
+              <span className="text-xl font-black text-teal-600 tracking-tight flex items-center gap-1.5 select-none">
                 G-End
               </span>
-              <nav className="flex items-center gap-6 text-sm font-bold text-zinc-400">
-                <Link href="/" className="hover:text-cyan-400 transition-colors py-2">ホーム</Link>
-                <Link href="/map" className="hover:text-cyan-400 transition-colors py-2">配置マップ</Link>
-                <Link href="/encyclopedia" className="hover:text-cyan-400 transition-colors py-2">対策図鑑</Link>
-                <Link href="/register" className="hover:text-cyan-400 transition-colors py-2">アカウント連携</Link>
+              <nav className="flex items-center gap-6 text-sm font-bold text-slate-500">
+                <Link href="/" className="hover:text-teal-600 transition-colors py-2">ホーム</Link>
+                <Link href="/map" className="hover:text-teal-600 transition-colors py-2">配置マップ</Link>
+                <Link href="/encyclopedia" className="hover:text-teal-600 transition-colors py-2">対策図鑑</Link>
+                <Link href="/register" className="hover:text-teal-600 transition-colors py-2">アカウント連携</Link>
               </nav>
             </div>
-            <div className="text-xs font-bold text-cyan-400 bg-cyan-950/40 px-3 py-1.5 rounded-full border border-cyan-900/60 font-mono uppercase tracking-widest">
-              DEFENSE CORE ACTIVE
+            <div className="text-xs font-bold text-slate-400 bg-slate-100 px-3 py-1.5 rounded-full">
+              防衛システム稼働中
             </div>
           </div>
         </header>
 
         {/* メインコンテンツエリア */}
-        <main className="flex-1 w-full max-w-md md:max-w-5xl mx-auto bg-zinc-950 md:shadow-2xl md:rounded-3xl md:my-6 md:border md:border-zinc-900 min-h-screen md:min-h-[calc(100vh-8rem)] flex flex-col overflow-hidden pb-16 md:pb-0">
+        <main className="flex-1 w-full max-w-md md:max-w-5xl mx-auto bg-white md:shadow-xl md:rounded-3xl md:my-6 md:border md:border-slate-100 min-h-screen md:min-h-[calc(100vh-8rem)] flex flex-col overflow-hidden pb-16 md:pb-0">
           {children}
         </main>
 
