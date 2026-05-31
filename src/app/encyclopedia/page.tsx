@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
 import { detectJapanRegion } from "@/lib/utils";
+import { PestIcon, TrapIcon } from "@/components/vector-icons";
 
 interface BugProfile {
   id: string;
@@ -165,9 +166,10 @@ export default function EncyclopediaPage() {
   const [selectedBugId, setSelectedBugId] = useState<string>("cockroach");
   const [currentMonth, setCurrentMonth] = useState<number>(new Date().getMonth() + 1);
   const [region, setRegion] = useState<string>("kinki");
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // アカウント画面等で設定された地域設定があれば同期して初期値にする、なければ自動位置判定
   useEffect(() => {
+    setIsInitialized(true);
     const saved = localStorage.getItem("user_region");
     if (saved) {
       setRegion(saved);
@@ -191,6 +193,15 @@ export default function EncyclopediaPage() {
     }
   }, []);
 
+  const getTrapIdFromText = (text: string): string => {
+    if (text.includes("ゴキブリホイホイ")) return "ゴキブリホイホイ";
+    if (text.includes("ブラックキャップ")) return "ブラックキャップ";
+    if (text.includes("ダニよけシート")) return "ダニよけシート";
+    if (text.includes("スプレー")) return "コバエがいなくなるスプレー";
+    if (text.includes("アリの巣コロリ")) return "アリの巣コロリ";
+    return "custom";
+  };
+
   const selectedRegionName = useMemo(() => {
     return REGIONS.find((r) => r.id === region)?.name || "近畿エリア";
   }, [region]);
@@ -199,42 +210,31 @@ export default function EncyclopediaPage() {
     return REGIONS.find((r) => r.id === region) || REGIONS[4];
   }, [region]);
 
-  // 各虫の「選択した月・地域における脅威スコア」を計算
   const scoredBugs = useMemo(() => {
     return BUG_DATABASE.map((bug) => {
-      // 1. 基本となる月が活動月かどうか
       const isBaseActive = bug.activeMonths.includes(currentMonth);
-      
-      // 2. 地域モディファイアを適用
-      // 温暖な地域は活動期が広がり、寒い地域は狭まる
       const modifier = activeRegionObj.modifier;
       
-      // 沖縄などは寒冷期でも活動しやすい
       let finalActive = isBaseActive;
       if (modifier > 0) {
-        // 活動期間の前後を広げる
         const prevMonth = bug.activeMonths[0] - 1 || 12;
         const nextMonth = bug.activeMonths[bug.activeMonths.length - 1] + 1 || 1;
         if (currentMonth === prevMonth || currentMonth === nextMonth) {
-          finalActive = true; // 広がった期間も活動可能に
+          finalActive = true;
         }
         if (region === "okinawa" && (bug.id === "cockroach" || bug.id === "tick" || bug.id === "mosquito" || bug.id === "ant")) {
-          // 沖縄の場合、特定の虫はほぼ通年活動
           finalActive = true;
         }
       } else if (modifier < 0) {
-        // 活動期間を狭める (最初と最後の月は不活発化)
         if (currentMonth === bug.activeMonths[0] || currentMonth === bug.activeMonths[bug.activeMonths.length - 1]) {
           finalActive = false;
         }
       }
 
-      // 3. 総合的な警戒レベル判定
       let threatLevel: "high" | "medium" | "low" | "none" = "none";
       if (finalActive) {
         threatLevel = bug.danger;
       } else {
-        // 不活発だが可能性はある時期
         const isClose = bug.activeMonths.some((m) => Math.abs(m - currentMonth) <= 1 || Math.abs(m - currentMonth) === 11);
         if (isClose) {
           threatLevel = "low";
@@ -249,7 +249,6 @@ export default function EncyclopediaPage() {
     });
   }, [currentMonth, region, activeRegionObj]);
 
-  // 警戒レベルが高い順（high -> medium -> low -> none）にソートして表示
   const sortedBugs = useMemo(() => {
     const order = { high: 0, medium: 1, low: 2, none: 3 };
     return [...scoredBugs].sort((a, b) => order[a.threatLevel] - order[b.threatLevel]);
@@ -259,9 +258,12 @@ export default function EncyclopediaPage() {
     return sortedBugs.find((b) => b.id === selectedBugId) || sortedBugs[0];
   }, [sortedBugs, selectedBugId]);
 
+  if (!isInitialized) {
+    return <div className="p-5 text-slate-500 text-sm">マイ間取りのデータを読み込み中...</div>;
+  }
+
   return (
     <div className="p-5 flex flex-col min-h-screen bg-slate-50 text-slate-800">
-      {/* ヘッダー */}
       <div className="border-b pb-3 mb-5">
         <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
           <span>🔍</span> 地域・季節連動：害虫対策図鑑
@@ -269,7 +271,6 @@ export default function EncyclopediaPage() {
         <p className="text-xs text-slate-400 mt-1">選択された地域と時期に最も注意すべき害虫を自動ソートします。</p>
       </div>
 
-      {/* スマートコントロールパネル */}
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="text-xs font-bold text-slate-500 block mb-1.5">📍 対象地域設定</label>
@@ -302,15 +303,12 @@ export default function EncyclopediaPage() {
         </div>
       </div>
 
-      {/* お知らせアラート */}
       <div className="bg-teal-50/50 border border-teal-100 p-3 rounded-2xl text-[11px] text-teal-900 leading-relaxed mb-6">
         📍 <strong>{selectedRegionName}</strong> における <strong>{currentMonth}月</strong> の気候データを元に計算：
         現在、{scoredBugs.filter(b => b.threatLevel === "high" || b.threatLevel === "medium").length}種類の害虫が警戒・要対策レベルに達しています。
       </div>
 
-      {/* メイングリッドレイアウト (PCでは左右分割) */}
       <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-        {/* 左側：害虫一覧リスト (4カラム) */}
         <div className="md:col-span-5 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm max-h-[60vh] md:max-h-[75vh] overflow-y-auto space-y-1">
           <h2 className="text-xs font-bold text-slate-400 px-2 pb-2 border-b mb-2">害虫リスト (注意度順)</h2>
           {sortedBugs.map((bug) => {
@@ -332,12 +330,12 @@ export default function EncyclopediaPage() {
               <button
                 key={bug.id}
                 onClick={() => setSelectedBugId(bug.id)}
-                className={`w-full p-2.5 rounded-xl flex items-center justify-between text-left transition ${
-                  isSelected ? "bg-slate-800 text-white" : "hover:bg-slate-50 text-slate-700"
+                className={`w-full p-2 rounded-xl flex items-center justify-between text-left transition-all duration-150 ${
+                  isSelected ? "bg-slate-800 text-white shadow-md scale-[1.02]" : "hover:bg-slate-50 text-slate-700"
                 }`}
               >
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">{bug.emoji}</span>
+                <div className="flex items-center gap-3">
+                  <PestIcon id={bug.id} size={28} className={isSelected ? "brightness-200" : ""} />
                   <span className="text-xs font-bold">{bug.name}</span>
                 </div>
                 <span className={`text-[9px] font-black px-1.5 py-0.5 rounded border ${isSelected ? "bg-white/20 text-white border-transparent" : badgeBg}`}>
@@ -349,41 +347,43 @@ export default function EncyclopediaPage() {
         </div>
 
         {/* 右側：選択された害虫の詳細カード (7カラム) */}
-        <div className="md:col-span-7 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col min-h-[450px]">
+        <div className="md:col-span-7 bg-white rounded-3xl border border-slate-100 shadow-md overflow-hidden flex flex-col min-h-[450px]">
           {/* カード上部 */}
-          <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-5 text-white">
-            <div className="flex justify-between items-start">
-              <span className="text-4xl p-2 bg-white/10 rounded-2xl backdrop-blur-sm select-none">
-                {selectedBug.emoji}
-              </span>
-              <div>
+          <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-5 text-white flex justify-between items-center gap-4">
+            <div>
+              <h2 className="text-lg font-black">{selectedBug.name}</h2>
+              <p className="text-[10px] text-slate-300 mt-1">
+                標準警戒月: {selectedBug.activeMonths.join(", ")}月
+              </p>
+              
+              <div className="mt-3">
                 {selectedBug.threatLevel === "high" && (
-                  <span className="text-[10px] font-black bg-red-600 border border-red-500 text-white px-2.5 py-1 rounded-full animate-bounce block text-center">
+                  <span className="text-[10px] font-black bg-red-600 border border-red-500 text-white px-2.5 py-1 rounded-full animate-bounce block text-center w-fit">
                     🚨 厳重警戒害虫
                   </span>
                 )}
                 {selectedBug.threatLevel === "medium" && (
-                  <span className="text-[10px] font-black bg-amber-500 text-slate-950 px-2.5 py-1 rounded-full block text-center">
+                  <span className="text-[10px] font-black bg-amber-500 text-slate-950 px-2.5 py-1 rounded-full block text-center w-fit">
                     ⚠️ 要注意害虫
                   </span>
                 )}
                 {selectedBug.threatLevel === "low" && (
-                  <span className="text-[10px] font-black bg-sky-500 text-white px-2.5 py-1 rounded-full block text-center">
+                  <span className="text-[10px] font-black bg-sky-500 text-white px-2.5 py-1 rounded-full block text-center w-fit">
                     🛡️ 低警戒状態
                   </span>
                 )}
                 {selectedBug.threatLevel === "none" && (
-                  <span className="text-[10px] font-bold bg-slate-600 text-slate-200 px-2.5 py-1 rounded-full block text-center">
+                  <span className="text-[10px] font-bold bg-slate-600 text-slate-200 px-2.5 py-1 rounded-full block text-center w-fit">
                     ❄️ シーズン外
                   </span>
                 )}
               </div>
             </div>
             
-            <h2 className="text-lg font-black mt-4">{selectedBug.name}</h2>
-            <p className="text-[10px] text-slate-300 mt-1">
-              標準警戒月: {selectedBug.activeMonths.join(", ")}月
-            </p>
+            {/* 右側大型ベクターアイコン（絵文字を完全排除！） */}
+            <div className="bg-white/10 p-2.5 rounded-2xl backdrop-blur-sm shadow-inner flex-shrink-0">
+              <PestIcon id={selectedBug.id} size={64} />
+            </div>
           </div>
 
           {/* カードボディ */}
@@ -402,8 +402,9 @@ export default function EncyclopediaPage() {
               <h3 className="font-black text-slate-400 text-[10px] uppercase tracking-wider mb-1.5">🛡️ 有効な市販の対策グッズ</h3>
               <div className="flex flex-wrap gap-2">
                 {selectedBug.goods.map((g, idx) => (
-                  <span key={idx} className="bg-slate-50 border border-slate-200 text-slate-700 px-2.5 py-1 rounded-lg font-bold text-[10px]">
-                    ✓ {g}
+                  <span key={idx} className="bg-slate-50 border border-slate-200/60 text-slate-700 px-3 py-1.5 rounded-xl font-bold text-[10px] flex items-center gap-1.5 shadow-sm">
+                    <TrapIcon id={getTrapIdFromText(g)} size={18} />
+                    {g}
                   </span>
                 ))}
               </div>
