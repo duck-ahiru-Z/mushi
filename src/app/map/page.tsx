@@ -492,7 +492,7 @@ export default function MapPage() {
           <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-5 border border-slate-100 flex flex-col gap-4 animate-scale-up">
             <div>
               <h3 className="font-black text-sm text-slate-900">オリジナルグッズの登録</h3>
-              <p className="text-[10px] text-slate-400">自分だけのカスタム虫よけ・罠を登録してマップに置けます。</p>
+              <p className="text-[10px] text-slate-400">オリジナルの防虫グッズやスプレーを登録し、間取りに配置して期限管理できます。</p>
             </div>
 
             <div className="space-y-3">
@@ -637,7 +637,7 @@ export default function MapPage() {
             </div>
           </div>
           <p className="text-[10px] text-teal-600 font-bold bg-teal-50/50 p-2 rounded-lg leading-normal">
-            <strong>配置方法:</strong> 上のリストから設置したいグッズを選び、下の部屋マップの<strong>「置きたい場所」を直接タップ</strong>してください！
+            <strong>配置方法:</strong> 設置するグッズを選択し、間取り図の配置したい場所をタップしてください。
           </p>
         </div>
       ) : (
