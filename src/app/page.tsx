@@ -37,6 +37,7 @@ export default function HomePage() {
   const [region, setRegion] = useState("kinki");
   const [locationLabel, setLocationLabel] = useState<string>("位置情報：未取得");
   const [currentMonth] = useState<number>(new Date().getMonth() + 1);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
   // 1. 地域設定の読み込み＆自動位置情報取得
   const loadUserRegionAndDetect = () => {
@@ -71,6 +72,14 @@ export default function HomePage() {
 
   useEffect(() => {
     loadUserRegionAndDetect();
+
+    // 初回起動時のウェルカム設定チェック
+    if (typeof window !== "undefined") {
+      const completed = localStorage.getItem("illustrations_setting_completed");
+      if (!completed) {
+        setShowWelcomeModal(true);
+      }
+    }
     
     // GPSの手動再取得用イベントハンドラや、アカウント画面変更検知
     const handleRegionChangeEv = () => {
@@ -84,6 +93,13 @@ export default function HomePage() {
     window.addEventListener("regionChanged", handleRegionChangeEv);
     return () => window.removeEventListener("regionChanged", handleRegionChangeEv);
   }, []);
+
+  const handleWelcomeSelection = (disableIllustrations: boolean) => {
+    localStorage.setItem("bug_illustrations_disabled", disableIllustrations ? "true" : "false");
+    localStorage.setItem("illustrations_setting_completed", "true");
+    window.dispatchEvent(new Event("safeModeChanged"));
+    setShowWelcomeModal(false);
+  };
 
   // 2. 地域と言動シーズンに合わせたリアルタイム害虫活動指数
   const pestAlertInfo = useMemo(() => {
@@ -155,6 +171,46 @@ export default function HomePage() {
   return (
     <div className="p-5 flex flex-col min-h-screen bg-slate-50 text-slate-800">
       
+      {/* 🛡️ 初回起動時ウェルカム・イラスト非表示選択モーダル */}
+      {showWelcomeModal && (
+        <div className="fixed inset-0 bg-slate-950/60 z-50 flex items-center justify-center p-5 backdrop-blur-md">
+          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-6 border border-slate-100 flex flex-col gap-5 animate-scale-up text-slate-800">
+            <div className="text-center space-y-2">
+              <span className="text-4xl inline-block animate-bounce">🛡️</span>
+              <h2 className="text-sm font-black text-slate-900">BugGuard へお越しいただきありがとうございます</h2>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">安心で快適な暮らしの防衛パートナー</p>
+            </div>
+            
+            <div className="bg-slate-50 p-4 rounded-2xl text-[11px] space-y-3 leading-relaxed text-slate-600">
+              <p>
+                本アプリでは、家の中の防虫効果をマップ上で視覚的に可視化・管理するため、各種害虫のイラストを使用しています。
+              </p>
+              <p className="font-bold text-slate-800">
+                ⚠️ 虫のイラストや画像が苦手ですか？
+              </p>
+              <p>
+                苦手な場合、「セーフシールド（非表示）」をお選びいただくと、アプリ内のすべての虫アイコンが<strong>優しい緑色の盾マーク</strong>に変更されます。この設定は設定画面からいつでも変更できます。
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2 mt-2">
+              <button
+                onClick={() => handleWelcomeSelection(true)}
+                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-[11px] font-black shadow-md transition flex items-center justify-center gap-2"
+              >
+                <span>🛡️</span> 優しいシールドで表示する (マイルドモード)
+              </button>
+              <button
+                onClick={() => handleWelcomeSelection(false)}
+                className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl text-[11px] font-bold transition flex items-center justify-center gap-2"
+              >
+                <span>🪳</span> そのまま表示する (標準モード)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ヘッダー */}
       <div className="flex justify-between items-center border-b pb-3 mb-5">
         <div>
@@ -245,6 +301,24 @@ export default function HomePage() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* 📱 オリジナル防衛グッズの作製アピール（目立つプレミアムカード） */}
+      <div className="bg-gradient-to-r from-teal-500/10 to-emerald-500/10 border border-teal-200/50 p-5 rounded-3xl shadow-sm mb-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex-1">
+          <h2 className="text-xs font-extrabold text-teal-800 mb-1 flex items-center gap-1.5">
+            <span>✨</span> 自分専用の防衛グッズを作製
+          </h2>
+          <p className="text-[10px] text-teal-950/80 leading-relaxed font-medium">
+            市販の防虫シートや独自の対策グッズをオリジナル名・持続期間で登録し、マイ間取りに美しく設置して一元管理できます。
+          </p>
+        </div>
+        <Link
+          href="/map?createCustom=true"
+          className="w-full sm:w-auto px-4 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white text-[11px] font-black rounded-xl text-center shadow-md transition-all whitespace-nowrap"
+        >
+          ✨ オリジナルグッズを作製する →
+        </Link>
       </div>
 
       {/* 3. 要交換（期限切れ間近） */}
