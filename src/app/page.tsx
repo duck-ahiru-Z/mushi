@@ -103,34 +103,34 @@ export default function HomePage() {
 
   // 2. 地域と言動シーズンに合わせたリアルタイム害虫活動指数
   const pestAlertInfo = useMemo(() => {
-    // 季節とエリアから独自のプレミアム気象警報を生成 (AI感を完全排除したプロ級テキスト)
+    // 季節とエリアから独自のプレミアム気象警報を生成 (AI感を排除したプロ級の簡潔テキスト)
     if (region === "hokkaido") {
       return {
         title: "アカイエカ・コバエ活動期 (北海道)",
-        desc: "現在、冷涼な北海道エリアでも日中気温が20度を超え、コバエや蚊が羽化しやすい環境が整っています。生ゴミの密封と水回りの換気を強化してください。",
+        desc: "北海道エリア：気温上昇に伴い、蚊やコバエが発生しやすい環境になります。生ゴミの密閉や水回りのこまめな換気が有効です。",
         bg: "from-sky-50 to-blue-50 border-sky-100 text-sky-900",
-        btnText: "北海道の対策を見る",
+        btnText: "対策情報を確認",
       };
     } else if (region === "okinawa") {
       return {
-        title: "【厳重警報】ゴキブリ・ムカデ超高活性期 (沖縄)",
-        desc: "沖縄エリアは亜熱帯気候により年間を通じて害虫リスクが極めて高い状態です。湿度の高いキッチンや浴室配管隙間、勝手口のホイホイ配置を再確認してください。",
+        title: "ゴキブリ・ムカデ活性期 (沖縄)",
+        desc: "沖縄エリア：温暖な気候のため通年で害虫発生リスクがあります。キッチン下や浴室配管の隙間など、侵入口の点検と防虫グッズの再配置を行ってください。",
         bg: "from-red-50 to-orange-50 border-red-150 text-red-950",
-        btnText: "沖縄の徹底防衛術を見る",
+        btnText: "対策情報を確認",
       };
     } else if (currentMonth >= 6 && currentMonth <= 9) {
       return {
-        title: "【警戒】梅雨・夏季の害虫活動最大化アラート",
-        desc: "気温28度、湿度75%を突破しました。ダニが布団やソファで急増するほか、黒ゴキブリが水回りで活発に動き回っています。速やかに対策シートを追加してください。",
+        title: "梅雨・夏季の害虫活動警戒アラート",
+        desc: "夏季警戒アラート：高温多湿の環境に入りました。ダニやゴキブリの活動期になりますので、寝具や水回りの対策グッズの設置・交換をお勧めします。",
         bg: "from-amber-50 to-orange-50 border-amber-100 text-amber-950",
-        btnText: "水回りの推奨防衛を見る",
+        btnText: "推奨対策を確認",
       };
     } else {
       return {
-        title: "【予防期】秋・冬の隙間侵入シャットアウト",
-        desc: "気温低下に伴い、外にいるカメムシやゴキブリが暖かい室内（窓サッシの隙間やエアコン配管口）に逃げ込みやすくなっています。侵入口の先回り対策が有効です。",
+        title: "秋冬の隙間侵入予防アラート",
+        desc: "秋冬予防アラート：外気温の低下に伴い、暖かい室内への害虫の侵入が増加します。エアコン配管口やサッシの隙間の点検が有効です。",
         bg: "from-slate-50 to-zinc-50 border-slate-200 text-slate-900",
-        btnText: "冬眠前の予防措置を見る",
+        btnText: "予防対策を確認",
       };
     }
   }, [region, currentMonth]);
@@ -176,7 +176,7 @@ export default function HomePage() {
         <div className="fixed inset-0 bg-slate-950/60 z-50 flex items-center justify-center p-5 backdrop-blur-md">
           <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-6 border border-slate-100 flex flex-col gap-5 animate-scale-up text-slate-800">
             <div className="text-center space-y-2">
-              <h2 className="text-sm font-black text-slate-900">BugGuard へお越しいただきありがとうございます</h2>
+              <h2 className="text-sm font-black text-slate-900">G-End へお越しいただきありがとうございます</h2>
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">安心で快適な暮らしの防衛パートナー</p>
             </div>
             
@@ -214,10 +214,10 @@ export default function HomePage() {
       <div className="flex justify-between items-center border-b pb-3 mb-5">
         <div>
           <h1 className="text-2xl font-black text-teal-600 tracking-tight flex items-center gap-1">
-            BugGuard
+            G-End
           </h1>
           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-            防衛ダッシュボード • 2026年 {currentMonth}月 シーズン
+            管理ダッシュボード • 2026年 {currentMonth}月
           </p>
         </div>
         
