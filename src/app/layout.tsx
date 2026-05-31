@@ -6,7 +6,7 @@ import BottomNav from "@/components/layouts/bottom-nav";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "BugGuard",
+  title: "G-End",
   description: "虫よけグッズの期限切れを間取りマップとプッシュ通知で防ぐアプリ",
   manifest: "/manifest.json", // PWA用のマニフェスト紐付け
 };
@@ -32,7 +32,7 @@ export default function RootLayout({
           <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
             <div className="flex items-center gap-8">
               <span className="text-xl font-black text-teal-600 tracking-tight flex items-center gap-1.5 select-none">
-                <span>🛡️</span> BugGuard
+                G-End
               </span>
               <nav className="flex items-center gap-6 text-sm font-bold text-slate-500">
                 <Link href="/" className="hover:text-teal-600 transition-colors py-2">ホーム</Link>

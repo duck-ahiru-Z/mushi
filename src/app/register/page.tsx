@@ -30,11 +30,36 @@ export default function RegisterPage() {
   const [isSimulatedUser, setIsSimulatedUser] = useState(false);
   const [simulatedEmail, setSimulatedEmail] = useState("");
 
-  // 1. 地域設定の初期読み込み
+  // 表示・通知の追加ステート
+  const [bugIllustrationsDisabled, setBugIllustrationsDisabled] = useState(false);
+  const [notifyOnDay, setNotifyOnDay] = useState(true);
+  const [notify3DaysBefore, setNotify3DaysBefore] = useState(true);
+  const [notify7DaysBefore, setNotify7DaysBefore] = useState(true);
+  const [notify30DaysBefore, setNotify30DaysBefore] = useState(false);
+  const [notifySeasonalAlert, setNotifySeasonalAlert] = useState(true);
+
+  // 1. 設定の初期読み込み
   useEffect(() => {
     const savedRegion = localStorage.getItem("user_region");
     if (savedRegion) {
       setRegion(savedRegion);
+    }
+
+    // イラスト非表示設定の初期読み込み
+    const savedDisabled = localStorage.getItem("bug_illustrations_disabled");
+    setBugIllustrationsDisabled(savedDisabled === "true");
+
+    // 通知設定の初期読み込み
+    const savedNotifySettings = localStorage.getItem("bug_guard_notification_settings");
+    if (savedNotifySettings) {
+      try {
+        const config = JSON.parse(savedNotifySettings);
+        if (config.notifyOnDay !== undefined) setNotifyOnDay(config.notifyOnDay);
+        if (config.notify3DaysBefore !== undefined) setNotify3DaysBefore(config.notify3DaysBefore);
+        if (config.notify7DaysBefore !== undefined) setNotify7DaysBefore(config.notify7DaysBefore);
+        if (config.notify30DaysBefore !== undefined) setNotify30DaysBefore(config.notify30DaysBefore);
+        if (config.notifySeasonalAlert !== undefined) setNotifySeasonalAlert(config.notifySeasonalAlert);
+      } catch {}
     }
   }, []);
 
@@ -67,6 +92,37 @@ export default function RegisterPage() {
     window.dispatchEvent(new Event("regionChanged"));
     setSuccess("地域設定を保存しました。ホームの害虫予報が同期されます。");
     setTimeout(() => setSuccess(""), 3000);
+  };
+
+  // イラスト表示設定変更保存
+  const handleToggleIllustrations = (disabled: boolean) => {
+    setBugIllustrationsDisabled(disabled);
+    localStorage.setItem("bug_illustrations_disabled", disabled ? "true" : "false");
+    localStorage.setItem("illustrations_setting_completed", "true");
+    window.dispatchEvent(new Event("safeModeChanged"));
+    setSuccess(disabled ? "セーフシールド（イラスト非表示）を有効にしました。" : "標準イラスト表示に戻しました。");
+    setTimeout(() => setSuccess(""), 3000);
+  };
+
+  // 通知タイミング変更保存
+  const saveNotificationSettings = (updates: {
+    notifyOnDay?: boolean;
+    notify3DaysBefore?: boolean;
+    notify7DaysBefore?: boolean;
+    notify30DaysBefore?: boolean;
+    notifySeasonalAlert?: boolean;
+  }) => {
+    const newConfig = {
+      notifyOnDay: updates.notifyOnDay !== undefined ? updates.notifyOnDay : notifyOnDay,
+      notify3DaysBefore: updates.notify3DaysBefore !== undefined ? updates.notify3DaysBefore : notify3DaysBefore,
+      notify7DaysBefore: updates.notify7DaysBefore !== undefined ? updates.notify7DaysBefore : notify7DaysBefore,
+      notify30DaysBefore: updates.notify30DaysBefore !== undefined ? updates.notify30DaysBefore : notify30DaysBefore,
+      notifySeasonalAlert: updates.notifySeasonalAlert !== undefined ? updates.notifySeasonalAlert : notifySeasonalAlert,
+    };
+    
+    localStorage.setItem("bug_guard_notification_settings", JSON.stringify(newConfig));
+    setSuccess("通知設定を更新しました。");
+    setTimeout(() => setSuccess(""), 2000);
   };
 
   // 4. Firebase認証 / シミュレーションログイン処理
@@ -103,12 +159,12 @@ export default function RegisterPage() {
         localStorage.setItem("simulated_user_email", email);
         setIsSimulatedUser(true);
         setSimulatedEmail(email);
-        setSuccess("【シミュレーション】アカウントを新規作成し、同期を開始しました！");
+        setSuccess("アカウントを作成し、データの同期を開始しました。");
       } else {
         localStorage.setItem("simulated_user_email", email);
         setIsSimulatedUser(true);
         setSimulatedEmail(email);
-        setSuccess("【シミュレーション】ログインに成功し、同期を開始しました！");
+        setSuccess("サインインが完了し、データの同期を開始しました。");
       }
     }
   };
@@ -151,30 +207,30 @@ export default function RegisterPage() {
       {/* ヘッダー */}
       <div className="border-b pb-3 mb-6">
         <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-          <span>⚙️</span> 設定とアカウント管理
+          設定とアカウント管理
         </h1>
-        <p className="text-xs text-slate-400 mt-1">クラウド同期と通知エリアの地域設定を設定できます。</p>
+        <p className="text-xs text-slate-400 mt-1">クラウドデータ同期と通知地域の設定を行えます。</p>
       </div>
 
       {/* エラー / 成功通知トースト風 */}
       {error && (
         <div className="bg-red-50 border border-red-100 text-red-800 text-xs p-3 rounded-xl mb-4 font-semibold animate-shake">
-          ⚠️ {error}
+          エラー: {error}
         </div>
       )}
       {success && (
         <div className="bg-emerald-50 border border-emerald-100 text-emerald-800 text-xs p-3 rounded-xl mb-4 font-semibold">
-          🎉 {success}
+          完了: {success}
         </div>
       )}
 
       {/* 📍 地域設定セクション */}
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 mb-6">
         <h2 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1.5">
-          <span>📍</span> 警報・天気用の地域設定
+          警報・天気用の地域設定
         </h2>
         <p className="text-xs text-slate-400 mb-3 leading-relaxed">
-          ここで指定した地域の気候データと時期を組み合わせて、ホーム画面の「害虫警報アラート」や「対策図鑑」の並び順が最適化されます。
+          指定した地域の気候データとシーズン情報に基づき、ホーム画面のアラートや対策図鑑の表示順が自動で最適化されます。
         </p>
         <div className="relative">
           <select
@@ -194,17 +250,120 @@ export default function RegisterPage() {
         </div>
       </div>
 
-      {/* 🔐 クラウド同期 (Firebase) セクション */}
+      {/* 🛡️ イラスト＆通知設定セクション */}
+      <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 mb-6">
+        <h2 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1.5">
+          表示と防衛アラート設定
+        </h2>
+        
+        {/* イラスト表示トグル */}
+        <div className="flex items-center justify-between py-3 border-b border-slate-50">
+          <div>
+            <h3 className="text-xs font-bold text-slate-800">セーフシールド機能 (イラスト非表示)</h3>
+            <p className="text-[10px] text-slate-400 mt-0.5">虫の画像が苦手な方向けに、イラストを優しい盾マークに変更します。</p>
+          </div>
+          <button
+            onClick={() => handleToggleIllustrations(!bugIllustrationsDisabled)}
+            className={`w-12 h-6 flex items-center rounded-full p-1 transition-all duration-300 focus:outline-none ${
+              bugIllustrationsDisabled ? "bg-emerald-500 justify-end" : "bg-slate-200 justify-start"
+            }`}
+          >
+            <span className="bg-white w-4 h-4 rounded-full shadow-md transition-all"></span>
+          </button>
+        </div>
+
+        {/* 通知タイミング設定 */}
+        <div className="pt-4 space-y-3">
+          <h3 className="text-xs font-bold text-slate-800 flex items-center gap-1">
+            期限切れ警告通知タイミング
+          </h3>
+          <p className="text-[10px] text-slate-400">設置した対策グッズの交換期限が近づいた際に、通知するしきい値を選択できます。</p>
+          
+          <div className="grid grid-cols-2 gap-3 pt-1">
+            <label className="flex items-center gap-2 p-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl cursor-pointer transition select-none text-[11px] font-bold text-slate-700">
+              <input
+                type="checkbox"
+                checked={notifyOnDay}
+                onChange={(e) => {
+                  setNotifyOnDay(e.target.checked);
+                  saveNotificationSettings({ notifyOnDay: e.target.checked });
+                }}
+                className="accent-teal-600 rounded"
+              />
+              期限当日
+            </label>
+
+            <label className="flex items-center gap-2 p-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl cursor-pointer transition select-none text-[11px] font-bold text-slate-700">
+              <input
+                type="checkbox"
+                checked={notify3DaysBefore}
+                onChange={(e) => {
+                  setNotify3DaysBefore(e.target.checked);
+                  saveNotificationSettings({ notify3DaysBefore: e.target.checked });
+                }}
+                className="accent-teal-600 rounded"
+              />
+              3日前警告
+            </label>
+
+            <label className="flex items-center gap-2 p-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl cursor-pointer transition select-none text-[11px] font-bold text-slate-700">
+              <input
+                type="checkbox"
+                checked={notify7DaysBefore}
+                onChange={(e) => {
+                  setNotify7DaysBefore(e.target.checked);
+                  saveNotificationSettings({ notify7DaysBefore: e.target.checked });
+                }}
+                className="accent-teal-600 rounded"
+              />
+              7日前警告
+            </label>
+
+            <label className="flex items-center gap-2 p-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl cursor-pointer transition select-none text-[11px] font-bold text-slate-700">
+              <input
+                type="checkbox"
+                checked={notify30DaysBefore}
+                onChange={(e) => {
+                  setNotify30DaysBefore(e.target.checked);
+                  saveNotificationSettings({ notify30DaysBefore: e.target.checked });
+                }}
+                className="accent-teal-600 rounded"
+              />
+              30日前警告
+            </label>
+          </div>
+        </div>
+
+        {/* 季節アラート通知トグル */}
+        <div className="flex items-center justify-between pt-4 mt-3 border-t border-slate-50">
+          <div>
+            <h3 className="text-xs font-bold text-slate-800">季節の気候脅威アラート</h3>
+            <p className="text-[10px] text-slate-400 mt-0.5">登録エリアの気候変化に合わせた害虫活発化の気象警報を受け取ります。</p>
+          </div>
+          <button
+            onClick={() => {
+              setNotifySeasonalAlert(!notifySeasonalAlert);
+              saveNotificationSettings({ notifySeasonalAlert: !notifySeasonalAlert });
+            }}
+            className={`w-12 h-6 flex items-center rounded-full p-1 transition-all duration-300 focus:outline-none ${
+              notifySeasonalAlert ? "bg-teal-600 justify-end" : "bg-slate-200 justify-start"
+            }`}
+          >
+            <span className="bg-white w-4 h-4 rounded-full shadow-md transition-all"></span>
+          </button>
+        </div>
+      </div>
+
+      {/* クラウド同期 (Firebase) セクション */}
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 mb-6 flex-1 flex flex-col justify-between">
         <div>
           <h2 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1.5">
-            <span>☁️</span> データベース同期 (Vercel & Firebase)
+            データベース同期 (Vercel & Firebase)
           </h2>
 
           {isUserLoggedIn ? (
             // ログイン済みUI
             <div className="bg-emerald-50/50 border border-emerald-100 p-4 rounded-xl text-center">
-              <span className="text-3xl">🛡️</span>
               <h3 className="font-bold text-xs text-emerald-950 mt-2">クラウド保護が有効です</h3>
               <p className="text-[10px] text-emerald-800 mt-1 font-mono">
                 ログインアカウント: {userEmail}
@@ -246,7 +405,7 @@ export default function RegisterPage() {
                   type="submit"
                   className="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl transition shadow-md flex justify-center items-center gap-1.5"
                 >
-                  <span>{isSignUp ? "🚀 アカウントを新規登録" : "🔑 サインインして同期開始"}</span>
+                  <span>{isSignUp ? "アカウントを新規登録" : "サインインして同期開始"}</span>
                 </button>
               </form>
 

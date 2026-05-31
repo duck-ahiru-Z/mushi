@@ -36,7 +36,7 @@ export async function GET(request: Request) {
     });
 
     // 本番環境シミュレーション：ここでFCM Admin SDKや外部APIを使用して通知トークン（user.fcmTokens）宛てにPush通知を送信します。
-    console.log(`[BugGuard Cron] 期限切れ間近のグッズを ${notifyingTraps.length} 個検出しました。`);
+    console.log(`[G-End Cron] 期限切れ間近のグッズを ${notifyingTraps.length} 個検出しました。`);
     
     notifyingTraps.forEach((trap) => {
       console.log(`FCM送信シミュレーション: [ユーザー: ${trap.userId || "ゲスト"}] -> 「${trap.name}」期限: ${trap.expirationDate}`);
