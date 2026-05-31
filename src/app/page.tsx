@@ -5,6 +5,8 @@ import { useTraps } from "@/hooks/usetraps";
 import { useFcmToken } from "@/hooks/useFcmToken";
 import { detectJapanRegion } from "@/lib/utils";
 import { TrapIcon, PestIcon } from "@/components/vector-icons";
+import { auth } from "@/lib/firebase/config";
+import { onAuthStateChanged } from "firebase/auth";
 
 const REGION_NAMES: Record<string, string> = {
   hokkaido: "北海道エリア",
@@ -19,13 +21,33 @@ const REGION_NAMES: Record<string, string> = {
 };
 
 export default function HomePage() {
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // ログイン状態およびシミュレーションログイン状態の監視
+  useEffect(() => {
+    try {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user) {
+          setUserId(user.uid);
+        } else {
+          const simEmail = localStorage.getItem("simulated_user_email");
+          setUserId(simEmail ? `sim-${simEmail}` : null);
+        }
+      });
+      return () => unsubscribe();
+    } catch {
+      const simEmail = localStorage.getItem("simulated_user_email");
+      setUserId(simEmail ? `sim-${simEmail}` : null);
+    }
+  }, []);
+
   const {
     rooms,
     traps,
     deleteTrap,
     getTrapIcon,
     isInitialized,
-  } = useTraps(null);
+  } = useTraps(userId);
 
   const {
     permission,

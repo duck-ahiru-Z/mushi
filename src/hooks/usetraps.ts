@@ -1,11 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { Room, Trap } from "@/types/trap";
-import { saveTrapData, fetchTraps } from "@/lib/firebase/firestore";
-
-export type ExtendedRoom = Room & {
-  floor: number;
-};
+import { Room, Trap, ExtendedRoom } from "@/types/trap";
+import { saveTrapData, fetchTraps, saveRoomsData, saveFloorsData, fetchUserData } from "@/lib/firebase/firestore";
 
 export interface CustomTrapType {
   name: string;
@@ -43,32 +39,54 @@ export function useTraps(userId: string | null = null) {
   // 1. 初期データ読み込み
   useEffect(() => {
     const initializeData = async () => {
-      // 部屋
-      const savedRooms = localStorage.getItem("map_rooms_data");
-      if (savedRooms) {
+      let loadedRooms: ExtendedRoom[] = [];
+      let loadedFloors: number[] = [1, 2];
+
+      if (userId) {
+        // ログインモード：Firestoreから間取り・階数を取得
         try {
-          const parsed = JSON.parse(savedRooms);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setRooms(parsed);
-          } else {
-            setRooms(DEFAULT_ROOMS);
+          const userData = await fetchUserData(userId);
+          if (userData.rooms && userData.rooms.length > 0) {
+            loadedRooms = userData.rooms;
           }
-        } catch {
-          setRooms(DEFAULT_ROOMS);
+          if (userData.floors && userData.floors.length > 0) {
+            loadedFloors = userData.floors;
+          }
+        } catch (err) {
+          console.error("Failed to load user layout from firestore:", err);
         }
-      } else {
-        setRooms(DEFAULT_ROOMS);
       }
 
-      // 階層
-      const savedFloors = localStorage.getItem("map_floors_data");
-      if (savedFloors) {
-        try {
-          setFloors(JSON.parse(savedFloors));
-        } catch {
-          setFloors([1, 2]);
+      // Firestoreにデータがなかった、またはゲストモードの場合、LocalStorageから取得
+      if (loadedRooms.length === 0) {
+        const savedRooms = localStorage.getItem("map_rooms_data");
+        if (savedRooms) {
+          try {
+            const parsed = JSON.parse(savedRooms);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              loadedRooms = parsed;
+            } else {
+              loadedRooms = DEFAULT_ROOMS;
+            }
+          } catch {
+            loadedRooms = DEFAULT_ROOMS;
+          }
+        } else {
+          loadedRooms = DEFAULT_ROOMS;
         }
       }
+
+      if (loadedFloors.length === 2 && loadedFloors[0] === 1 && loadedFloors[1] === 2) {
+        const savedFloors = localStorage.getItem("map_floors_data");
+        if (savedFloors) {
+          try {
+            loadedFloors = JSON.parse(savedFloors);
+          } catch {}
+        }
+      }
+
+      setRooms(loadedRooms);
+      setFloors(loadedFloors);
 
       // カスタムグッズ種類
       const savedCustomTypes = localStorage.getItem("custom_trap_types");
@@ -83,7 +101,6 @@ export function useTraps(userId: string | null = null) {
       // グッズ一覧
       try {
         const loadedTraps = await fetchTraps(userId);
-        // Firebase or LocalStorage から取得したものを同期
         setTraps(loadedTraps);
       } catch (err) {
         console.error("Failed to load traps:", err);
@@ -95,24 +112,31 @@ export function useTraps(userId: string | null = null) {
     initializeData();
   }, [userId]);
 
-  // 2. 部屋・階層・カスタム種類のローカルストレージ同期
+  // 2. 部屋・階層・カスタム種類の同期 (Local ＆ Firestore)
   useEffect(() => {
     if (isInitialized) {
       localStorage.setItem("map_rooms_data", JSON.stringify(rooms));
+      if (userId) {
+        saveRoomsData(rooms, userId).catch(err => console.error("Failed to sync rooms to firestore:", err));
+      }
     }
-  }, [rooms, isInitialized]);
+  }, [rooms, isInitialized, userId]);
 
   useEffect(() => {
     if (isInitialized) {
       localStorage.setItem("map_floors_data", JSON.stringify(floors));
+      if (userId) {
+        saveFloorsData(floors, userId).catch(err => console.error("Failed to sync floors to firestore:", err));
+      }
     }
-  }, [floors, isInitialized]);
+  }, [floors, isInitialized, userId]);
 
   useEffect(() => {
     if (isInitialized) {
       localStorage.setItem("custom_trap_types", JSON.stringify(customTrapTypes));
     }
   }, [customTrapTypes, isInitialized]);
+
 
   // 3. 部屋の追加
   const addRoom = useCallback((name: string, type: string = "living") => {

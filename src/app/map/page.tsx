@@ -1,13 +1,35 @@
 "use client";
 import { useState, useEffect, useRef, useMemo } from "react";
-import { useTraps, ExtendedRoom } from "@/hooks/usetraps";
-import { Trap } from "@/types/trap";
+import { useTraps } from "@/hooks/usetraps";
+import { Trap, ExtendedRoom } from "@/types/trap";
 import { TrapIcon } from "@/components/vector-icons";
+import { auth } from "@/lib/firebase/config";
+import { onAuthStateChanged } from "firebase/auth";
 
 type ResizeDirection = "n" | "s" | "e" | "w" | "nw" | "ne" | "sw" | "se";
 
 export default function MapPage() {
-  // グローバル状態管理フックを呼び出す (ゲストモード: null)
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // ログイン状態およびシミュレーションログイン状態の監視
+  useEffect(() => {
+    try {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user) {
+          setUserId(user.uid);
+        } else {
+          const simEmail = localStorage.getItem("simulated_user_email");
+          setUserId(simEmail ? `sim-${simEmail}` : null);
+        }
+      });
+      return () => unsubscribe();
+    } catch {
+      const simEmail = localStorage.getItem("simulated_user_email");
+      setUserId(simEmail ? `sim-${simEmail}` : null);
+    }
+  }, []);
+
+  // グローバル状態管理フックを呼び出す (ログイン中の userId を引き渡し)
   const {
     rooms,
     setRooms,
@@ -27,7 +49,7 @@ export default function MapPage() {
     addCustomTrapType,
     updateTrapPosition,
     isInitialized,
-  } = useTraps(null);
+  } = useTraps(userId);
 
   const [mode, setMode] = useState<"place" | "edit">("place");
   const containerRef = useRef<HTMLDivElement>(null);
