@@ -591,12 +591,12 @@ export default function MapPage() {
             <h2 className="text-xs font-extrabold text-slate-400">🛠️ 配置するグッズを選択</h2>
           </div>
 
-          {/* ✨ オリジナルカスタムグッズ作製の大アピールプレミアムボタン */}
+          {/*  オリジナルカスタムグッズ作製の大アピールプレミアムボタン */}
           <button
             onClick={() => setShowCustomModal(true)}
             className="w-full py-3 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white rounded-xl text-xs font-black shadow-md transition flex items-center justify-center gap-1.5 active:scale-[0.98] animate-pulse-subtle"
           >
-            <span>✨</span> 自分専用のオリジナル防衛グッズを作製する
+            <span></span> 自分専用のオリジナル防衛グッズを作製する
           </button>
 
           <div className="flex flex-col gap-2">
