@@ -56,6 +56,24 @@ export default function RootLayout({
         <div className="md:hidden">
           <BottomNav />
         </div>
+        {/* PWA サービスワーカー自動登録用スクリプト */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/firebase-messaging-sw.js')
+                    .then(function(reg) {
+                      console.log('G-End Service Worker registered with scope:', reg.scope);
+                    })
+                    .catch(function(err) {
+                      console.error('G-End Service Worker registration failed:', err);
+                    });
+                });
+              }
+            `
+          }}
+        />
       </body>
     </html>
   );

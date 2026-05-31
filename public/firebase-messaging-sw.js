@@ -3,23 +3,23 @@
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
-  console.log("BugGuard Service Worker: Installed successfully");
+  console.log("G-End Service Worker: Installed successfully");
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim());
-  console.log("BugGuard Service Worker: Activated successfully");
+  console.log("G-End Service Worker: Activated successfully");
 });
 
 // バックグラウンドプッシュメッセージの受信リスナー
 self.addEventListener("push", (event) => {
-  console.log("BugGuard Service Worker: Push message received", event);
+  console.log("G-End Service Worker: Push message received", event);
   
   let data = {
-    title: "🛡️ BugGuard 防衛アラート",
+    title: "🛡️ G-End 防衛アラート",
     body: "対策グッズの交換期限が到来しました！",
     icon: "/favicon.ico",
-    tag: "bugguard-push-alert"
+    tag: "gend-push-alert"
   };
 
   if (event.data) {

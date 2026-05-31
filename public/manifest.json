@@ -1,12 +1,12 @@
 {
-  "theme_color": "#0d9488",
-  "background_color": "#f8fafc",
+  "theme_color": "#09090b",
+  "background_color": "#09090b",
   "display": "standalone",
   "scope": "/",
   "start_url": "/",
-  "name": "BugGuard - 虫対策期限管理アプリ",
-  "short_name": "BugGuard",
-  "description": "虫よけグッズの期限切れを間取りマップとプッシュ通知で防ぐアプリ",
+  "name": "G-End - 害虫対策最終防衛システム",
+  "short_name": "G-End",
+  "description": "害虫対策グッズの交換期限を間取りマップとプッシュ通知で完全管理し、家全体の防衛体制を維持するシステム",
   "icons": [
     {
       "src": "/icons/icon-192x192.png",
