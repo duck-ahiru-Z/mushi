@@ -207,7 +207,7 @@ export default function RegisterPage() {
       {/* ヘッダー */}
       <div className="border-b pb-3 mb-6">
         <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-          <span>⚙️</span> 設定とアカウント管理
+          設定とアカウント管理
         </h1>
         <p className="text-xs text-slate-400 mt-1">クラウド同期と通知エリアの地域設定を設定できます。</p>
       </div>
@@ -215,19 +215,19 @@ export default function RegisterPage() {
       {/* エラー / 成功通知トースト風 */}
       {error && (
         <div className="bg-red-50 border border-red-100 text-red-800 text-xs p-3 rounded-xl mb-4 font-semibold animate-shake">
-          ⚠️ {error}
+          エラー: {error}
         </div>
       )}
       {success && (
         <div className="bg-emerald-50 border border-emerald-100 text-emerald-800 text-xs p-3 rounded-xl mb-4 font-semibold">
-          🎉 {success}
+          完了: {success}
         </div>
       )}
 
       {/* 📍 地域設定セクション */}
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 mb-6">
         <h2 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1.5">
-          <span>📍</span> 警報・天気用の地域設定
+          警報・天気用の地域設定
         </h2>
         <p className="text-xs text-slate-400 mb-3 leading-relaxed">
           ここで指定した地域の気候データと時期を組み合わせて、ホーム画面の「害虫警報アラート」や「対策図鑑」の並び順が最適化されます。
@@ -253,7 +253,7 @@ export default function RegisterPage() {
       {/* 🛡️ イラスト＆通知設定セクション */}
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 mb-6">
         <h2 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1.5">
-          <span>🛡️</span> 表示と防衛アラート設定
+          表示と防衛アラート設定
         </h2>
         
         {/* イラスト表示トグル */}
@@ -275,7 +275,7 @@ export default function RegisterPage() {
         {/* 通知タイミング設定 */}
         <div className="pt-4 space-y-3">
           <h3 className="text-xs font-bold text-slate-800 flex items-center gap-1">
-            <span>🔔</span> 期限切れ警告通知タイミング
+            期限切れ警告通知タイミング
           </h3>
           <p className="text-[10px] text-slate-400">設置した対策グッズの交換期限が近づいた際に、通知するしきい値を選択できます。</p>
           
@@ -354,17 +354,16 @@ export default function RegisterPage() {
         </div>
       </div>
 
-      {/* 🔐 クラウド同期 (Firebase) セクション */}
+      {/* クラウド同期 (Firebase) セクション */}
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 mb-6 flex-1 flex flex-col justify-between">
         <div>
           <h2 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1.5">
-            <span>☁️</span> データベース同期 (Vercel & Firebase)
+            データベース同期 (Vercel & Firebase)
           </h2>
 
           {isUserLoggedIn ? (
             // ログイン済みUI
             <div className="bg-emerald-50/50 border border-emerald-100 p-4 rounded-xl text-center">
-              <span className="text-3xl">🛡️</span>
               <h3 className="font-bold text-xs text-emerald-950 mt-2">クラウド保護が有効です</h3>
               <p className="text-[10px] text-emerald-800 mt-1 font-mono">
                 ログインアカウント: {userEmail}
@@ -406,7 +405,7 @@ export default function RegisterPage() {
                   type="submit"
                   className="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl transition shadow-md flex justify-center items-center gap-1.5"
                 >
-                  <span>{isSignUp ? "🚀 アカウントを新規登録" : "🔑 サインインして同期開始"}</span>
+                  <span>{isSignUp ? "アカウントを新規登録" : "サインインして同期開始"}</span>
                 </button>
               </form>
 
