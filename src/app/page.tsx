@@ -319,7 +319,7 @@ export default function HomePage() {
                 onClick={triggerTestNotification}
                 className="mt-3 w-full py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-[10px] font-bold rounded-lg transition shadow"
               >
-                テスト通知を発火
+                テスト通知を送信する
               </button>
             ) : (
               <span className="text-[8px] text-red-600 mt-3 font-bold text-right block">ブロック中</span>

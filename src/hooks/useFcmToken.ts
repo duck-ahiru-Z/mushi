@@ -94,14 +94,35 @@ export function useFcmToken() {
       vibrate: [200, 100, 200],
     };
 
-    // サービスワーカー経由、または直接表示
-    if ("serviceWorker" in navigator && "showNotification" in ServiceWorkerRegistration.prototype) {
-      navigator.serviceWorker.ready.then((registration) => {
-        registration.showNotification(title, options);
-      });
-    } else {
-      new Notification(title, options);
-    }
+    // サービスワーカー経由、または直接表示 (SW準備未完了時は即座にネイティブ表示にフォールバックして確実に発火させる)
+    const fireNotification = () => {
+      try {
+        if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.ready
+            .then((registration) => {
+              registration.showNotification(title, options).catch((err) => {
+                console.warn("SW showNotification failed, using native:", err);
+                new Notification(title, options);
+              });
+            })
+            .catch((err) => {
+              console.warn("SW ready failed, using native:", err);
+              new Notification(title, options);
+            });
+        } else {
+          new Notification(title, options);
+        }
+      } catch (err) {
+        console.error("Notification fallback failed:", err);
+        try {
+          new Notification(title, options);
+        } catch (e) {
+          alert("通知の送信に失敗しました。ブラウザの通知許可がブロックされていないかご確認ください。");
+        }
+      }
+    };
+
+    fireNotification();
   }, [permission, isSupported]);
 
   // 4. 交換期限が迫った時のリマインダー通知をスケジュール（シミュレート）

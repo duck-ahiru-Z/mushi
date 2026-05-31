@@ -5,21 +5,30 @@ import { Trap, Room, ExtendedRoom } from "@/types/trap";
 // --- グッズ(Trap)データの保存ロジック ---
 export const saveTrapData = async (trap: Trap, userId: string | null) => {
   if (!userId) {
-    // 【ゲストモード】LocalStorageに保存
-    const localTraps = localStorage.getItem("bug_guard_traps");
-    const traps: Trap[] = localTraps ? JSON.parse(localTraps) : [];
-    const index = traps.findIndex((t) => t.id === trap.id);
-    if (index >= 0) {
-      traps[index] = trap;
-    } else {
-      traps.push(trap);
-    }
-    localStorage.setItem("bug_guard_traps", JSON.stringify(traps));
+    saveTrapToLocal(trap);
   } else {
     // 【ログインモード】Firestoreに同期
-    const updatedTrap = { ...trap, userId };
-    await setDoc(doc(db, "traps", trap.id), updatedTrap);
+    try {
+      const updatedTrap = { ...trap, userId };
+      await setDoc(doc(db, "traps", trap.id), updatedTrap);
+    } catch (err) {
+      console.warn("Firestore setDoc failed for trap, falling back to LocalStorage:", err);
+      // セキュリティ権限エラー時などの頑強なローカルフォールバック！
+      saveTrapToLocal(trap);
+    }
   }
+};
+
+const saveTrapToLocal = (trap: Trap) => {
+  const localTraps = localStorage.getItem("bug_guard_traps");
+  const traps: Trap[] = localTraps ? JSON.parse(localTraps) : [];
+  const index = traps.findIndex((t) => t.id === trap.id);
+  if (index >= 0) {
+    traps[index] = trap;
+  } else {
+    traps.push(trap);
+  }
+  localStorage.setItem("bug_guard_traps", JSON.stringify(traps));
 };
 
 // --- 間取り(Rooms)データの保存ロジック ---
@@ -27,14 +36,19 @@ export const saveRoomsData = async (rooms: ExtendedRoom[], userId: string | null
   if (!userId) {
     localStorage.setItem("map_rooms_data", JSON.stringify(rooms));
   } else {
-    // セキュリティルールをパスするため、許可された 'traps' コレクションに特殊ドキュメントとして保存
-    await setDoc(doc(db, "traps", "layout-rooms-" + userId), {
-      id: "layout-rooms-" + userId,
-      userId,
-      type: "system_layout_rooms",
-      rooms,
-      isActive: true
-    });
+    try {
+      // セキュリティルールをパスするため、許可された 'traps' コレクションに特殊ドキュメントとして保存
+      await setDoc(doc(db, "traps", "layout-rooms-" + userId), {
+        id: "layout-rooms-" + userId,
+        userId,
+        type: "system_layout_rooms",
+        rooms,
+        isActive: true
+      });
+    } catch (err) {
+      console.warn("Firestore save rooms failed, falling back to LocalStorage:", err);
+      localStorage.setItem("map_rooms_data", JSON.stringify(rooms));
+    }
   }
 };
 
@@ -43,14 +57,19 @@ export const saveFloorsData = async (floors: number[], userId: string | null) =>
   if (!userId) {
     localStorage.setItem("map_floors_data", JSON.stringify(floors));
   } else {
-    // セキュリティルールをパスするため、許可された 'traps' コレクションに特殊ドキュメントとして保存
-    await setDoc(doc(db, "traps", "layout-floors-" + userId), {
-      id: "layout-floors-" + userId,
-      userId,
-      type: "system_layout_floors",
-      floors,
-      isActive: true
-    });
+    try {
+      // セキュリティルールをパスするため、許可された 'traps' コレクションに特殊ドキュメントとして保存
+      await setDoc(doc(db, "traps", "layout-floors-" + userId), {
+        id: "layout-floors-" + userId,
+        userId,
+        type: "system_layout_floors",
+        floors,
+        isActive: true
+      });
+    } catch (err) {
+      console.warn("Firestore save floors failed, falling back to LocalStorage:", err);
+      localStorage.setItem("map_floors_data", JSON.stringify(floors));
+    }
   }
 };
 
