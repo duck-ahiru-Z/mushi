@@ -430,12 +430,12 @@ export default function MapPage() {
       {/* ⚠️ Undo 復元トースト通知 */}
       {showUndoToast && (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 text-white text-xs px-4 py-3 rounded-2xl shadow-xl border border-slate-700/50 flex items-center gap-3 backdrop-blur-md animate-slide-up">
-          <span>⚠️ 部屋を削除しました（設置済みの防衛も一時解除）</span>
+          <span>部屋を削除しました（設置済みの防衛も一時解除）</span>
           <button
             onClick={handleUndoRoom}
             className="bg-teal-500 hover:bg-teal-600 text-slate-950 font-black px-2.5 py-1 rounded-lg transition"
           >
-            元に戻す (Undo)
+            元に戻す
           </button>
         </div>
       )}
@@ -473,7 +473,7 @@ export default function MapPage() {
                 onClick={handleRemoveTrap}
                 className="flex-1 py-2.5 bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1"
               >
-                <span>🗑️</span> グッズを回収（削除）
+                グッズを回収
               </button>
               <button
                 onClick={() => setSelectedTrap(null)}
@@ -491,7 +491,7 @@ export default function MapPage() {
         <div className="fixed inset-0 bg-slate-950/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-5 border border-slate-100 flex flex-col gap-4 animate-scale-up">
             <div>
-              <h3 className="font-black text-sm text-slate-900">🛡️ オリジナルグッズの登録</h3>
+              <h3 className="font-black text-sm text-slate-900">オリジナルグッズの登録</h3>
               <p className="text-[10px] text-slate-400">自分だけのカスタム虫よけ・罠を登録してマップに置けます。</p>
             </div>
 
@@ -561,7 +561,7 @@ export default function MapPage() {
 
       {/* ヘッダー */}
       <h1 className="text-xl font-bold border-b pb-2 mb-4 text-slate-900 flex items-center gap-2">
-        <span>🏡</span> マイ間取り・防衛グッズ配置
+        マイ間取り・防衛グッズ配置
       </h1>
 
       {/* モード切り替え */}
@@ -572,7 +572,7 @@ export default function MapPage() {
             mode === "place" ? "bg-teal-600 text-white border-teal-600 shadow" : "bg-white text-slate-600 border-slate-200"
           }`}
         >
-          📍 グッズを配置する (配置モード)
+          グッズを配置する (配置モード)
         </button>
         <button
           onClick={() => setMode("edit")}
@@ -580,7 +580,7 @@ export default function MapPage() {
             mode === "edit" ? "bg-indigo-600 text-white border-indigo-600 shadow" : "bg-white text-slate-600 border-slate-200"
           }`}
         >
-          🛠️ 間取りを編集する (編集モード)
+          間取りを編集する (編集モード)
         </button>
       </div>
 
@@ -637,13 +637,13 @@ export default function MapPage() {
             </div>
           </div>
           <p className="text-[10px] text-teal-600 font-bold bg-teal-50/50 p-2 rounded-lg leading-normal">
-            💡 <strong>配置方法:</strong> 上のリストから設置したいグッズを選び、下の部屋マップの<strong>「置きたい場所」を直接タップ</strong>してください！
+            <strong>配置方法:</strong> 上のリストから設置したいグッズを選び、下の部屋マップの<strong>「置きたい場所」を直接タップ</strong>してください！
           </p>
         </div>
       ) : (
         <div className="bg-white p-4 rounded-2xl shadow-sm mb-4 border border-slate-100 space-y-3">
           <div>
-            <h2 className="text-xs font-bold text-slate-400 mb-2">📐 全体のキャンバスサイズ（微調整用）</h2>
+            <h2 className="text-xs font-bold text-slate-400 mb-2">全体のキャンバスサイズ（微調整用）</h2>
             <div className="flex items-center gap-4 text-xs bg-slate-50 p-2 rounded-xl w-fit">
               <label>横幅: <input type="number" min="200" step="50" value={houseSize.width} onChange={(e) => setHouseSize({ ...houseSize, width: Math.max(200, Number(e.target.value)) })} className="w-16 p-1 border rounded bg-white text-center font-mono" /> px</label>
               <label>高さ: <input type="number" min="200" step="50" value={houseSize.height} onChange={(e) => setHouseSize({ ...houseSize, height: Math.max(200, Number(e.target.value)) })} className="w-16 p-1 border rounded bg-white text-center font-mono" /> px</label>
@@ -651,7 +651,7 @@ export default function MapPage() {
           </div>
           <hr className="border-slate-100" />
           <div>
-            <h2 className="text-xs font-bold text-slate-400 mb-2">➕ {getFloorName(currentFloor)} に新しい部屋を追加</h2>
+            <h2 className="text-xs font-bold text-slate-400 mb-2">{getFloorName(currentFloor)} に新しい部屋を追加</h2>
             <div className="flex gap-2">
               <input
                 type="text"
@@ -675,7 +675,7 @@ export default function MapPage() {
       <div className="flex items-center justify-between gap-2 mb-3 bg-slate-100 p-2 rounded-2xl flex-wrap">
         {/* 左: 階数操作 */}
         <div className="flex items-center gap-1.5">
-          <button onClick={handleAddLowerFloor} className="px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-sky-600 hover:bg-sky-700 text-white transition">⬇️ 地下</button>
+          <button onClick={handleAddLowerFloor} className="px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-sky-600 hover:bg-sky-700 text-white transition">地下階を追加</button>
           <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 overflow-x-auto max-w-[150px] sm:max-w-none">
             {floors.sort((a, b) => a - b).map((floor) => (
               <button
@@ -689,21 +689,21 @@ export default function MapPage() {
               </button>
             ))}
           </div>
-          <button onClick={handleAddUpperFloor} className="px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-orange-600 hover:bg-orange-700 text-white transition">⬆️ 階追加</button>
+          <button onClick={handleAddUpperFloor} className="px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-orange-600 hover:bg-orange-700 text-white transition">地上階を追加</button>
           
           {mode === "edit" && floors.length > 1 && (
             <button
               onClick={handleDeleteCurrentFloor}
               className="px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition"
             >
-              🗑️ この階を削除
+              この階を削除
             </button>
           )}
         </div>
 
-        {/* 右: 🔍 ズーム調整ボタン */}
+        {/* 右: ズーム調整ボタン */}
         <div className="flex items-center gap-1 bg-white p-1.5 rounded-xl border border-slate-200 shadow-sm ml-auto">
-          <span className="text-[10px] font-black text-slate-400 px-1">🔍 ズーム:</span>
+          <span className="text-[10px] font-black text-slate-400 px-1">ズーム:</span>
           <button
             onClick={() => setZoom(Math.max(0.4, Number((zoom - 0.1).toFixed(2))))}
             className="w-6 h-6 flex items-center justify-center bg-slate-50 hover:bg-slate-200 border rounded-lg text-xs font-bold"
@@ -784,10 +784,10 @@ export default function MapPage() {
                   {mode === "edit" && (
                     <button
                       onClick={(e) => handleDeleteRoomClick(room.id, room.name, e)}
-                      className="pointer-events-auto bg-red-100 hover:bg-red-200 text-red-700 w-5 h-5 flex items-center justify-center rounded-lg text-[9px] font-black transition z-30"
+                      className="pointer-events-auto bg-red-100 hover:bg-red-200 text-red-700 w-10 h-5 flex items-center justify-center rounded-lg text-[9px] font-bold transition z-30"
                       title="この部屋を削除"
                     >
-                      🗑️
+                      削除
                     </button>
                   )}
                 </div>
