@@ -57,15 +57,22 @@ export function useFcmToken() {
   }, [isSupported]);
 
   // 3. テスト用のネイティブ風通知を今すぐ送る
-  const triggerTestNotification = useCallback(() => {
+  // 3. テスト用のネイティブ風通知を今すぐ送る
+  const triggerTestNotification = useCallback(async () => {
     if (!isSupported) {
-      alert("通知機能がサポートされていません。");
+      alert("お使いのブラウザやデバイスは、ウェブプッシュ通知機能に対応していません。");
       return;
     }
 
-    if (permission !== "granted") {
-      alert("通知許可が与えられていません。まず通知を許可してください。");
-      return;
+    let currentPermission = permission;
+    if (currentPermission !== "granted") {
+      // 未許可の場合は、自動的に許可を求めるプロンプトを起動！
+      const result = await requestNotificationPermission();
+      currentPermission = result;
+      if (result !== "granted") {
+        alert("通知が許可されなかったため、テスト通知を送信できませんでした。ブラウザの設定から通知を許可してください。");
+        return;
+      }
     }
 
     // 保存された通知タイミング設定を取得して文言に連動
@@ -84,25 +91,46 @@ export function useFcmToken() {
     const alertsText = activeAlerts.length > 0 ? activeAlerts.join(", ") : "なし";
 
     // ネイティブ通知オプション
-    const title = "G-End アラート";
+    const title = "G-End 防衛通知テスト";
     const options: any = {
-      body: `対策グッズの交換期限が近づいています。設置マップを確認して交換してください。(有効な通知設定: ${alertsText})`,
+      body: `期限切れ警告のリマインダー通知は正常に動作しています！(通知スケジュール: ${alertsText})`,
       icon: "/favicon.ico",
       badge: "/favicon.ico",
-      tag: "g-end-alert",
+      tag: "g-end-alert-test",
       requireInteraction: true,
       vibrate: [200, 100, 200],
     };
 
-    // サービスワーカー経由、または直接表示
-    if ("serviceWorker" in navigator && "showNotification" in ServiceWorkerRegistration.prototype) {
-      navigator.serviceWorker.ready.then((registration) => {
-        registration.showNotification(title, options);
-      });
-    } else {
-      new Notification(title, options);
-    }
-  }, [permission, isSupported]);
+    // サービスワーカー経由、または直接表示 (SW準備未完了時は即座にネイティブ表示にフォールバックして確実に発火させる)
+    const fireNotification = () => {
+      try {
+        if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.ready
+            .then((registration) => {
+              registration.showNotification(title, options).catch((err) => {
+                console.warn("SW showNotification failed, using native:", err);
+                new Notification(title, options);
+              });
+            })
+            .catch((err) => {
+              console.warn("SW ready failed, using native:", err);
+              new Notification(title, options);
+            });
+        } else {
+          new Notification(title, options);
+        }
+      } catch (err) {
+        console.error("Notification fallback failed:", err);
+        try {
+          new Notification(title, options);
+        } catch (e) {
+          alert("通知の送信に失敗しました。ブラウザの設定で通知がブロックされていないかご確認ください。");
+        }
+      }
+    };
+
+    fireNotification();
+  }, [permission, isSupported, requestNotificationPermission]);
 
   // 4. 交換期限が迫った時のリマインダー通知をスケジュール（シミュレート）
   const scheduleReminder = useCallback((trapName: string, daysLeft: number) => {

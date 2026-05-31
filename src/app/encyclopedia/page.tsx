@@ -23,7 +23,7 @@ const BUG_DATABASE: BugProfile[] = [
     activeMonths: [5, 6, 7, 8, 9, 10],
     danger: "high",
     description: "暗く、暖かく、湿気の多い隙間を好みます。1匹見かけると数十匹潜んでいる可能性があり、繁殖力が極めて高い衛生害虫です。",
-    hidingSpot: "キッチンのシンク下、冷蔵庫の裏、電子レンジの底、洗面台の配管隙間",
+    hidingSpot: "キッチンのシンク下、冷蔵庫の裏、電子レンジ of 底、洗面台 of 配管隙間",
     goods: ["ゴキブリホイホイ（捕獲用）", "ブラックキャップ（毒餌剤・巣ごと退治）", "ゴキジェットプロ（即効スプレー）"],
     tips: "ブラックキャップを「壁際」や「家電の温かい裏」に多めに置くことで、巣に持ち帰らせて全滅を狙うのが最も効果的です。"
   },
@@ -150,7 +150,7 @@ const BUG_DATABASE: BugProfile[] = [
   },
   {
     id: "termite",
-    name: "シロアリ（ヤマトシロアリ）",
+    name: "シロアリ",
     emoji: "🐜",
     activeMonths: [4, 5, 6, 7],
     danger: "high",
@@ -194,7 +194,7 @@ const BUG_DATABASE: BugProfile[] = [
   },
   {
     id: "shiba_mushi",
-    name: "シバンムシ（タバコシバンムシ）",
+    name: "シバンムシ",
     emoji: "🐜",
     activeMonths: [5, 6, 7, 8, 9, 10],
     danger: "low",
@@ -249,7 +249,7 @@ const BUG_DATABASE: BugProfile[] = [
   },
   {
     id: "fire_ant",
-    name: "ヒアリ（外来有毒アリ）",
+    name: "ヒアリ",
     emoji: "🐜",
     activeMonths: [6, 7, 8, 9, 10],
     danger: "high",
@@ -368,7 +368,6 @@ export default function EncyclopediaPage() {
         if (currentMonth === prevMonth || currentMonth === nextMonth) {
           finalActive = true;
         }
-        // 非常に温暖な沖縄エリア等では特定害虫が通年活発化
         if (region === "okinawa" && (
           bug.id === "cockroach" || 
           bug.id === "tick" || 
@@ -449,19 +448,19 @@ export default function EncyclopediaPage() {
                 window.dispatchEvent(new Event("regionChanged"));
               }
             }}
-            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 text-slate-800"
           >
             {PREFECTURE_COORDINATES.map((p) => (
               <option key={p.name} value={p.name}>
                 {p.name} ({
-                  p.region === "hokkaido" ? "北海道帯" :
-                  p.region === "tohoku" ? "東北帯" :
-                  p.region === "kanto" ? "関東帯" :
-                  p.region === "chubu" ? "中部帯" :
-                  p.region === "kinki" ? "近畿帯" :
-                  p.region === "chugoku" ? "中国帯" :
-                  p.region === "shikoku" ? "四国帯" :
-                  p.region === "kyushu" ? "九州帯" : "沖縄帯"
+                  p.region === "hokkaido" ? "北海道エリア" :
+                  p.region === "tohoku" ? "東北エリア" :
+                  p.region === "kanto" ? "関東エリア" :
+                  p.region === "chubu" ? "中部エリア" :
+                  p.region === "kinki" ? "近畿・関西エリア" :
+                  p.region === "chugoku" ? "中国エリア" :
+                  p.region === "shikoku" ? "四国エリア" :
+                  p.region === "kyushu" ? "九州エリア" : "沖縄エリア"
                 })
               </option>
             ))}

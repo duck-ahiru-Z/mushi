@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { auth } from "@/lib/firebase/config";
-import { signInAnonymously, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, User } from "firebase/auth";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, User } from "firebase/auth";
 import { migrateLocalDataToFirebase } from "@/lib/firebase/firestore";
 
 const REGIONS = [
@@ -9,7 +9,7 @@ const REGIONS = [
   { id: "tohoku", name: "東北エリア" },
   { id: "kanto", name: "関東エリア" },
   { id: "chubu", name: "中部エリア" },
-  { id: "kinki", name: "近畿・関西エリア" },
+  { id: "kinki", name: "近畿・関西エリア (デフォルト)" },
   { id: "chugoku", name: "中国エリア" },
   { id: "shikoku", name: "四国エリア" },
   { id: "kyushu", name: "九州エリア" },
@@ -26,10 +26,6 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState("");
   const [region, setRegion] = useState("kinki");
 
-  // シミュレーション用ゲストモード状態
-  const [isSimulatedUser, setIsSimulatedUser] = useState(false);
-  const [simulatedEmail, setSimulatedEmail] = useState("");
-
   // 表示・通知の追加ステート
   const [bugIllustrationsDisabled, setBugIllustrationsDisabled] = useState(false);
   const [notifyOnDay, setNotifyOnDay] = useState(true);
@@ -38,18 +34,19 @@ export default function RegisterPage() {
   const [notify30DaysBefore, setNotify30DaysBefore] = useState(false);
   const [notifySeasonalAlert, setNotifySeasonalAlert] = useState(true);
 
-  // 1. 設定の初期読み込み
+  // PWA OS判定
+  const [detectedOS, setDetectedOS] = useState<"ios" | "android" | "desktop">("desktop");
+
+  // 1. 設定の初期読み込み＆OS検出
   useEffect(() => {
     const savedRegion = localStorage.getItem("user_region");
     if (savedRegion) {
       setRegion(savedRegion);
     }
 
-    // イラスト非表示設定の初期読み込み
     const savedDisabled = localStorage.getItem("bug_illustrations_disabled");
     setBugIllustrationsDisabled(savedDisabled === "true");
 
-    // 通知設定の初期読み込み
     const savedNotifySettings = localStorage.getItem("bug_guard_notification_settings");
     if (savedNotifySettings) {
       try {
@@ -61,17 +58,22 @@ export default function RegisterPage() {
         if (config.notifySeasonalAlert !== undefined) setNotifySeasonalAlert(config.notifySeasonalAlert);
       } catch {}
     }
+
+    // PWA環境判定
+    if (typeof window !== "undefined") {
+      const ua = navigator.userAgent.toLowerCase();
+      if (/iphone|ipad|ipod/.test(ua)) {
+        setDetectedOS("ios");
+      } else if (/android/.test(ua)) {
+        setDetectedOS("android");
+      } else {
+        setDetectedOS("desktop");
+      }
+    }
   }, []);
 
   // 2. Auth監視
   useEffect(() => {
-    // ローカルのシミュレーションログイン状態のチェック
-    const simEmail = localStorage.getItem("simulated_user_email");
-    if (simEmail) {
-      setIsSimulatedUser(true);
-      setSimulatedEmail(simEmail);
-    }
-
     try {
       const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
         setUser(currentUser);
@@ -79,7 +81,6 @@ export default function RegisterPage() {
       });
       return () => unsubscribe();
     } catch {
-      // Firebaseが初期化できていないかエラーの場合のフェールセーフ
       setLoading(false);
     }
   }, []);
@@ -88,9 +89,8 @@ export default function RegisterPage() {
   const handleRegionChange = (newRegion: string) => {
     setRegion(newRegion);
     localStorage.setItem("user_region", newRegion);
-    // カスタムイベントを発火して、リアルタイムでホームページに反映できるようにする
     window.dispatchEvent(new Event("regionChanged"));
-    setSuccess("地域設定を保存しました。ホームの害虫予報が同期されます。");
+    setSuccess("地域設定を保存しました。ホームの気候アラートに即時反映されます。");
     setTimeout(() => setSuccess(""), 3000);
   };
 
@@ -122,10 +122,36 @@ export default function RegisterPage() {
     
     localStorage.setItem("bug_guard_notification_settings", JSON.stringify(newConfig));
     setSuccess("通知設定を更新しました。");
-    setTimeout(() => setSuccess(""), 2000);
+    setTimeout(() => setSuccess(""), 3000);
   };
 
-  // 4. Firebase認証 / シミュレーションログイン処理
+  // Firebase Authのエラーコードを分かりやすい日本語メッセージに変換
+  const getAuthErrorMessage = (errorCode: string): string => {
+    switch (errorCode) {
+      case "auth/invalid-email":
+        return "メールアドレスの形式が正しくありません。";
+      case "auth/user-disabled":
+        return "このアカウントは現在無効化されています。";
+      case "auth/user-not-found":
+        return "アカウントが見つかりません。メールアドレスを確認するか、新規作成からアカウントを登録してください。";
+      case "auth/wrong-password":
+        return "パスワードが正しくありません。";
+      case "auth/invalid-credential":
+        return "ログイン情報（メールアドレスまたはパスワード）が正しくありません。仮アカウントでお試しの場合は、新規登録を行っているか再度ご確認ください。";
+      case "auth/email-already-in-use":
+        return "このメールアドレスは既に登録されています。サインインするか、別のメールアドレスをお試しください。";
+      case "auth/weak-password":
+        return "パスワードは6文字以上で入力してください。";
+      case "auth/operation-not-allowed":
+        return "メール/パスワード認証が有効になっていません。Firebase管理画面を確認してください。";
+      case "auth/network-request-failed":
+        return "ネットワーク接続に失敗しました。インターネット回線の接続状況をご確認ください。";
+      default:
+        return `認証エラーが発生しました。 (${errorCode})`;
+    }
+  };
+
+  // 4. Firebase認証 / ログイン・新規登録処理
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -137,35 +163,23 @@ export default function RegisterPage() {
     }
 
     try {
-      // 実環境のFirebase接続を試行
       if (isSignUp) {
         await createUserWithEmailAndPassword(auth, email, password);
-        setSuccess("アカウントを新規作成しました！");
+        setSuccess("アカウントを作成しました。");
       } else {
         await signInWithEmailAndPassword(auth, email, password);
-        setSuccess("ログインに成功しました！");
+        setSuccess("ログインに成功しました。");
       }
 
-      // ゲストデータの移行をトリガー
       const current = auth.currentUser;
       if (current) {
         await migrateLocalDataToFirebase(current.uid);
-        setSuccess("ログイン完了！ローカルの配置データをクラウドと同期しました。");
+        setSuccess("同期完了。ローカルの部屋・グッズデータをクラウドと完全に同期しました！");
       }
     } catch (err: any) {
-      console.warn("Firebase Auth fallback to simulation:", err.message);
-      // Firebase接続がオフライン、またはキー未設定の場合、ハイクオリティなシミュレーションを実行！
-      if (isSignUp) {
-        localStorage.setItem("simulated_user_email", email);
-        setIsSimulatedUser(true);
-        setSimulatedEmail(email);
-        setSuccess("アカウントを作成し、データの同期を開始しました。");
-      } else {
-        localStorage.setItem("simulated_user_email", email);
-        setIsSimulatedUser(true);
-        setSimulatedEmail(email);
-        setSuccess("サインインが完了し、データの同期を開始しました。");
-      }
+      console.error("Firebase Auth Error:", err);
+      const friendlyMessage = getAuthErrorMessage(err.code || err.message);
+      setError(friendlyMessage);
     }
   };
 
@@ -175,18 +189,16 @@ export default function RegisterPage() {
     setSuccess("");
     try {
       await signOut(auth);
-    } catch {}
-    
-    localStorage.removeItem("simulated_user_email");
-    setIsSimulatedUser(false);
-    setSimulatedEmail("");
-    setSuccess("ログアウトしました。ゲストモードに戻ります。");
-    setTimeout(() => setSuccess(""), 3000);
+      setSuccess("ログアウトしました。ゲスト（オフライン）モードに移行しました。");
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err: any) {
+      setError("ログアウトに失敗しました。");
+    }
   };
 
   // 6. ローカルデータの一括初期化（リセット）
   const handleResetData = () => {
-    if (!confirm("警告: すべての間取り（部屋）と設置グッズのデータが完全に消去されます。よろしいですか？")) {
+    if (!confirm("警告: すべての間取り（部屋）と防衛グッズのデータが完全に削除されます。よろしいですか？")) {
       return;
     }
     localStorage.removeItem("map_rooms_data");
@@ -194,13 +206,13 @@ export default function RegisterPage() {
     localStorage.removeItem("bug_guard_traps");
     localStorage.removeItem("custom_trap_types");
     
-    setSuccess("すべてのアプリデータを初期化しました。マップを開くと初期配置で起動します。");
+    setSuccess("すべてのアプリデータを初期化しました。");
     window.dispatchEvent(new Event("trapsChanged"));
     setTimeout(() => setSuccess(""), 4000);
   };
 
-  const isUserLoggedIn = !!user || isSimulatedUser;
-  const userEmail = user?.email || simulatedEmail;
+  const isUserLoggedIn = !!user;
+  const userEmail = user?.email || "";
 
   return (
     <div className="p-5 flex flex-col min-h-screen bg-slate-50 text-slate-800">
@@ -212,9 +224,9 @@ export default function RegisterPage() {
         <p className="text-xs text-slate-400 mt-1">クラウドデータ同期と通知地域の設定を行えます。</p>
       </div>
 
-      {/* エラー / 成功通知トースト風 */}
+      {/* エラー / 成功通知トースト */}
       {error && (
-        <div className="bg-red-50 border border-red-100 text-red-800 text-xs p-3 rounded-xl mb-4 font-semibold animate-shake">
+        <div className="bg-red-50 border border-red-100 text-red-800 text-xs p-3 rounded-xl mb-4 font-semibold">
           エラー: {error}
         </div>
       )}
@@ -224,19 +236,67 @@ export default function RegisterPage() {
         </div>
       )}
 
+      {/* 📱 PWAインストールガイド */}
+      <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 text-slate-800 mb-6">
+        <h2 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1.5">
+          📱 ホーム画面へのアプリアイコン追加 (PWA)
+        </h2>
+        <p className="text-xs text-slate-400 mb-4 leading-relaxed">
+          G-Endをスマホのホーム画面にアプリアイコンとして登録（インストール）することで、全画面で使いやすくなり、ブラウザを閉じている際にも期限切れのプッシュ通知を確実に受け取れるようになります。
+        </p>
+
+        {detectedOS === "ios" ? (
+          <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs leading-relaxed text-slate-600">
+            <div className="text-xs font-bold text-slate-800 flex items-center gap-1">
+              iPhone / iPad (Safari) での追加手順:
+            </div>
+            <ol className="list-decimal pl-4 space-y-1.5 font-medium text-slate-600">
+              <li>標準ブラウザの <strong className="text-teal-600">Safari</strong> で本サイトにアクセスします。</li>
+              <li>画面下部のメニューバーにある <strong className="text-teal-600">「共有」ボタン</strong>（四角から矢印が上に出ているアイコン）をタップします。</li>
+              <li>表示されたメニューから <strong className="text-teal-600">「ホーム画面に追加」</strong> を選択します。</li>
+              <li>右上の <strong className="text-teal-600">「追加」</strong> を押すと、ホーム画面にアプリアイコンが登録されます。</li>
+            </ol>
+            <p className="text-[10px] text-slate-400 font-bold">※ iOSの仕様上、Safari以外のブラウザ（Chrome等）からはホーム画面に追加できません。</p>
+          </div>
+        ) : detectedOS === "android" ? (
+          <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs leading-relaxed text-slate-600">
+            <div className="text-xs font-bold text-slate-800 flex items-center gap-1">
+              Android (Chrome) での追加手順:
+            </div>
+            <ol className="list-decimal pl-4 space-y-1.5 font-medium text-slate-600">
+              <li>ブラウザ <strong className="text-teal-600">Google Chrome</strong> で本サイトを開きます。</li>
+              <li>右上の <strong className="text-teal-600">メニューボタン</strong>（縦の3点リーダー）をタップします。</li>
+              <li>リストから <strong className="text-teal-600">「アプリをインストール」</strong> または <strong className="text-teal-600">「ホーム画面に追加」</strong> を選択します。</li>
+              <li>確認ダイアログが表示されるので、<strong className="text-teal-600">「インストール」</strong> を選択してください。</li>
+            </ol>
+          </div>
+        ) : (
+          <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs leading-relaxed text-slate-600">
+            <div className="text-xs font-bold text-slate-800 flex items-center gap-1">
+              PC (Chrome / Edge) での追加手順:
+            </div>
+            <ol className="list-decimal pl-4 space-y-1.5 font-medium text-slate-600">
+              <li>ブラウザのアドレスバーの右端に表示される <strong className="text-teal-600">「インストール」アイコン</strong>（パソコンマーク）をクリックします。</li>
+              <li>または、メニューから <strong className="text-teal-600">「G-Endをインストール」</strong> を選択します。</li>
+              <li>これでデスクトップ上に登録され、独立したウィンドウでサクサク動作します。</li>
+            </ol>
+          </div>
+        )}
+      </div>
+
       {/* 📍 地域設定セクション */}
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 mb-6">
         <h2 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1.5">
-          警報・天気用の地域設定
+          警報・予報用の地域設定
         </h2>
         <p className="text-xs text-slate-400 mb-3 leading-relaxed">
-          指定した地域の気候データとシーズン情報に基づき、ホーム画面のアラートや対策図鑑の表示順が自動で最適化されます。
+          指定した地域の気候データに基づき、ホーム画面のアラートや対策図鑑の表示順が自動で最適化されます。
         </p>
         <div className="relative">
           <select
             value={region}
             onChange={(e) => handleRegionChange(e.target.value)}
-            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-none"
+            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-none text-slate-800"
           >
             {REGIONS.map((r) => (
               <option key={r.id} value={r.id}>
@@ -358,22 +418,22 @@ export default function RegisterPage() {
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 mb-6 flex-1 flex flex-col justify-between">
         <div>
           <h2 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1.5">
-            データベース同期 (Vercel & Firebase)
+            データベース同期 (Firebase)
           </h2>
 
           {isUserLoggedIn ? (
             // ログイン済みUI
             <div className="bg-emerald-50/50 border border-emerald-100 p-4 rounded-xl text-center">
-              <h3 className="font-bold text-xs text-emerald-950 mt-2">クラウド保護が有効です</h3>
-              <p className="text-[10px] text-emerald-800 mt-1 font-mono">
+              <h3 className="font-bold text-xs text-emerald-950 mt-2">クラウド同期が有効です</h3>
+              <p className="text-[10px] text-emerald-800 mt-1 font-mono break-all">
                 ログインアカウント: {userEmail}
               </p>
-              <p className="text-[10px] text-slate-400 mt-2 leading-relaxed">
-                間取りや配置したグッズの期限は安全に同期されています。別のデバイスからログインしても防衛状況を再現できます。
+              <p className="text-[10px] text-slate-400 mt-2.5 leading-relaxed font-semibold">
+                間取りや設置したグッズの期限は安全に同期されています。別のデバイスからログインしても防衛状況を再現できます。
               </p>
               <button
                 onClick={handleLogout}
-                className="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition shadow-sm"
+                className="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition shadow-sm border border-slate-200"
               >
                 サインアウトする
               </button>
@@ -391,19 +451,19 @@ export default function RegisterPage() {
                   placeholder="メールアドレス"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                  className="w-full p-3 bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 rounded-xl text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none"
                 />
                 <input
                   type="password"
                   placeholder="パスワード (6文字以上)"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                  className="w-full p-3 bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 rounded-xl text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none"
                 />
                 
                 <button
                   type="submit"
-                  className="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl transition shadow-md flex justify-center items-center gap-1.5"
+                  className="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl transition shadow-md flex justify-center items-center gap-1.5 active:scale-[0.99]"
                 >
                   <span>{isSignUp ? "アカウントを新規登録" : "サインインして同期開始"}</span>
                 </button>
@@ -413,7 +473,7 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setIsSignUp(!isSignUp)}
-                  className="text-xs text-teal-600 hover:underline font-bold"
+                  className="text-xs text-teal-600 hover:text-teal-700 font-bold transition"
                 >
                   {isSignUp ? "すでにアカウントをお持ちですか？ログインはこちら" : "まだアカウントがありませんか？新規作成はこちら"}
                 </button>
@@ -423,14 +483,14 @@ export default function RegisterPage() {
         </div>
 
         {/* ⚠️ 危険ゾーン（データ初期化） */}
-        <div className="border-t pt-5 mt-6">
+        <div className="border-t border-slate-100 pt-5 mt-6">
           <h3 className="text-xs font-bold text-red-600 mb-2">危険エリア</h3>
           <p className="text-[10px] text-slate-400 mb-3 leading-relaxed">
             スマホやブラウザをリセットしたい場合、保存されているすべてのデータ（部屋構成・設置したグッズ）を初期化できます。
           </p>
           <button
             onClick={handleResetData}
-            className="w-full py-2.5 bg-red-50/50 hover:bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-xl transition"
+            className="w-full py-2.5 bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 text-xs font-bold rounded-xl transition"
           >
             アプリ内の全データを初期化する
           </button>

@@ -5,6 +5,8 @@ import { useTraps } from "@/hooks/usetraps";
 import { useFcmToken } from "@/hooks/useFcmToken";
 import { detectJapanRegion } from "@/lib/utils";
 import { TrapIcon, PestIcon } from "@/components/vector-icons";
+import { auth } from "@/lib/firebase/config";
+import { onAuthStateChanged } from "firebase/auth";
 
 const REGION_NAMES: Record<string, string> = {
   hokkaido: "北海道エリア",
@@ -19,13 +21,27 @@ const REGION_NAMES: Record<string, string> = {
 };
 
 export default function HomePage() {
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // ログイン状態の監視
+  useEffect(() => {
+    try {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        setUserId(user ? user.uid : null);
+      });
+      return () => unsubscribe();
+    } catch {
+      setUserId(null);
+    }
+  }, []);
+
   const {
     rooms,
     traps,
     deleteTrap,
     getTrapIcon,
     isInitialized,
-  } = useTraps(null);
+  } = useTraps(userId);
 
   const {
     permission,
@@ -39,6 +55,22 @@ export default function HomePage() {
   const [currentMonth] = useState<number>(new Date().getMonth() + 1);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
+  // 位置情報のパーミッション監視
+  const [geoPermission, setGeoPermission] = useState<"granted" | "prompt" | "denied">("prompt");
+
+  useEffect(() => {
+    if (typeof navigator !== "undefined" && navigator.permissions) {
+      try {
+        navigator.permissions.query({ name: "geolocation" as PermissionName }).then((result) => {
+          setGeoPermission(result.state as any);
+          result.onchange = () => {
+            setGeoPermission(result.state as any);
+          };
+        });
+      } catch {}
+    }
+  }, []);
+
   // 1. 地域設定の読み込み＆自動位置情報取得
   const loadUserRegionAndDetect = () => {
     const saved = localStorage.getItem("user_region");
@@ -48,7 +80,10 @@ export default function HomePage() {
       return;
     }
 
-    // 保存されていない場合は、GPSから自動取得を試みる
+    requestGeoPermission();
+  };
+
+  const requestGeoPermission = () => {
     if (typeof navigator !== "undefined" && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -59,12 +94,13 @@ export default function HomePage() {
           setRegion(detected);
           localStorage.setItem("user_region", detected);
           setLocationLabel(`${REGION_NAMES[detected]} (GPS自動判定)`);
-          // 他のコンポーネントへイベント通知
+          setGeoPermission("granted");
           window.dispatchEvent(new Event("regionChanged"));
         },
         (error) => {
           console.warn("Geolocation error, using default region:", error);
           setLocationLabel("近畿・関西エリア (デフォルト)");
+          setGeoPermission("denied");
         }
       );
     }
@@ -73,7 +109,6 @@ export default function HomePage() {
   useEffect(() => {
     loadUserRegionAndDetect();
 
-    // 初回起動時のウェルカム設定チェック
     if (typeof window !== "undefined") {
       const completed = localStorage.getItem("illustrations_setting_completed");
       if (!completed) {
@@ -81,7 +116,6 @@ export default function HomePage() {
       }
     }
     
-    // GPSの手動再取得用イベントハンドラや、アカウント画面変更検知
     const handleRegionChangeEv = () => {
       const saved = localStorage.getItem("user_region");
       if (saved) {
@@ -103,7 +137,6 @@ export default function HomePage() {
 
   // 2. 地域と言動シーズンに合わせたリアルタイム害虫活動指数
   const pestAlertInfo = useMemo(() => {
-    // 季節とエリアから独自のプレミアム気象警報を生成 (AI感を排除したプロ級の簡潔テキスト)
     if (region === "hokkaido") {
       return {
         title: "アカイエカ・コバエ活動期 (北海道)",
@@ -174,7 +207,7 @@ export default function HomePage() {
       {/* 🛡️ 初回起動時ウェルカム・イラスト非表示選択モーダル */}
       {showWelcomeModal && (
         <div className="fixed inset-0 bg-slate-950/60 z-50 flex items-center justify-center p-5 backdrop-blur-md">
-          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-6 border border-slate-100 flex flex-col gap-5 animate-scale-up text-slate-800">
+          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-6 border border-slate-100 flex flex-col gap-5 text-slate-800 animate-scale-up">
             <div className="text-center space-y-2">
               <h2 className="text-sm font-black text-slate-900">G-End へお越しいただきありがとうございます</h2>
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">安心で快適な暮らしの防衛パートナー</p>
@@ -230,6 +263,60 @@ export default function HomePage() {
         </Link>
       </div>
 
+      {/* 📡 高級コントロールパネル: 位置情報と通知の許可設定 */}
+      <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-200/60 mb-5 text-slate-800">
+        <h2 className="text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+          位置情報と通知の設定
+        </h2>
+        <p className="text-[10px] text-slate-400 mb-3 leading-normal">
+          アプリの天気予報や交換期限のリマインダー通知を正しく受け取るため、許可設定を有効にしてください。
+        </p>
+        
+        <div className="grid grid-cols-2 gap-3">
+          {/* 位置情報パーミッション */}
+          <div className="bg-slate-50 border border-slate-100 p-3 rounded-xl flex flex-col justify-between">
+            <div>
+              <span className="text-[9px] text-slate-400 font-bold block">位置情報 (GPS)</span>
+              <span className={`text-xs font-black mt-0.5 block ${geoPermission === "granted" ? "text-emerald-600" : "text-amber-600"}`}>
+                {geoPermission === "granted" ? "許可済み" : "未許可"}
+              </span>
+            </div>
+            {geoPermission !== "granted" ? (
+              <button
+                onClick={requestGeoPermission}
+                className="mt-3 w-full py-1.5 bg-teal-600 hover:bg-teal-700 text-white text-[10px] font-bold rounded-lg transition shadow"
+              >
+                許可する
+              </button>
+            ) : (
+              <span className="text-[8px] text-slate-400 mt-3 font-bold text-right block">自動測位中</span>
+            )}
+          </div>
+
+          {/* 通知パーミッション */}
+          <div className="bg-slate-50 border border-slate-100 p-3 rounded-xl flex flex-col justify-between">
+            <div>
+              <span className="text-[9px] text-slate-400 font-bold block">プッシュ通知</span>
+              <span className={`text-xs font-black mt-0.5 block ${permission === "granted" ? "text-emerald-600" : "text-amber-600"}`}>
+                {permission === "granted" ? "受信可能" : "未設定"}
+              </span>
+            </div>
+            {permission === "denied" ? (
+              <span className="text-[8px] text-red-600 mt-3 font-bold text-right block">ブラウザでブロック中</span>
+            ) : (
+              <button
+                onClick={triggerTestNotification}
+                className={`mt-3 w-full py-1.5 text-white text-[10px] font-bold rounded-lg transition shadow ${
+                  permission === "granted" ? "bg-slate-800 hover:bg-slate-900" : "bg-teal-600 hover:bg-teal-700"
+                }`}
+              >
+                {permission === "granted" ? "テスト通知を送信" : "通知を設定してテスト"}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* 1. 日本防虫気象協会風 リアルタイム害虫警報 */}
       <div className={`bg-gradient-to-br border p-5 rounded-3xl shadow-md mb-5 flex items-center justify-between gap-4 transition-all duration-300 hover:shadow-lg ${pestAlertInfo.bg}`}>
         <div className="flex-1">
@@ -265,42 +352,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div className="bg-white/80 backdrop-blur-md p-5 rounded-3xl shadow-sm border border-slate-200/60 mb-5">
-        <h2 className="text-xs font-bold text-slate-700 mb-2 flex items-center gap-1.5">
-          スマホ・PC プッシュ通知機能
-        </h2>
-        <p className="text-[10px] text-slate-400 leading-normal mb-3">
-          ネイティブアプリのように機能するWeb通知機能です。PWAとしてホーム画面に追加すると、バックグラウンド時でも期限切れの数日前に通知を受け取れます。
-        </p>
-        
-        <div className="flex gap-2 items-center">
-          {permission === "default" ? (
-            <button
-              onClick={requestNotificationPermission}
-              className="flex-1 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-extrabold rounded-xl transition shadow"
-            >
-              通知を有効にする
-            </button>
-          ) : permission === "granted" ? (
-            <div className="flex-1 flex gap-2">
-              <button
-                onClick={triggerTestNotification}
-                className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-extrabold rounded-xl transition shadow"
-              >
-                テスト通知を発火
-              </button>
-              <div className="bg-emerald-50 text-emerald-800 text-[10px] font-black px-3 rounded-xl border border-emerald-100 flex items-center justify-center">
-                受信可能
-              </div>
-            </div>
-          ) : (
-            <div className="w-full bg-red-50 text-red-700 text-[11px] p-2.5 rounded-xl border border-red-100 text-center font-bold">
-              通知がブラウザ設定でブロックされています。設定から許可してください。
-            </div>
-          )}
-        </div>
-      </div>
-
+      {/* 🛠️ オリジナルグッズ作製アピール */}
       <div className="bg-gradient-to-r from-teal-500/10 to-emerald-500/10 border border-teal-200/50 p-5 rounded-3xl shadow-sm mb-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex-1">
           <h2 className="text-xs font-extrabold text-teal-800 mb-1 flex items-center gap-1.5">
@@ -312,12 +364,13 @@ export default function HomePage() {
         </div>
         <Link
           href="/map?createCustom=true"
-          className="w-full sm:w-auto px-4 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white text-[11px] font-black rounded-xl text-center shadow-md transition-all whitespace-nowrap"
+          className="w-full sm:w-auto px-4 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white text-[11px] font-black rounded-xl text-center shadow-md transition-all whitespace-nowrap active:scale-[0.98]"
         >
           オリジナルグッズを作製する
         </Link>
       </div>
 
+      {/* 要交換グッズ */}
       <div className="mb-5">
         <h2 className="text-xs font-extrabold text-slate-400 mb-2 tracking-wider uppercase flex items-center gap-1">
           要交換のグッズ ({alertTraps.length})
@@ -378,7 +431,6 @@ export default function HomePage() {
         ) : (
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 divide-y divide-slate-50 overflow-hidden">
             {traps.map((trap) => {
-              // 期限までの残り日数を計算
               const diffTime = new Date(trap.expirationDate).getTime() - new Date().getTime();
               const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
               const isClose = diffDays <= 7;

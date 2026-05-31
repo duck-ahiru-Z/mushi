@@ -8,6 +8,10 @@ export interface Room {
   h: number;         // 縦幅のサイズ
 }
 
+export interface ExtendedRoom extends Room {
+  floor: number;
+}
+
 export interface Trap {
   id: string;
   userId: string | null; // ゲスト時はnull、アカウント登録後はUIDが入る
@@ -19,4 +23,4 @@ export interface Trap {
   placedDate: string;    // ISO文字列（例: 2026-05-25）
   expirationDate: string;// 有効期限のISO文字列
   isActive: boolean;     // 設置中か回収済みか
-}
+}

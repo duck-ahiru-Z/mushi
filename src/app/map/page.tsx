@@ -1,13 +1,29 @@
 "use client";
 import { useState, useEffect, useRef, useMemo } from "react";
-import { useTraps, ExtendedRoom } from "@/hooks/usetraps";
-import { Trap } from "@/types/trap";
+import { useTraps } from "@/hooks/usetraps";
+import { Trap, ExtendedRoom } from "@/types/trap";
 import { TrapIcon } from "@/components/vector-icons";
+import { auth } from "@/lib/firebase/config";
+import { onAuthStateChanged } from "firebase/auth";
 
 type ResizeDirection = "n" | "s" | "e" | "w" | "nw" | "ne" | "sw" | "se";
 
 export default function MapPage() {
-  // グローバル状態管理フックを呼び出す (ゲストモード: null)
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // ログイン状態の監視
+  useEffect(() => {
+    try {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        setUserId(user ? user.uid : null);
+      });
+      return () => unsubscribe();
+    } catch {
+      setUserId(null);
+    }
+  }, []);
+
+  // グローバル状態管理フックを呼び出す
   const {
     rooms,
     setRooms,
@@ -27,18 +43,18 @@ export default function MapPage() {
     addCustomTrapType,
     updateTrapPosition,
     isInitialized,
-  } = useTraps(null);
+  } = useTraps(userId);
 
   const [mode, setMode] = useState<"place" | "edit">("place");
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // 📐 ズーム状態（スマホ・PCの画面幅に合わせたデフォルト調整）
+  // 📐 ズーム状態
   const [zoom, setZoom] = useState(1);
 
   // マップ表示ベースサイズ
   const [houseSize, setHouseSize] = useState({ width: 600, height: 600 });
 
-  // 🔍 モバイル端末か判定し、デフォルトズームを自動フィットさせる（URLクエリ連動も対応）
+  // 🔍 モバイル端末か判定し、デフォルトズームを自動フィットさせる
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedHouseSize = localStorage.getItem("map_house_size_data");
@@ -50,11 +66,9 @@ export default function MapPage() {
 
       const screenWidth = window.innerWidth;
       if (screenWidth < 640) {
-        // モバイル画面ならデフォルトを 0.6x に縮小してはみ出しを防ぐ！
         setZoom(0.55);
       }
 
-      // クエリパラメータをチェックして、カスタムグッズ登録モーダルを自動表示
       const params = new URLSearchParams(window.location.search);
       if (params.get("createCustom") === "true") {
         setShowCustomModal(true);
@@ -82,7 +96,6 @@ export default function MapPage() {
     roomId?: string;
   } | null>(null);
 
-  // 📱 タッチによるピンチズーム用状態
   const [touchStartDist, setTouchStartDist] = useState<number | null>(null);
   const [touchStartZoom, setTouchStartZoom] = useState<number>(1);
 
@@ -96,7 +109,6 @@ export default function MapPage() {
   const [placedLocation, setPlacedLocation] = useState<string>("");
   const [placementMonths, setPlacementMonths] = useState<number>(3);
 
-  // プリセットが選択されたらデフォルト有効期間を自動でセット
   useEffect(() => {
     const foundType = allTrapTypes.find((t) => t.name === selectedTrapType);
     if (foundType) {
@@ -114,7 +126,7 @@ export default function MapPage() {
   const [customIcon, setCustomIcon] = useState("🛡️");
   const [showCustomModal, setShowCustomModal] = useState(false);
 
-  // 設置グッズの詳細表示（タップ時）
+  // 設置グッズの詳細表示
   const [selectedTrap, setSelectedTrap] = useState<Trap | null>(null);
 
   // Undoトースト表示
@@ -132,10 +144,6 @@ export default function MapPage() {
 
       e.preventDefault();
 
-      const container = containerRef.current;
-      const rect = container.getBoundingClientRect();
-      
-      // 📐 ズーム時のドラッグズレを完全に修正するため、移動量をズーム倍率で除算します！
       const deltaX = (((e.clientX - state.startX) / zoom) / 600) * 100;
       const deltaY = (((e.clientY - state.startY) / zoom) / 600) * 100;
 
@@ -217,7 +225,7 @@ export default function MapPage() {
       window.removeEventListener("pointermove", handleGlobalMove);
       window.removeEventListener("pointerup", handleGlobalUp);
     };
-  }, [dragState, zoom]);
+  }, [dragState, zoom, rooms, setRooms, updateTrapPosition]);
 
   const currentFloorRooms = useMemo(() => {
     return rooms.filter((r) => r.floor === currentFloor);
@@ -245,7 +253,6 @@ export default function MapPage() {
     const targetRoomIds = rooms.filter(r => r.floor === currentFloor).map(r => r.id);
     setFloors(floors.filter(f => f !== currentFloor));
     setRooms(rooms.filter(r => r.floor !== currentFloor));
-    // 関連グッズを全削除
     targetRoomIds.forEach((rid) => {
       traps.filter(t => t.roomId === rid).forEach((t) => deleteTrap(t.id));
     });
@@ -262,7 +269,6 @@ export default function MapPage() {
     e.stopPropagation();
     deleteRoom(id);
     setShowUndoToast(true);
-    // 6秒後に自動でUndoトーストを消去
     setTimeout(() => {
       setShowUndoToast(false);
     }, 6000);
@@ -294,7 +300,6 @@ export default function MapPage() {
   };
 
   const handleTrapPointerDown = (trap: Trap, roomId: string, e: React.PointerEvent<HTMLButtonElement>) => {
-    // 💡 指やマウスでのピン（トラップ）ドラッグ移動を開始
     e.stopPropagation();
     e.preventDefault();
     
@@ -329,18 +334,14 @@ export default function MapPage() {
     });
   };
 
-  // 🏡 部屋クリック時にグッズを配置
   const handleRoomClick = async (room: ExtendedRoom, e: React.MouseEvent<HTMLDivElement>) => {
     if (mode !== "place") return;
-
-    // もしすでに設置済みのトラップアイコン自体をクリックしていたら配置しない
     if ((e.target as HTMLElement).closest(".trap-marker")) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = (e.clientX - rect.left) / rect.width;
     const clickY = (e.clientY - rect.top) / rect.height;
 
-    // 選択されたグッズの有効期限（月数）を取得
     const months = placementMonths;
 
     try {
@@ -358,13 +359,11 @@ export default function MapPage() {
     }
   };
 
-  // 📍 設置済みグッズのタップ詳細表示
   const handleTrapClick = (trap: Trap, e: React.MouseEvent) => {
     e.stopPropagation();
     setSelectedTrap(trap);
   };
 
-  // 🗑️ グッズ回収（削除）処理
   const handleRemoveTrap = async () => {
     if (!selectedTrap) return;
     try {
@@ -375,7 +374,6 @@ export default function MapPage() {
     }
   };
 
-  // 🛡️ カスタムグッズの登録処理
   const handleCreateCustomType = () => {
     if (!customName.trim()) {
       alert("グッズの名前を入力してください。");
@@ -391,7 +389,6 @@ export default function MapPage() {
     }
   };
 
-  // 📱 スマホ用マルチタッチ・ピンチズームジェスチャーのハンドラー
   const handleTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length === 2) {
       const dist = Math.hypot(
@@ -427,9 +424,9 @@ export default function MapPage() {
   return (
     <div className="p-4 flex flex-col min-h-screen bg-slate-50 text-slate-800 relative">
       
-      {/* ⚠️ Undo 復元トースト通知 */}
+      {/* ⚠️ Undo 復元トースト */}
       {showUndoToast && (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 text-white text-xs px-4 py-3 rounded-2xl shadow-xl border border-slate-700/50 flex items-center gap-3 backdrop-blur-md animate-slide-up">
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 text-white text-xs px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 backdrop-blur-md animate-slide-up">
           <span>部屋を削除しました（設置済みの防衛も一時解除）</span>
           <button
             onClick={handleUndoRoom}
@@ -443,7 +440,7 @@ export default function MapPage() {
       {/* 📍 設置グッズの詳細ポップアップ（モーダル） */}
       {selectedTrap && (
         <div className="fixed inset-0 bg-slate-950/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-5 border border-slate-100 flex flex-col gap-4 animate-scale-up">
+          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-5 border border-slate-100 flex flex-col gap-4 animate-scale-up text-slate-800">
             <div className="flex justify-between items-start">
               <div className="flex items-center gap-2">
                 <span className="p-1.5 bg-slate-100 rounded-2xl flex items-center justify-center flex-shrink-0">
@@ -471,7 +468,7 @@ export default function MapPage() {
             <div className="flex gap-2 mt-2">
               <button
                 onClick={handleRemoveTrap}
-                className="flex-1 py-2.5 bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1"
+                className="flex-1 py-2.5 bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 active:scale-[0.98]"
               >
                 グッズを回収
               </button>
@@ -489,7 +486,7 @@ export default function MapPage() {
       {/* 🛡️ オリジナルカスタムグッズ追加モーダル */}
       {showCustomModal && (
         <div className="fixed inset-0 bg-slate-950/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-5 border border-slate-100 flex flex-col gap-4 animate-scale-up">
+          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-5 border border-slate-100 flex flex-col gap-4 animate-scale-up text-slate-800">
             <div>
               <h3 className="font-black text-sm text-slate-900">オリジナルグッズの登録</h3>
               <p className="text-[10px] text-slate-400">オリジナルの防虫グッズやスプレーを登録し、間取りに配置して期限管理できます。</p>
@@ -531,7 +528,7 @@ export default function MapPage() {
                       type="button"
                       onClick={() => setCustomIcon(emoji)}
                       className={`w-8 h-8 rounded-lg text-lg flex items-center justify-center transition border ${
-                        customIcon === emoji ? "bg-slate-800 border-slate-800 shadow" : "bg-white hover:bg-slate-100 border-slate-200"
+                        customIcon === emoji ? "bg-slate-800 border-slate-800 text-white shadow" : "bg-white hover:bg-slate-100 border-slate-200"
                       }`}
                     >
                       {emoji}
@@ -544,7 +541,7 @@ export default function MapPage() {
             <div className="flex gap-2 mt-2">
               <button
                 onClick={handleCreateCustomType}
-                className="flex-1 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold transition shadow-md"
+                className="flex-1 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold transition shadow-md active:scale-[0.98]"
               >
                 登録して選択する
               </button>
@@ -591,12 +588,11 @@ export default function MapPage() {
             <h2 className="text-xs font-extrabold text-slate-400">🛠️ 配置するグッズを選択</h2>
           </div>
 
-          {/* ✨ オリジナルカスタムグッズ作製の大アピールプレミアムボタン */}
           <button
             onClick={() => setShowCustomModal(true)}
-            className="w-full py-3 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white rounded-xl text-xs font-black shadow-md transition flex items-center justify-center gap-1.5 active:scale-[0.98] animate-pulse-subtle"
+            className="w-full py-3 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white rounded-xl text-xs font-black shadow-md transition flex items-center justify-center gap-1.5 active:scale-[0.98]"
           >
-            <span>✨</span> 自分専用のオリジナル防衛グッズを作製する
+            自分専用のオリジナル防衛グッズを作製する
           </button>
 
           <div className="flex flex-col gap-2">
@@ -728,14 +724,13 @@ export default function MapPage() {
         </div>
       </div>
 
-      {/* キャンバス外周スクロール枠 (ズーム＆マルチタッチピンチジェスチャー対応) */}
+      {/* キャンバス外周スクロール枠 */}
       <div 
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         className="w-full overflow-auto border border-slate-300 bg-slate-200/60 rounded-3xl p-4 max-h-[62vh] shadow-inner flex justify-center items-start min-h-[300px]"
       >
-        {/* 📐 拡縮を適用するためのコンテナ */}
         <div
           style={{
             width: `${houseSize.width * zoom}px`,
@@ -795,39 +790,36 @@ export default function MapPage() {
                 {/* リサイズ掴み手（編集モード用） */}
                 {mode === "edit" && (
                   <>
-                    {/* 四辺 */}
                     <div data-resize-dir="n" onPointerDown={(e) => handleHandlePointerDown(room, "n", e)} className="absolute top-0 left-3 right-3 h-3 cursor-n-resize -top-1.5 bg-transparent" />
                     <div data-resize-dir="s" onPointerDown={(e) => handleHandlePointerDown(room, "s", e)} className="absolute bottom-0 left-3 right-3 h-3 cursor-s-resize -bottom-1.5 bg-transparent" />
-                    <div data-resize-dir="e" onPointerDown={(e) => handleHandlePointerDown(room, "e", e)} className="absolute top-3 bottom-3 right-0 w-3 cursor-e-resize -right-1.5 bg-transparent" />
-                    <div data-resize-dir="w" onPointerDown={(e) => handleHandlePointerDown(room, "w", e)} className="absolute top-3 bottom-3 left-0 w-3 cursor-w-resize -left-1.5 bg-transparent" />
-
-                    {/* 四隅 */}
-                    <div data-resize-dir="nw" onPointerDown={(e) => handleHandlePointerDown(room, "nw", e)} className="absolute top-0 left-0 w-4 h-4 cursor-nw-resize -top-2 -left-2 z-30 bg-transparent" />
-                    <div data-resize-dir="ne" onPointerDown={(e) => handleHandlePointerDown(room, "ne", e)} className="absolute top-0 right-0 w-4 h-4 cursor-ne-resize -top-2 -right-2 z-30 bg-transparent" />
-                    <div data-resize-dir="sw" onPointerDown={(e) => handleHandlePointerDown(room, "sw", e)} className="absolute bottom-0 left-0 w-4 h-4 cursor-sw-resize -bottom-2 -left-2 z-30 bg-transparent" />
-                    <div data-resize-dir="se" onPointerDown={(e) => handleHandlePointerDown(room, "se", e)} className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize -bottom-2 -right-2 z-30 bg-transparent" />
+                    <div data-resize-dir="e" onPointerDown={(e) => handleHandlePointerDown(room, "e", e)} className="absolute right-0 top-3 bottom-3 w-3 cursor-e-resize -right-1.5 bg-transparent" />
+                    <div data-resize-dir="w" onPointerDown={(e) => handleHandlePointerDown(room, "w", e)} className="absolute left-0 top-3 bottom-3 w-3 cursor-w-resize -left-1.5 bg-transparent" />
+                    <div data-resize-dir="nw" onPointerDown={(e) => handleHandlePointerDown(room, "nw", e)} className="absolute top-0 left-0 w-3.5 h-3.5 cursor-nw-resize -top-1 -left-1 bg-transparent" />
+                    <div data-resize-dir="ne" onPointerDown={(e) => handleHandlePointerDown(room, "ne", e)} className="absolute top-0 right-0 w-3.5 h-3.5 cursor-ne-resize -top-1 -right-1 bg-transparent" />
+                    <div data-resize-dir="sw" onPointerDown={(e) => handleHandlePointerDown(room, "sw", e)} className="absolute bottom-0 left-0 w-3.5 h-3.5 cursor-sw-resize -bottom-1 -left-1 bg-transparent" />
+                    <div data-resize-dir="se" onPointerDown={(e) => handleHandlePointerDown(room, "se", e)} className="absolute bottom-0 right-0 w-3.5 h-3.5 cursor-se-resize -bottom-1 -right-1 bg-transparent" />
                   </>
                 )}
 
-                {/* 📍 トラップ（グッズ）の描画 */}
-                {traps
-                  .filter((t) => t.roomId === room.id)
-                  .map((trap) => (
-                    <button
-                      key={trap.id}
-                      onClick={(e) => handleTrapClick(trap, e)}
-                      onPointerDown={(e) => handleTrapPointerDown(trap, room.id, e)}
-                      className="trap-marker absolute w-8 h-8 bg-white border-2 border-teal-500 rounded-full flex items-center justify-center shadow-md hover:scale-125 hover:border-red-500 hover:shadow-lg transition-all active:scale-95 cursor-grab pointer-events-auto z-20"
-                      style={{
-                        left: `${trap.x * 100}%`,
-                        top: `${trap.y * 100}%`,
-                        transform: "translate(-50%, -50%)",
-                      }}
-                      title={`${trap.name}: ${trap.placedLocation}`}
-                    >
-                      <TrapIcon id={trap.name} size={20} />
-                    </button>
-                  ))}
+                {/* 設置グッズのピン（トラップ）の描画 */}
+                {traps.filter(t => t.roomId === room.id).map((trap) => (
+                  <button
+                    key={trap.id}
+                    onPointerDown={(e) => handleTrapPointerDown(trap, room.id, e)}
+                    onClick={(e) => handleTrapClick(trap, e)}
+                    className="absolute trap-marker z-20 pointer-events-auto p-1 bg-white rounded-xl border border-slate-200 hover:border-slate-350 shadow flex items-center justify-center transition active:scale-95 cursor-grab touch-none"
+                    style={{
+                      left: `calc(${trap.x * 100}% - 14px)`,
+                      top: `calc(${trap.y * 100}% - 14px)`,
+                      width: "28px",
+                      height: "28px",
+                      touchAction: "none"
+                    }}
+                    title={`${trap.name}: ${trap.placedLocation}`}
+                  >
+                    <TrapIcon id={trap.name} size={20} />
+                  </button>
+                ))}
               </div>
             ))}
           </div>
