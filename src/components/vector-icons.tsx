@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 interface IconProps {
   id: string;
@@ -11,6 +11,23 @@ interface IconProps {
  * 🪳 12種類の害虫用の高品質フラットベクターSVGイラストレーション
  */
 export const PestIcon: React.FC<IconProps> = ({ id, className = "", size = 48 }) => {
+  const [isDisabled, setIsDisabled] = useState(false);
+
+  useEffect(() => {
+    const checkDisabled = () => {
+      if (typeof window !== "undefined") {
+        const val = localStorage.getItem("bug_illustrations_disabled");
+        setIsDisabled(val === "true");
+      }
+    };
+    checkDisabled();
+
+    window.addEventListener("safeModeChanged", checkDisabled);
+    return () => {
+      window.removeEventListener("safeModeChanged", checkDisabled);
+    };
+  }, []);
+
   const svgProps = {
     className: `transition-transform duration-200 ${className}`,
     width: size,
@@ -19,6 +36,17 @@ export const PestIcon: React.FC<IconProps> = ({ id, className = "", size = 48 })
     fill: "none",
     xmlns: "http://www.w3.org/2000/svg"
   };
+
+  if (isDisabled) {
+    return (
+      <svg {...svgProps}>
+        {/* セーフシールド：優しい緑の防衛シールド */}
+        <path d="M32 8L12 18V34C12 46 24 52 32 56C40 52 52 46 52 34V18L32 8Z" fill="#10B981" fillOpacity="0.9" stroke="#059669" strokeWidth="3" />
+        {/* 内側の白いチェックマーク */}
+        <path d="M24 32L30 38L40 26" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      </svg>
+    );
+  }
 
   switch (id) {
     case "cockroach":
