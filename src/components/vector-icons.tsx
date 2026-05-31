@@ -68,6 +68,9 @@ export const PestIcon: React.FC<IconProps> = ({ id, className = "", size = 48 })
       );
 
     case "tick":
+    case "bedbug":
+    case "flea":
+    case "clover_mite":
       return (
         <svg {...svgProps}>
           {/* ダニ: 扁平なグレーの円形ボディと細い脚 */}
@@ -104,6 +107,7 @@ export const PestIcon: React.FC<IconProps> = ({ id, className = "", size = 48 })
       );
 
     case "fly":
+    case "drain_fly":
       return (
         <svg {...svgProps}>
           {/* コバエ: 丸いフォルムと大きな赤い複眼 */}
@@ -119,6 +123,8 @@ export const PestIcon: React.FC<IconProps> = ({ id, className = "", size = 48 })
       );
 
     case "ant":
+    case "termite":
+    case "fire_ant":
       return (
         <svg {...svgProps}>
           {/* アリ: 3つのセグメント（頭・胸・腹） */}
@@ -134,6 +140,7 @@ export const PestIcon: React.FC<IconProps> = ({ id, className = "", size = 48 })
       );
 
     case "spider":
+    case "red_back_spider":
       return (
         <svg {...svgProps}>
           {/* クモ: 幾何学的な8本脚 */}
@@ -181,6 +188,10 @@ export const PestIcon: React.FC<IconProps> = ({ id, className = "", size = 48 })
       );
 
     case "booklice":
+    case "carpet_beetle":
+    case "shiba_mushi":
+    case "rice_weevil":
+    case "silverfish":
       return (
         <svg {...svgProps}>
           {/* チャタテムシ: ベージュ系の微小虫 */}
@@ -223,6 +234,7 @@ export const PestIcon: React.FC<IconProps> = ({ id, className = "", size = 48 })
       );
 
     case "wasp":
+    case "yellow_jacket":
       return (
         <svg {...svgProps}>
           {/* ハチ: 黄色と黒のボーダー腹部 */}
