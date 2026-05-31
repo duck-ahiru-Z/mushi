@@ -44,7 +44,7 @@ export default function HomePage() {
     const saved = localStorage.getItem("user_region");
     if (saved) {
       setRegion(saved);
-      setLocationLabel(`📍 ${REGION_NAMES[saved]}`);
+      setLocationLabel(REGION_NAMES[saved]);
       return;
     }
 
@@ -58,13 +58,13 @@ export default function HomePage() {
           
           setRegion(detected);
           localStorage.setItem("user_region", detected);
-          setLocationLabel(`📍 ${REGION_NAMES[detected]} (GPS自動判定)`);
+          setLocationLabel(`${REGION_NAMES[detected]} (GPS自動判定)`);
           // 他のコンポーネントへイベント通知
           window.dispatchEvent(new Event("regionChanged"));
         },
         (error) => {
           console.warn("Geolocation error, using default region:", error);
-          setLocationLabel("📍 近畿・関西エリア (デフォルト)");
+          setLocationLabel("近畿・関西エリア (デフォルト)");
         }
       );
     }
@@ -86,7 +86,7 @@ export default function HomePage() {
       const saved = localStorage.getItem("user_region");
       if (saved) {
         setRegion(saved);
-        setLocationLabel(`📍 ${REGION_NAMES[saved]}`);
+        setLocationLabel(REGION_NAMES[saved]);
       }
     };
 
@@ -106,28 +106,28 @@ export default function HomePage() {
     // 季節とエリアから独自のプレミアム気象警報を生成 (AI感を完全排除したプロ級テキスト)
     if (region === "hokkaido") {
       return {
-        title: "🦟 アカイエカ・コバエ活動期（北海道）",
+        title: "アカイエカ・コバエ活動期 (北海道)",
         desc: "現在、冷涼な北海道エリアでも日中気温が20度を超え、コバエや蚊が羽化しやすい環境が整っています。生ゴミの密封と水回りの換気を強化してください。",
         bg: "from-sky-50 to-blue-50 border-sky-100 text-sky-900",
         btnText: "北海道の対策を見る",
       };
     } else if (region === "okinawa") {
       return {
-        title: "🚨 【厳重警報】ゴキブリ・ムカデ超高活性期（沖縄）",
+        title: "【厳重警報】ゴキブリ・ムカデ超高活性期 (沖縄)",
         desc: "沖縄エリアは亜熱帯気候により年間を通じて害虫リスクが極めて高い状態です。湿度の高いキッチンや浴室配管隙間、勝手口のホイホイ配置を再確認してください。",
         bg: "from-red-50 to-orange-50 border-red-150 text-red-950",
         btnText: "沖縄の徹底防衛術を見る",
       };
     } else if (currentMonth >= 6 && currentMonth <= 9) {
       return {
-        title: "⚠️ 【警戒】梅雨・夏季の害虫活動最大化アラート",
+        title: "【警戒】梅雨・夏季の害虫活動最大化アラート",
         desc: "気温28度、湿度75%を突破しました。ダニが布団やソファで急増するほか、黒ゴキブリが水回りで活発に動き回っています。速やかに対策シートを追加してください。",
         bg: "from-amber-50 to-orange-50 border-amber-100 text-amber-950",
         btnText: "水回りの推奨防衛を見る",
       };
     } else {
       return {
-        title: "🍂 【予防期】秋・冬の隙間侵入シャットアウト",
+        title: "【予防期】秋・冬の隙間侵入シャットアウト",
         desc: "気温低下に伴い、外にいるカメムシやゴキブリが暖かい室内（窓サッシの隙間やエアコン配管口）に逃げ込みやすくなっています。侵入口の先回り対策が有効です。",
         bg: "from-slate-50 to-zinc-50 border-slate-200 text-slate-900",
         btnText: "冬眠前の予防措置を見る",
@@ -176,7 +176,6 @@ export default function HomePage() {
         <div className="fixed inset-0 bg-slate-950/60 z-50 flex items-center justify-center p-5 backdrop-blur-md">
           <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-6 border border-slate-100 flex flex-col gap-5 animate-scale-up text-slate-800">
             <div className="text-center space-y-2">
-              <span className="text-4xl inline-block animate-bounce">🛡️</span>
               <h2 className="text-sm font-black text-slate-900">BugGuard へお越しいただきありがとうございます</h2>
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">安心で快適な暮らしの防衛パートナー</p>
             </div>
@@ -186,7 +185,7 @@ export default function HomePage() {
                 本アプリでは、家の中の防虫効果をマップ上で視覚的に可視化・管理するため、各種害虫のイラストを使用しています。
               </p>
               <p className="font-bold text-slate-800">
-                ⚠️ 虫のイラストや画像が苦手ですか？
+                虫のイラストや画像が苦手ですか？
               </p>
               <p>
                 苦手な場合、「セーフシールド（非表示）」をお選びいただくと、アプリ内のすべての虫アイコンが<strong>優しい緑色の盾マーク</strong>に変更されます。この設定は設定画面からいつでも変更できます。
@@ -198,13 +197,13 @@ export default function HomePage() {
                 onClick={() => handleWelcomeSelection(true)}
                 className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-[11px] font-black shadow-md transition flex items-center justify-center gap-2"
               >
-                <span>🛡️</span> 優しいシールドで表示する (マイルドモード)
+                優しいシールドで表示する (マイルドモード)
               </button>
               <button
                 onClick={() => handleWelcomeSelection(false)}
                 className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl text-[11px] font-bold transition flex items-center justify-center gap-2"
               >
-                <span>🪳</span> そのまま表示する (標準モード)
+                そのまま表示する (標準モード)
               </button>
             </div>
           </div>
@@ -215,7 +214,7 @@ export default function HomePage() {
       <div className="flex justify-between items-center border-b pb-3 mb-5">
         <div>
           <h1 className="text-2xl font-black text-teal-600 tracking-tight flex items-center gap-1">
-            <span>🛡️</span> BugGuard
+            BugGuard
           </h1>
           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
             防衛ダッシュボード • 2026年 {currentMonth}月 シーズン
@@ -266,10 +265,9 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* 2. 📱 ネイティブ風プッシュ通知テスト */}
       <div className="bg-white/80 backdrop-blur-md p-5 rounded-3xl shadow-sm border border-slate-200/60 mb-5">
         <h2 className="text-xs font-bold text-slate-700 mb-2 flex items-center gap-1.5">
-          <span>🔔</span> スマホ・PC プッシュ通知機能
+          スマホ・PC プッシュ通知機能
         </h2>
         <p className="text-[10px] text-slate-400 leading-normal mb-3">
           ネイティブアプリのように機能するWeb通知機能です。PWAとしてホーム画面に追加すると、バックグラウンド時でも期限切れの数日前に通知を受け取れます。
@@ -281,7 +279,7 @@ export default function HomePage() {
               onClick={requestNotificationPermission}
               className="flex-1 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-extrabold rounded-xl transition shadow"
             >
-              🔔 通知を有効にする
+              通知を有効にする
             </button>
           ) : permission === "granted" ? (
             <div className="flex-1 flex gap-2">
@@ -289,7 +287,7 @@ export default function HomePage() {
                 onClick={triggerTestNotification}
                 className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-extrabold rounded-xl transition shadow"
               >
-                ⚡ テスト通知を発火 (ネイティブ風)
+                テスト通知を発火
               </button>
               <div className="bg-emerald-50 text-emerald-800 text-[10px] font-black px-3 rounded-xl border border-emerald-100 flex items-center justify-center">
                 受信可能
@@ -297,17 +295,16 @@ export default function HomePage() {
             </div>
           ) : (
             <div className="w-full bg-red-50 text-red-700 text-[11px] p-2.5 rounded-xl border border-red-100 text-center font-bold">
-              ⚠️ 通知がブラウザ設定でブロックされています。設定から許可してください。
+              通知がブラウザ設定でブロックされています。設定から許可してください。
             </div>
           )}
         </div>
       </div>
 
-      {/* 📱 オリジナル防衛グッズの作製アピール（目立つプレミアムカード） */}
       <div className="bg-gradient-to-r from-teal-500/10 to-emerald-500/10 border border-teal-200/50 p-5 rounded-3xl shadow-sm mb-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex-1">
           <h2 className="text-xs font-extrabold text-teal-800 mb-1 flex items-center gap-1.5">
-            <span>✨</span> 自分専用の防衛グッズを作製
+            自分専用の防衛グッズを作製
           </h2>
           <p className="text-[10px] text-teal-950/80 leading-relaxed font-medium">
             市販の防虫シートや独自の対策グッズをオリジナル名・持続期間で登録し、マイ間取りに美しく設置して一元管理できます。
@@ -317,14 +314,13 @@ export default function HomePage() {
           href="/map?createCustom=true"
           className="w-full sm:w-auto px-4 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white text-[11px] font-black rounded-xl text-center shadow-md transition-all whitespace-nowrap"
         >
-          ✨ オリジナルグッズを作製する →
+          オリジナルグッズを作製する
         </Link>
       </div>
 
-      {/* 3. 要交換（期限切れ間近） */}
       <div className="mb-5">
         <h2 className="text-xs font-extrabold text-slate-400 mb-2 tracking-wider uppercase flex items-center gap-1">
-          <span>🚨</span> 要交換のグッズ ({alertTraps.length})
+          要交換のグッズ ({alertTraps.length})
         </h2>
         {alertTraps.length === 0 ? (
           <div className="bg-white p-6 rounded-3xl text-center border border-slate-200/60 shadow-sm text-xs text-slate-400 leading-relaxed">
@@ -351,10 +347,9 @@ export default function HomePage() {
                   </span>
                   <button
                     onClick={() => handleRemoveTrap(trap.id, trap.name)}
-                    className="p-2 bg-white hover:bg-red-100 text-red-600 hover:text-red-700 rounded-xl border border-red-200 transition text-xs"
-                    title="回収する"
+                    className="p-1.5 px-3 bg-white hover:bg-red-50 text-red-600 hover:text-red-700 rounded-xl border border-red-200 hover:border-red-300 transition text-[10px] font-bold shadow-sm"
                   >
-                    🗑️
+                    回収
                   </button>
                 </div>
               </div>
@@ -366,11 +361,10 @@ export default function HomePage() {
       {/* 4. 現在設置中の全グッズリスト */}
       <div className="flex-1 mb-6">
         <h2 className="text-xs font-extrabold text-slate-400 mb-2 tracking-wider uppercase flex items-center gap-1">
-          <span>🏡</span> 現在の防衛状況 ({traps.length}個設置中)
+          現在の防衛状況 ({traps.length}個設置中)
         </h2>
         {traps.length === 0 ? (
           <div className="bg-white p-8 rounded-2xl text-center border border-slate-100 shadow-sm flex flex-col items-center gap-3">
-            <span className="text-4xl">🍃</span>
             <p className="text-xs text-slate-400 leading-normal max-w-xs">
               現在、家の中に防衛グッズが配置されていません。間取りマップから配置しましょう。
             </p>
@@ -413,10 +407,9 @@ export default function HomePage() {
                     </div>
                     <button
                       onClick={() => handleRemoveTrap(trap.id, trap.name)}
-                      className="p-2 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-xl border border-transparent hover:border-red-200 transition text-xs"
-                      title="回収する"
+                      className="p-1.5 px-3 hover:bg-red-50 text-slate-500 hover:text-red-600 rounded-xl border border-slate-100 hover:border-red-200 transition text-[10px] font-bold shadow-sm bg-slate-50/50"
                     >
-                      🗑️
+                      回収
                     </button>
                   </div>
                 </div>
