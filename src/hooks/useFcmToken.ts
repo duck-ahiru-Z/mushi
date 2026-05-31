@@ -56,7 +56,7 @@ export function useFcmToken() {
     }
   }, [isSupported]);
 
-  // 3. テスト用のネイティブ風通知を今すぐ送る (ネイティブアプリ体験)
+  // 3. テスト用のネイティブ風通知を今すぐ送る
   const triggerTestNotification = useCallback(() => {
     if (!isSupported) {
       alert("通知機能がサポートされていません。");
@@ -64,19 +64,34 @@ export function useFcmToken() {
     }
 
     if (permission !== "granted") {
-      alert("通知許可がまだ与えられていません。まず「通知を許可」ボタンを押してください。");
+      alert("通知許可が与えられていません。まず通知を許可してください。");
       return;
     }
 
+    // 保存された通知タイミング設定を取得して文言に連動
+    const savedConfig = localStorage.getItem("bug_guard_notification_settings");
+    let activeAlerts = ["当日", "3日前警告", "7日前警告"];
+    if (savedConfig) {
+      try {
+        const config = JSON.parse(savedConfig);
+        activeAlerts = [];
+        if (config.notifyOnDay) activeAlerts.push("当日");
+        if (config.notify3DaysBefore) activeAlerts.push("3日前");
+        if (config.notify7DaysBefore) activeAlerts.push("7日前");
+        if (config.notify30DaysBefore) activeAlerts.push("30日前");
+      } catch {}
+    }
+    const alertsText = activeAlerts.length > 0 ? activeAlerts.join(", ") : "なし";
+
     // ネイティブ通知オプション
-    const title = "🛡️ BugGuard 防衛アラート";
+    const title = "BugGuard 防衛アラート";
     const options: any = {
-      body: "【警告】ゴキブリホイホイの交換期限（あと7日）が近づいています！設置マップを確認してください。",
-      icon: "/favicon.ico", // 実装上のプレースホルダー、アイコン指定
+      body: `対策グッズの交換期限が近づいています。設置マップを確認して交換してください。(有効な通知設定: ${alertsText})`,
+      icon: "/favicon.ico",
       badge: "/favicon.ico",
       tag: "bugguard-alert",
-      requireInteraction: true, // ユーザーが閉じるまで表示し続ける
-      vibrate: [200, 100, 200], // スマホでのバイブパターン
+      requireInteraction: true,
+      vibrate: [200, 100, 200],
     };
 
     // サービスワーカー経由、または直接表示
@@ -85,7 +100,6 @@ export function useFcmToken() {
         registration.showNotification(title, options);
       });
     } else {
-      // フォールバック
       new Notification(title, options);
     }
   }, [permission, isSupported]);
@@ -95,12 +109,10 @@ export function useFcmToken() {
     if (permission !== "granted") return;
 
     // ハッカソン・PWAデモ用のタイマーシミュレーション
-    // 実際にはサーバーまたは Service Worker の同期機能で送信されますが、
-    // ここでは10秒後にリマインダーが届く「擬似体験タイマー」を仕掛けることができます
     setTimeout(() => {
-      const title = "⏰ 防衛グッズの交換リマインダー";
+      const title = "BugGuard 交換リマインダー";
       const options: any = {
-        body: `「${trapName}」の回収期限まで残り ${daysLeft} 日です。家全体の防衛効果が弱まる前に交換しましょう！`,
+        body: `「${trapName}」の交換期限まで残り ${daysLeft} 日です。家全体の防衛効果を維持するために交換しましょう。`,
         icon: "/favicon.ico",
         tag: "bugguard-reminder",
         vibrate: [100, 50, 100],
