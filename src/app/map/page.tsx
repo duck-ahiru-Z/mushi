@@ -353,7 +353,7 @@ export default function MapPage() {
     try {
       await addTrap(
         selectedTrapType,
-        placedLocation || `${room.name}の防衛ポイント`,
+        placedLocation || `${room.name}の隅`,
         room.id,
         clickX,
         clickY,
@@ -424,68 +424,63 @@ export default function MapPage() {
   };
 
   if (!isInitialized) {
-    return (
-      <div className="p-5 flex flex-col min-h-screen bg-slate-950 text-cyan-400 font-mono text-xs items-center justify-center gap-3">
-        <div className="animate-spin rounded-full h-5 w-5 border border-cyan-500 border-t-transparent"></div>
-        <span>LOADING TACTICAL MAPS / 戦略間取り図の読み込み中...</span>
-      </div>
-    );
+    return <div className="p-5 text-slate-500 text-sm">マイ間取りのデータを読み込み中...</div>;
   }
 
   return (
-    <div className="p-4 flex flex-col min-h-screen bg-slate-950 text-zinc-100 relative">
+    <div className="p-4 flex flex-col min-h-screen bg-slate-50 text-slate-800 relative">
       
-      {/* ⚠️ Undo 復元トースト通知 */}
+      {/* ⚠️ Undo 復元トースト */}
       {showUndoToast && (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-zinc-900 border border-zinc-800 text-zinc-100 text-xs px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 backdrop-blur-md animate-slide-up">
-          <span>防衛区画を閉鎖しました（設置済みの防衛装備は一時解除）</span>
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 text-white text-xs px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 backdrop-blur-md animate-slide-up">
+          <span>部屋を削除しました（設置済みの防衛も一時解除）</span>
           <button
             onClick={handleUndoRoom}
-            className="bg-cyan-500 hover:bg-cyan-600 text-zinc-950 font-black px-2.5 py-1 rounded-lg transition"
+            className="bg-teal-500 hover:bg-teal-600 text-slate-950 font-black px-2.5 py-1 rounded-lg transition"
           >
-            復元する
+            元に戻す
           </button>
         </div>
       )}
 
       {/* 📍 設置グッズの詳細ポップアップ（モーダル） */}
       {selectedTrap && (
-        <div className="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-zinc-900 w-full max-w-sm rounded-3xl shadow-2xl p-5 border border-zinc-850 flex flex-col gap-4 animate-scale-up text-zinc-200">
-            <div className="flex justify-between items-start border-b border-zinc-850 pb-2">
+        <div className="fixed inset-0 bg-slate-950/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-5 border border-slate-100 flex flex-col gap-4 animate-scale-up text-slate-800">
+            <div className="flex justify-between items-start">
               <div className="flex items-center gap-2">
-                <span className="p-1.5 bg-zinc-950 rounded-2xl flex items-center justify-center flex-shrink-0 border border-zinc-800">
+                <span className="p-1.5 bg-slate-100 rounded-2xl flex items-center justify-center flex-shrink-0">
                   <TrapIcon id={selectedTrap.name} size={40} />
                 </span>
                 <div>
-                  <h3 className="font-black text-sm text-zinc-100">{selectedTrap.name}</h3>
-                  <p className="text-[10px] text-zinc-500 font-mono">LOCATION: {selectedTrap.placedLocation}</p>
+                  <h3 className="font-black text-sm text-slate-900">{selectedTrap.name}</h3>
+                  <p className="text-[10px] text-slate-400">場所: {selectedTrap.placedLocation}</p>
                 </div>
               </div>
-              <button onClick={() => setSelectedTrap(null)} className="text-zinc-500 hover:text-zinc-300 text-lg font-bold">×</button>
+              <button onClick={() => setSelectedTrap(null)} className="text-slate-400 hover:text-slate-600 text-lg font-bold">×</button>
             </div>
             
-            <div className="bg-zinc-950 p-3 rounded-xl space-y-1.5 text-xs text-zinc-400 font-mono border border-zinc-900">
+            <div className="bg-slate-50 p-3 rounded-xl space-y-1.5 text-xs text-slate-500">
               <div className="flex justify-between">
-                <span>配備開始日:</span>
-                <strong className="text-zinc-300">{selectedTrap.placedDate}</strong>
+                <span>設置日:</span>
+                <strong className="text-slate-700 font-mono">{selectedTrap.placedDate}</strong>
               </div>
               <div className="flex justify-between">
-                <span>耐用限界期限:</span>
-                <strong className="text-red-400">{selectedTrap.expirationDate}</strong>
+                <span>交換期限:</span>
+                <strong className="text-red-600 font-mono">{selectedTrap.expirationDate}</strong>
               </div>
             </div>
 
             <div className="flex gap-2 mt-2">
               <button
                 onClick={handleRemoveTrap}
-                className="flex-1 py-2.5 bg-red-950/40 hover:bg-red-900/40 border border-red-900 text-red-400 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 active:scale-[0.98]"
+                className="flex-1 py-2.5 bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 active:scale-[0.98]"
               >
-                装備を回収する
+                グッズを回収
               </button>
               <button
                 onClick={() => setSelectedTrap(null)}
-                className="px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl text-xs font-bold transition border border-zinc-700"
+                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition"
               >
                 閉じる
               </button>
@@ -496,50 +491,50 @@ export default function MapPage() {
 
       {/* 🛡️ オリジナルカスタムグッズ追加モーダル */}
       {showCustomModal && (
-        <div className="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-zinc-900 w-full max-w-sm rounded-3xl shadow-2xl p-5 border border-zinc-850 flex flex-col gap-4 animate-scale-up text-zinc-200">
-            <div className="border-b border-zinc-850 pb-2">
-              <h3 className="font-black text-sm text-cyan-400 tracking-wider">🛠️ 新規防衛装備（グッズ）の調合</h3>
-              <p className="text-[9px] text-zinc-500 font-mono">Custom Defense Arsenal Configurator</p>
+        <div className="fixed inset-0 bg-slate-950/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-5 border border-slate-100 flex flex-col gap-4 animate-scale-up text-slate-800">
+            <div>
+              <h3 className="font-black text-sm text-slate-900">オリジナルグッズの登録</h3>
+              <p className="text-[10px] text-slate-400">オリジナルの防虫グッズやスプレーを登録し、間取りに配置して期限管理できます。</p>
             </div>
 
             <div className="space-y-3">
               <div>
-                <label className="text-[10px] font-bold text-zinc-500 block mb-1">防衛グッズの一般名称</label>
+                <label className="text-[10px] font-bold text-slate-400 block mb-1">グッズの名前</label>
                 <input
                   type="text"
                   placeholder="例: バルサン置くだけダニシート"
                   value={customName}
                   onChange={(e) => setCustomName(e.target.value)}
-                  className="w-full p-2.5 bg-zinc-950 border border-zinc-850 rounded-xl text-xs text-zinc-200 placeholder-zinc-700 focus:ring-1 focus:ring-cyan-500 focus:outline-none"
+                  className="w-full p-2.5 bg-slate-50 border rounded-xl text-xs"
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-bold text-zinc-500 block mb-1">耐用限界（持続稼働月数）</label>
+                <label className="text-[10px] font-bold text-slate-400 block mb-1">有効期限（持続月数）</label>
                 <select
                   value={customMonths}
                   onChange={(e) => setCustomMonths(Number(e.target.value))}
-                  className="w-full p-2.5 bg-zinc-950 border border-zinc-850 rounded-xl text-xs text-zinc-200 focus:outline-none"
+                  className="w-full p-2.5 bg-slate-50 border rounded-xl text-xs"
                 >
-                  <option value="1">1ヶ月 (短期スプレー等)</option>
-                  <option value="2">2ヶ月 (ダニ用等)</option>
-                  <option value="3">3ヶ月 (一般捕獲罠等)</option>
-                  <option value="6">6ヶ月 (強力誘引毒餌剤等)</option>
-                  <option value="12">12ヶ月 (1年間持続防壁)</option>
+                  <option value="1">1ヶ月 (例: コバエ用)</option>
+                  <option value="2">2ヶ月</option>
+                  <option value="3">3ヶ月 (例: 一般ホイホイ)</option>
+                  <option value="6">6ヶ月 (例: 毒餌剤)</option>
+                  <option value="12">12ヶ月 (1年持続)</option>
                 </select>
               </div>
 
               <div>
-                <label className="text-[10px] font-bold text-zinc-500 block mb-1">コンソール表示アイコン</label>
-                <div className="flex gap-2 flex-wrap bg-zinc-950 p-2.5 rounded-xl border border-zinc-900 justify-between">
+                <label className="text-[10px] font-bold text-slate-400 block mb-1">マップ表示アイコン</label>
+                <div className="flex gap-2 flex-wrap bg-slate-50 p-2.5 rounded-xl justify-between">
                   {["🪳", "🕷️", "🦟", "🐜", "🌿", "🧴", "📦", "🪙", "🛡️"].map((emoji) => (
                     <button
                       key={emoji}
                       type="button"
                       onClick={() => setCustomIcon(emoji)}
                       className={`w-8 h-8 rounded-lg text-lg flex items-center justify-center transition border ${
-                        customIcon === emoji ? "bg-cyan-500 border-cyan-400 text-zinc-950 shadow" : "bg-zinc-900 hover:bg-zinc-800 border-zinc-800 text-zinc-300"
+                        customIcon === emoji ? "bg-slate-800 border-slate-800 text-white shadow" : "bg-white hover:bg-slate-100 border-slate-200"
                       }`}
                     >
                       {emoji}
@@ -552,13 +547,13 @@ export default function MapPage() {
             <div className="flex gap-2 mt-2">
               <button
                 onClick={handleCreateCustomType}
-                className="flex-1 py-2.5 bg-cyan-500 hover:bg-cyan-600 text-zinc-950 rounded-xl text-xs font-black transition shadow-md active:scale-[0.98]"
+                className="flex-1 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold transition shadow-md active:scale-[0.98]"
               >
-                装備を調合し選択する
+                登録して選択する
               </button>
               <button
                 onClick={() => setShowCustomModal(false)}
-                className="px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl text-xs font-bold transition border border-zinc-700"
+                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition"
               >
                 キャンセル
               </button>
@@ -568,62 +563,53 @@ export default function MapPage() {
       )}
 
       {/* ヘッダー */}
-      <div className="border-b border-zinc-800 pb-2 mb-4">
-        <h1 className="text-xl font-bold text-cyan-400 flex items-center gap-2 font-mono uppercase tracking-wider">
-          🗺️ STRATEGIC MAP / 戦略配置マップ
-        </h1>
-        <p className="text-[9px] text-zinc-500 mt-1 uppercase font-bold tracking-widest">
-          Defensive Layout Configurator & Arsenal Placements
-        </p>
-      </div>
+      <h1 className="text-xl font-bold border-b pb-2 mb-4 text-slate-900 flex items-center gap-2">
+        マイ間取り・防衛グッズ配置
+      </h1>
 
-      {/* モード切り替え (サイバー調) */}
+      {/* モード切り替え */}
       <div className="flex gap-2 mb-4">
         <button
           onClick={() => setMode("place")}
-          className={`flex-1 py-2.5 rounded-xl text-xs font-black border transition-all ${
-            mode === "place" 
-              ? "bg-cyan-500 text-zinc-950 border-cyan-400 shadow-md scale-[1.01]" 
-              : "bg-zinc-900 text-zinc-400 border-zinc-800/80"
+          className={`flex-1 py-2 rounded-xl text-xs font-extrabold border transition-all ${
+            mode === "place" ? "bg-teal-600 text-white border-teal-600 shadow" : "bg-white text-slate-600 border-slate-200"
           }`}
         >
-          🚨 装備を配備する (配備プロトコル)
+          グッズを配置する (配置モード)
         </button>
         <button
           onClick={() => setMode("edit")}
-          className={`flex-1 py-2.5 rounded-xl text-xs font-black border transition-all ${
-            mode === "edit" 
-              ? "bg-indigo-600 text-zinc-100 border-indigo-500 shadow-md scale-[1.01]" 
-              : "bg-zinc-900 text-zinc-400 border-zinc-800/80"
+          className={`flex-1 py-2 rounded-xl text-xs font-extrabold border transition-all ${
+            mode === "edit" ? "bg-indigo-600 text-white border-indigo-600 shadow" : "bg-white text-slate-600 border-slate-200"
           }`}
         >
-          📐 間取りを編集する (設計プロトコル)
+          間取りを編集する (編集モード)
         </button>
       </div>
 
       {/* コントロールパネル */}
       {mode === "place" ? (
-        <div className="bg-zinc-900/60 border border-zinc-800/80 backdrop-blur-md p-4 rounded-2xl shadow-sm mb-4 flex flex-col gap-3">
-          <div className="flex justify-between items-center border-b border-zinc-850 pb-1.5">
-            <h2 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider font-mono">🛠️ SELECT ARSENAL / 配備装備の選定</h2>
+        <div className="bg-white p-4 rounded-2xl shadow-sm mb-4 border border-slate-100 flex flex-col gap-3">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xs font-extrabold text-slate-400">🛠️ 配置するグッズを選択</h2>
           </div>
 
           <button
             onClick={() => setShowCustomModal(true)}
-            className="w-full py-3 bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-600 hover:to-emerald-600 text-zinc-950 rounded-xl text-xs font-black shadow-md transition flex items-center justify-center gap-1.5 active:scale-[0.98]"
+            className="w-full py-3 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white rounded-xl text-xs font-black shadow-md transition flex items-center justify-center gap-1.5 active:scale-[0.98]"
           >
-            オリジナル防衛装備（グッズ）を調合する
+            自分専用のオリジナル防衛グッズを作製する
           </button>
 
           <div className="flex flex-col gap-2">
             <select
               value={selectedTrapType}
               onChange={(e) => setSelectedTrapType(e.target.value)}
-              className="w-full p-2.5 bg-zinc-950 border border-zinc-850 rounded-xl text-xs font-bold text-zinc-200 focus:outline-none"
+              className="w-full p-2.5 border rounded-xl bg-slate-50 text-xs font-bold focus:outline-none"
             >
               {allTrapTypes.map((type) => (
                 <option key={type.name} value={type.name}>
-                  {type.icon} {type.name} (定格: {type.months}ヶ月)
+                  {type.icon} {type.name} (基本: {type.months}ヶ月)
                 </option>
               ))}
             </select>
@@ -632,10 +618,10 @@ export default function MapPage() {
               <div className="col-span-2">
                 <input
                   type="text"
-                  placeholder="配備区画のメモ (例: 冷蔵庫の裏隙間)"
+                  placeholder="設置場所メモ (例: 冷蔵庫の裏)"
                   value={placedLocation}
                   onChange={(e) => setPlacedLocation(e.target.value)}
-                  className="w-full p-2.5 bg-zinc-950 border border-zinc-850 rounded-xl text-xs font-medium text-zinc-200 placeholder-zinc-700 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                  className="w-full p-2.5 border rounded-xl text-xs bg-slate-50 font-medium"
                 />
               </div>
               <div className="relative flex items-center">
@@ -645,40 +631,40 @@ export default function MapPage() {
                   max="36"
                   value={placementMonths}
                   onChange={(e) => setPlacementMonths(Math.max(1, Number(e.target.value)))}
-                  className="w-full p-2.5 pr-8 bg-zinc-950 border border-zinc-850 rounded-xl text-xs font-black text-center text-zinc-200 focus:outline-none"
-                  title="有効稼働限界月数"
+                  className="w-full p-2.5 pr-8 border rounded-xl text-xs bg-slate-50 font-black text-center focus:outline-none"
+                  title="有効期限を指定した月数で上書きします"
                 />
-                <span className="absolute right-2 text-[8px] font-black text-zinc-500 pointer-events-none uppercase font-mono">MON</span>
+                <span className="absolute right-2.5 text-[9px] font-black text-slate-400 pointer-events-none">ヶ月</span>
               </div>
             </div>
           </div>
-          <p className="text-[10px] text-cyan-400 font-bold bg-cyan-950/30 p-2.5 rounded-lg leading-normal font-mono border border-cyan-900/40">
-            <strong>DEPLOYMENT ACTION:</strong> 装備を選択後、防衛線（間取り）上の配備したいピンポイント区画をタップしてください。
+          <p className="text-[10px] text-teal-600 font-bold bg-teal-50/50 p-2 rounded-lg leading-normal">
+            <strong>配置方法:</strong> 設置するグッズを選択し、間取り図の配置したい場所をタップしてください。
           </p>
         </div>
       ) : (
-        <div className="bg-zinc-900/60 border border-zinc-800/80 backdrop-blur-md p-4 rounded-2xl shadow-sm mb-4 space-y-3">
+        <div className="bg-white p-4 rounded-2xl shadow-sm mb-4 border border-slate-100 space-y-3">
           <div>
-            <h2 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider font-mono mb-2">CANVAS DIMENSIONS / キャンバスサイズ（微調整用）</h2>
-            <div className="flex items-center gap-4 text-xs bg-zinc-950 border border-zinc-850 p-2.5 rounded-xl w-fit font-mono">
-              <label className="text-zinc-400">WIDTH: <input type="number" min="200" step="50" value={houseSize.width} onChange={(e) => setHouseSize({ ...houseSize, width: Math.max(200, Number(e.target.value)) })} className="w-16 p-1 border border-zinc-800 rounded bg-zinc-900 text-center text-zinc-100 font-mono focus:outline-none" /> px</label>
-              <label className="text-zinc-400">HEIGHT: <input type="number" min="200" step="50" value={houseSize.height} onChange={(e) => setHouseSize({ ...houseSize, height: Math.max(200, Number(e.target.value)) })} className="w-16 p-1 border border-zinc-800 rounded bg-zinc-900 text-center text-zinc-100 font-mono focus:outline-none" /> px</label>
+            <h2 className="text-xs font-bold text-slate-400 mb-2">全体のキャンバスサイズ（微調整用）</h2>
+            <div className="flex items-center gap-4 text-xs bg-slate-50 p-2 rounded-xl w-fit">
+              <label>横幅: <input type="number" min="200" step="50" value={houseSize.width} onChange={(e) => setHouseSize({ ...houseSize, width: Math.max(200, Number(e.target.value)) })} className="w-16 p-1 border rounded bg-white text-center font-mono" /> px</label>
+              <label>高さ: <input type="number" min="200" step="50" value={houseSize.height} onChange={(e) => setHouseSize({ ...houseSize, height: Math.max(200, Number(e.target.value)) })} className="w-16 p-1 border rounded bg-white text-center font-mono" /> px</label>
             </div>
           </div>
-          <hr className="border-zinc-800/60" />
+          <hr className="border-slate-100" />
           <div>
-            <h2 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider font-mono mb-2">ADD ZONE / {getFloorName(currentFloor)} に新しい区画を追加</h2>
+            <h2 className="text-xs font-bold text-slate-400 mb-2">{getFloorName(currentFloor)} に新しい部屋を追加</h2>
             <div className="flex gap-2">
               <input
                 type="text"
-                placeholder="区画名 (例: バスルーム, 洗面脱衣所)"
+                placeholder="部屋名 (例: トイレ, 脱衣所)"
                 value={newRoomName}
                 onChange={(e) => setNewRoomName(e.target.value)}
-                className="flex-1 p-2.5 bg-zinc-950 border border-zinc-850 rounded-xl text-xs font-bold text-zinc-200 placeholder-zinc-700 focus:outline-none"
+                className="flex-1 p-2 border rounded-xl text-xs bg-slate-50 font-bold"
               />
               <button
                 onClick={handleAddRoomClick}
-                className="px-4 bg-indigo-600 hover:bg-indigo-700 border border-indigo-500 text-white rounded-xl text-xs font-black transition active:scale-[0.98]"
+                className="px-4 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition"
               >
                 追加
               </button>
@@ -688,58 +674,58 @@ export default function MapPage() {
       )}
 
       {/* 🏢 階層＆ズーム管理バー */}
-      <div className="flex items-center justify-between gap-2 mb-3 bg-zinc-900/60 border border-zinc-800/80 p-2.5 rounded-2xl flex-wrap">
+      <div className="flex items-center justify-between gap-2 mb-3 bg-slate-100 p-2 rounded-2xl flex-wrap">
         {/* 左: 階数操作 */}
         <div className="flex items-center gap-1.5">
-          <button onClick={handleAddLowerFloor} className="px-2.5 py-1.5 rounded-lg text-[9px] font-black bg-cyan-950/40 border border-cyan-850 text-cyan-400 hover:bg-cyan-900/40 transition font-mono">ADD BASEMENT</button>
-          <div className="flex items-center gap-1 bg-zinc-950 p-1 rounded-lg border border-zinc-850 overflow-x-auto max-w-[150px] sm:max-w-none">
+          <button onClick={handleAddLowerFloor} className="px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-sky-600 hover:bg-sky-700 text-white transition">地下階を追加</button>
+          <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 overflow-x-auto max-w-[150px] sm:max-w-none">
             {floors.sort((a, b) => a - b).map((floor) => (
               <button
                 key={floor}
                 onClick={() => setCurrentFloor(floor)}
-                className={`px-3 py-1 rounded-md text-xs font-bold transition font-mono ${
-                  currentFloor === floor ? "bg-cyan-500 text-zinc-950 shadow" : "text-zinc-500 hover:bg-zinc-900"
+                className={`px-3 py-1 rounded-md text-xs font-bold transition ${
+                  currentFloor === floor ? "bg-slate-800 text-white shadow-sm" : "text-slate-500 hover:bg-slate-50"
                 }`}
               >
                 {getFloorName(floor)}
               </button>
             ))}
           </div>
-          <button onClick={handleAddUpperFloor} className="px-2.5 py-1.5 rounded-lg text-[9px] font-black bg-cyan-950/40 border border-cyan-850 text-cyan-400 hover:bg-cyan-900/40 transition font-mono">ADD UPPER</button>
+          <button onClick={handleAddUpperFloor} className="px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-orange-600 hover:bg-orange-700 text-white transition">地上階を追加</button>
           
           {mode === "edit" && floors.length > 1 && (
             <button
               onClick={handleDeleteCurrentFloor}
-              className="px-2.5 py-1.5 rounded-lg text-[9px] font-black bg-red-950/40 text-red-400 border border-red-900 hover:bg-red-900/40 transition font-mono"
+              className="px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition"
             >
-              DELETE FLOOR
+              この階を削除
             </button>
           )}
         </div>
 
         {/* 右: ズーム調整ボタン */}
-        <div className="flex items-center gap-1 bg-zinc-950 p-1.5 rounded-xl border border-zinc-850 shadow ml-auto">
-          <span className="text-[9px] font-black text-zinc-500 px-1 font-mono uppercase">ZOOM:</span>
+        <div className="flex items-center gap-1 bg-white p-1.5 rounded-xl border border-slate-200 shadow-sm ml-auto">
+          <span className="text-[10px] font-black text-slate-400 px-1">ズーム:</span>
           <button
             onClick={() => setZoom(Math.max(0.4, Number((zoom - 0.1).toFixed(2))))}
-            className="w-6 h-6 flex items-center justify-center bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-lg text-xs font-bold text-zinc-300"
+            className="w-6 h-6 flex items-center justify-center bg-slate-50 hover:bg-slate-200 border rounded-lg text-xs font-bold"
           >
             -
           </button>
-          <span className="text-[9px] font-black text-cyan-400 min-w-[36px] text-center font-mono">
+          <span className="text-[10px] font-black text-slate-700 min-w-[36px] text-center font-mono">
             {Math.round(zoom * 100)}%
           </span>
           <button
             onClick={() => setZoom(Math.min(1.6, Number((zoom + 0.1).toFixed(2))))}
-            className="w-6 h-6 flex items-center justify-center bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-lg text-xs font-bold text-zinc-300"
+            className="w-6 h-6 flex items-center justify-center bg-slate-50 hover:bg-slate-200 border rounded-lg text-xs font-bold"
           >
             +
           </button>
           <button
             onClick={() => setZoom(window.innerWidth < 640 ? 0.55 : 1)}
-            className="text-[8px] font-black bg-zinc-900 hover:bg-zinc-800 px-1.5 py-1 rounded border border-zinc-850 text-zinc-500 font-mono uppercase"
+            className="text-[9px] font-bold bg-slate-100 hover:bg-slate-200 px-1.5 py-1 rounded border text-slate-500"
           >
-            RESET
+            リセット
           </button>
         </div>
       </div>
@@ -749,7 +735,7 @@ export default function MapPage() {
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className="w-full overflow-auto border border-zinc-800 bg-zinc-950 rounded-3xl p-4 max-h-[62vh] shadow-inner flex justify-center items-start min-h-[300px]"
+        className="w-full overflow-auto border border-slate-300 bg-slate-200/60 rounded-3xl p-4 max-h-[62vh] shadow-inner flex justify-center items-start min-h-[300px]"
       >
         <div
           style={{
@@ -763,16 +749,13 @@ export default function MapPage() {
         >
           <div 
             ref={containerRef}
-            className="relative bg-zinc-900 rounded-2xl border border-zinc-800 shadow-2xl overflow-hidden"
+            className="relative bg-white rounded-2xl border border-slate-300 shadow-xl"
             style={{
               width: `${houseSize.width}px`,
               height: `${houseSize.height}px`,
               transform: `scale(${zoom})`,
               transformOrigin: "top left",
               touchAction: "none",
-              // サイバーな背景グリッドパターン
-              backgroundImage: "radial-gradient(#1e293b 1px, transparent 1px)",
-              backgroundSize: "20px 20px"
             }}
           >
             {/* 各部屋の描画 */}
@@ -781,10 +764,10 @@ export default function MapPage() {
                 key={room.id}
                 onClick={(e) => handleRoomClick(room, e)}
                 onPointerDown={(e) => handleRoomPointerDown(room, e)}
-                className={`absolute border-2 rounded-2xl shadow flex items-center justify-center select-none touch-none transition-all duration-150 ${
+                className={`absolute border-2 rounded-2xl shadow-sm flex items-center justify-center select-none touch-none ${
                   mode === "edit"
-                    ? "bg-indigo-950/40 border-indigo-500/70 cursor-move hover:bg-indigo-950/60"
-                    : "bg-cyan-950/20 border-cyan-600/30 cursor-crosshair hover:bg-cyan-950/30"
+                    ? "bg-indigo-50/80 border-indigo-500/70 cursor-move hover:bg-indigo-50"
+                    : "bg-teal-50/50 border-teal-600/30 cursor-crosshair hover:bg-teal-50"
                 }`}
                 style={{
                   left: `${room.x}%`,
@@ -794,18 +777,18 @@ export default function MapPage() {
                   touchAction: "none",
                 }}
               >
-                {/* 部屋名表示（編集モード時は削除ボタンを併記） */}
+                {/* 部屋名表示（編集モード時は削除ゴミ箱を併記） */}
                 <div className="flex flex-col items-center gap-1 pointer-events-none select-none">
-                  <span className={`text-[10px] font-black select-none tracking-wide ${mode === "edit" ? "text-indigo-300" : "text-cyan-300"}`}>
+                  <span className={`text-[10px] font-black select-none ${mode === "edit" ? "text-indigo-900" : "text-teal-900"}`}>
                     {room.name}
                   </span>
                   {mode === "edit" && (
                     <button
                       onClick={(e) => handleDeleteRoomClick(room.id, room.name, e)}
-                      className="pointer-events-auto bg-red-950/60 border border-red-800 hover:bg-red-900/60 text-red-400 w-10 h-5 flex items-center justify-center rounded-lg text-[9px] font-black transition z-30 font-mono"
-                      title="区画削除"
+                      className="pointer-events-auto bg-red-100 hover:bg-red-200 text-red-700 w-10 h-5 flex items-center justify-center rounded-lg text-[9px] font-bold transition z-30"
+                      title="この部屋を削除"
                     >
-                      DELETE
+                      削除
                     </button>
                   )}
                 </div>
@@ -830,7 +813,7 @@ export default function MapPage() {
                     key={trap.id}
                     onPointerDown={(e) => handleTrapPointerDown(trap, room.id, e)}
                     onClick={(e) => handleTrapClick(trap, e)}
-                    className="absolute trap-marker z-20 pointer-events-auto p-1 bg-zinc-950 rounded-xl border border-cyan-500/70 hover:border-cyan-400 shadow-lg flex items-center justify-center transition active:scale-95 cursor-grab touch-none"
+                    className="absolute trap-marker z-20 pointer-events-auto p-1 bg-white rounded-xl border border-slate-200 hover:border-slate-350 shadow flex items-center justify-center transition active:scale-95 cursor-grab touch-none"
                     style={{
                       left: `calc(${trap.x * 100}% - 14px)`,
                       top: `calc(${trap.y * 100}% - 14px)`,
