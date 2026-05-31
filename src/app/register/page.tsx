@@ -159,12 +159,12 @@ export default function RegisterPage() {
         localStorage.setItem("simulated_user_email", email);
         setIsSimulatedUser(true);
         setSimulatedEmail(email);
-        setSuccess("【シミュレーション】アカウントを新規作成し、同期を開始しました！");
+        setSuccess("アカウントを作成し、データの同期を開始しました。");
       } else {
         localStorage.setItem("simulated_user_email", email);
         setIsSimulatedUser(true);
         setSimulatedEmail(email);
-        setSuccess("【シミュレーション】ログインに成功し、同期を開始しました！");
+        setSuccess("サインインが完了し、データの同期を開始しました。");
       }
     }
   };
@@ -209,7 +209,7 @@ export default function RegisterPage() {
         <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
           設定とアカウント管理
         </h1>
-        <p className="text-xs text-slate-400 mt-1">クラウド同期と通知エリアの地域設定を設定できます。</p>
+        <p className="text-xs text-slate-400 mt-1">クラウドデータ同期と通知地域の設定を行えます。</p>
       </div>
 
       {/* エラー / 成功通知トースト風 */}
@@ -230,7 +230,7 @@ export default function RegisterPage() {
           警報・天気用の地域設定
         </h2>
         <p className="text-xs text-slate-400 mb-3 leading-relaxed">
-          ここで指定した地域の気候データと時期を組み合わせて、ホーム画面の「害虫警報アラート」や「対策図鑑」の並び順が最適化されます。
+          指定した地域の気候データとシーズン情報に基づき、ホーム画面のアラートや対策図鑑の表示順が自動で最適化されます。
         </p>
         <div className="relative">
           <select
