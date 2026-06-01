@@ -1,10 +1,17 @@
 "use client";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTraps } from "@/hooks/usetraps";
 import { Trap, ExtendedRoom } from "@/types/trap";
-import { TrapIcon } from "@/components/vector-icons";
 import { auth } from "@/lib/firebase/config";
 import { onAuthStateChanged } from "firebase/auth";
+
+// 新しく作成したサブコンポーネントをインポート
+import { CustomTrapModal } from "@/components/map/CustomTrapModal";
+import { TrapDetailModal } from "@/components/map/TrapDetailModal";
+import { FloorSelector } from "@/components/map/FloorSelector";
+import { TrapSelector } from "@/components/map/TrapSelector";
+import { RoomEditor } from "@/components/map/RoomEditor";
+import { MapCanvas } from "@/components/map/MapCanvas";
 
 type ResizeDirection = "n" | "s" | "e" | "w" | "nw" | "ne" | "sw" | "se";
 
@@ -35,11 +42,9 @@ export default function MapPage() {
     addRoom,
     deleteRoom,
     undoDeleteRoom,
-    canUndo,
     addTrap,
     deleteTrap,
     allTrapTypes,
-    getTrapIcon,
     addCustomTrapType,
     updateTrapPosition,
     isInitialized,
@@ -226,10 +231,6 @@ export default function MapPage() {
       window.removeEventListener("pointerup", handleGlobalUp);
     };
   }, [dragState, zoom, rooms, setRooms, updateTrapPosition]);
-
-  const currentFloorRooms = useMemo(() => {
-    return rooms.filter((r) => r.floor === currentFloor);
-  }, [rooms, currentFloor]);
 
   const handleAddUpperFloor = () => {
     const upperFloors = floors.filter(f => f > 0);
@@ -438,123 +439,24 @@ export default function MapPage() {
       )}
 
       {/* 📍 設置グッズの詳細ポップアップ（モーダル） */}
-      {selectedTrap && (
-        <div className="fixed inset-0 bg-slate-950/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-5 border border-slate-100 flex flex-col gap-4 animate-scale-up text-slate-800">
-            <div className="flex justify-between items-start">
-              <div className="flex items-center gap-2">
-                <span className="p-1.5 bg-slate-100 rounded-2xl flex items-center justify-center flex-shrink-0">
-                  <TrapIcon id={selectedTrap.name} size={40} />
-                </span>
-                <div>
-                  <h3 className="font-black text-sm text-slate-900">{selectedTrap.name}</h3>
-                  <p className="text-[10px] text-slate-400">場所: {selectedTrap.placedLocation}</p>
-                </div>
-              </div>
-              <button onClick={() => setSelectedTrap(null)} className="text-slate-400 hover:text-slate-600 text-lg font-bold">×</button>
-            </div>
-            
-            <div className="bg-slate-50 p-3 rounded-xl space-y-1.5 text-xs text-slate-500">
-              <div className="flex justify-between">
-                <span>設置日:</span>
-                <strong className="text-slate-700 font-mono">{selectedTrap.placedDate}</strong>
-              </div>
-              <div className="flex justify-between">
-                <span>交換期限:</span>
-                <strong className="text-red-600 font-mono">{selectedTrap.expirationDate}</strong>
-              </div>
-            </div>
-
-            <div className="flex gap-2 mt-2">
-              <button
-                onClick={handleRemoveTrap}
-                className="flex-1 py-2.5 bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 active:scale-[0.98]"
-              >
-                グッズを回収
-              </button>
-              <button
-                onClick={() => setSelectedTrap(null)}
-                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition"
-              >
-                閉じる
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <TrapDetailModal
+        trap={selectedTrap}
+        onClose={() => setSelectedTrap(null)}
+        onRemove={handleRemoveTrap}
+      />
 
       {/* 🛡️ オリジナルカスタムグッズ追加モーダル */}
-      {showCustomModal && (
-        <div className="fixed inset-0 bg-slate-950/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-5 border border-slate-100 flex flex-col gap-4 animate-scale-up text-slate-800">
-            <div>
-              <h3 className="font-black text-sm text-slate-900">オリジナルグッズの登録</h3>
-              <p className="text-[10px] text-slate-400">オリジナルの防虫グッズやスプレーを登録し、間取りに配置して期限管理できます。</p>
-            </div>
-
-            <div className="space-y-3">
-              <div>
-                <label className="text-[10px] font-bold text-slate-400 block mb-1">グッズの名前</label>
-                <input
-                  type="text"
-                  placeholder="例: バルサン置くだけダニシート"
-                  value={customName}
-                  onChange={(e) => setCustomName(e.target.value)}
-                  className="w-full p-2.5 bg-slate-50 border rounded-xl text-xs"
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] font-bold text-slate-400 block mb-1">有効期限（持続月数）</label>
-                <select
-                  value={customMonths}
-                  onChange={(e) => setCustomMonths(Number(e.target.value))}
-                  className="w-full p-2.5 bg-slate-50 border rounded-xl text-xs"
-                >
-                  <option value="1">1ヶ月 (例: コバエ用)</option>
-                  <option value="2">2ヶ月</option>
-                  <option value="3">3ヶ月 (例: 一般ホイホイ)</option>
-                  <option value="6">6ヶ月 (例: 毒餌剤)</option>
-                  <option value="12">12ヶ月 (1年持続)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-[10px] font-bold text-slate-400 block mb-1">マップ表示アイコン</label>
-                <div className="flex gap-2 flex-wrap bg-slate-50 p-2.5 rounded-xl justify-between">
-                  {["🪳", "🕷️", "🦟", "🐜", "🌿", "🧴", "📦", "🪙", "🛡️"].map((emoji) => (
-                    <button
-                      key={emoji}
-                      type="button"
-                      onClick={() => setCustomIcon(emoji)}
-                      className={`w-8 h-8 rounded-lg text-lg flex items-center justify-center transition border ${
-                        customIcon === emoji ? "bg-slate-800 border-slate-800 text-white shadow" : "bg-white hover:bg-slate-100 border-slate-200"
-                      }`}
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-2 mt-2">
-              <button
-                onClick={handleCreateCustomType}
-                className="flex-1 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold transition shadow-md active:scale-[0.98]"
-              >
-                登録して選択する
-              </button>
-              <button
-                onClick={() => setShowCustomModal(false)}
-                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition"
-              >
-                キャンセル
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CustomTrapModal
+        isOpen={showCustomModal}
+        onClose={() => setShowCustomModal(false)}
+        customName={customName}
+        setCustomName={setCustomName}
+        customMonths={customMonths}
+        setCustomMonths={setCustomMonths}
+        customIcon={customIcon}
+        setCustomIcon={setCustomIcon}
+        onCreateCustom={handleCreateCustomType}
+      />
 
       {/* ヘッダー */}
       <h1 className="text-xl font-bold border-b pb-2 mb-4 text-slate-900 flex items-center gap-2">
@@ -583,248 +485,62 @@ export default function MapPage() {
 
       {/* コントロールパネル */}
       {mode === "place" ? (
-        <div className="bg-white p-4 rounded-2xl shadow-sm mb-4 border border-slate-100 flex flex-col gap-3">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xs font-extrabold text-slate-400">🛠️ 配置するグッズを選択</h2>
-          </div>
-
-          <button
-            onClick={() => setShowCustomModal(true)}
-            className="w-full py-3 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white rounded-xl text-xs font-black shadow-md transition flex items-center justify-center gap-1.5 active:scale-[0.98]"
-          >
-            自分専用のオリジナル防衛グッズを作製する
-          </button>
-
-          <div className="flex flex-col gap-2">
-            <select
-              value={selectedTrapType}
-              onChange={(e) => setSelectedTrapType(e.target.value)}
-              className="w-full p-2.5 border rounded-xl bg-slate-50 text-xs font-bold focus:outline-none"
-            >
-              {allTrapTypes.map((type) => (
-                <option key={type.name} value={type.name}>
-                  {type.icon} {type.name} (基本: {type.months}ヶ月)
-                </option>
-              ))}
-            </select>
-            
-            <div className="grid grid-cols-3 gap-2">
-              <div className="col-span-2">
-                <input
-                  type="text"
-                  placeholder="設置場所メモ (例: 冷蔵庫の裏)"
-                  value={placedLocation}
-                  onChange={(e) => setPlacedLocation(e.target.value)}
-                  className="w-full p-2.5 border rounded-xl text-xs bg-slate-50 font-medium"
-                />
-              </div>
-              <div className="relative flex items-center">
-                <input
-                  type="number"
-                  min="1"
-                  max="36"
-                  value={placementMonths}
-                  onChange={(e) => setPlacementMonths(Math.max(1, Number(e.target.value)))}
-                  className="w-full p-2.5 pr-8 border rounded-xl text-xs bg-slate-50 font-black text-center focus:outline-none"
-                  title="有効期限を指定した月数で上書きします"
-                />
-                <span className="absolute right-2.5 text-[9px] font-black text-slate-400 pointer-events-none">ヶ月</span>
-              </div>
-            </div>
-          </div>
-          <p className="text-[10px] text-teal-600 font-bold bg-teal-50/50 p-2 rounded-lg leading-normal">
-            <strong>配置方法:</strong> 設置するグッズを選択し、間取り図の配置したい場所をタップしてください。
-          </p>
-        </div>
+        <TrapSelector
+          allTrapTypes={allTrapTypes}
+          selectedTrapType={selectedTrapType}
+          setSelectedTrapType={setSelectedTrapType}
+          placedLocation={placedLocation}
+          setPlacedLocation={setPlacedLocation}
+          placementMonths={placementMonths}
+          setPlacementMonths={setPlacementMonths}
+          onRequestCustomModal={() => setShowCustomModal(true)}
+        />
       ) : (
-        <div className="bg-white p-4 rounded-2xl shadow-sm mb-4 border border-slate-100 space-y-3">
-          <div>
-            <h2 className="text-xs font-bold text-slate-400 mb-2">全体のキャンバスサイズ（微調整用）</h2>
-            <div className="flex items-center gap-4 text-xs bg-slate-50 p-2 rounded-xl w-fit">
-              <label>横幅: <input type="number" min="200" step="50" value={houseSize.width} onChange={(e) => setHouseSize({ ...houseSize, width: Math.max(200, Number(e.target.value)) })} className="w-16 p-1 border rounded bg-white text-center font-mono" /> px</label>
-              <label>高さ: <input type="number" min="200" step="50" value={houseSize.height} onChange={(e) => setHouseSize({ ...houseSize, height: Math.max(200, Number(e.target.value)) })} className="w-16 p-1 border rounded bg-white text-center font-mono" /> px</label>
-            </div>
-          </div>
-          <hr className="border-slate-100" />
-          <div>
-            <h2 className="text-xs font-bold text-slate-400 mb-2">{getFloorName(currentFloor)} に新しい部屋を追加</h2>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="部屋名 (例: トイレ, 脱衣所)"
-                value={newRoomName}
-                onChange={(e) => setNewRoomName(e.target.value)}
-                className="flex-1 p-2 border rounded-xl text-xs bg-slate-50 font-bold"
-              />
-              <button
-                onClick={handleAddRoomClick}
-                className="px-4 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition"
-              >
-                追加
-              </button>
-            </div>
-          </div>
-        </div>
+        <RoomEditor
+          houseSize={houseSize}
+          setHouseSize={setHouseSize}
+          currentFloorName={getFloorName(currentFloor)}
+          newRoomName={newRoomName}
+          setNewRoomName={setNewRoomName}
+          newRoomType={newRoomType}
+          setNewRoomType={setNewRoomType}
+          onAddRoom={handleAddRoomClick}
+        />
       )}
 
       {/* 🏢 階層＆ズーム管理バー */}
-      <div className="flex items-center justify-between gap-2 mb-3 bg-slate-100 p-2 rounded-2xl flex-wrap">
-        {/* 左: 階数操作 */}
-        <div className="flex items-center gap-1.5">
-          <button onClick={handleAddLowerFloor} className="px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-sky-600 hover:bg-sky-700 text-white transition">地下階を追加</button>
-          <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 overflow-x-auto max-w-[150px] sm:max-w-none">
-            {floors.sort((a, b) => a - b).map((floor) => (
-              <button
-                key={floor}
-                onClick={() => setCurrentFloor(floor)}
-                className={`px-3 py-1 rounded-md text-xs font-bold transition ${
-                  currentFloor === floor ? "bg-slate-800 text-white shadow-sm" : "text-slate-500 hover:bg-slate-50"
-                }`}
-              >
-                {getFloorName(floor)}
-              </button>
-            ))}
-          </div>
-          <button onClick={handleAddUpperFloor} className="px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-orange-600 hover:bg-orange-700 text-white transition">地上階を追加</button>
-          
-          {mode === "edit" && floors.length > 1 && (
-            <button
-              onClick={handleDeleteCurrentFloor}
-              className="px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition"
-            >
-              この階を削除
-            </button>
-          )}
-        </div>
-
-        {/* 右: ズーム調整ボタン */}
-        <div className="flex items-center gap-1 bg-white p-1.5 rounded-xl border border-slate-200 shadow-sm ml-auto">
-          <span className="text-[10px] font-black text-slate-400 px-1">ズーム:</span>
-          <button
-            onClick={() => setZoom(Math.max(0.4, Number((zoom - 0.1).toFixed(2))))}
-            className="w-6 h-6 flex items-center justify-center bg-slate-50 hover:bg-slate-200 border rounded-lg text-xs font-bold"
-          >
-            -
-          </button>
-          <span className="text-[10px] font-black text-slate-700 min-w-[36px] text-center font-mono">
-            {Math.round(zoom * 100)}%
-          </span>
-          <button
-            onClick={() => setZoom(Math.min(1.6, Number((zoom + 0.1).toFixed(2))))}
-            className="w-6 h-6 flex items-center justify-center bg-slate-50 hover:bg-slate-200 border rounded-lg text-xs font-bold"
-          >
-            +
-          </button>
-          <button
-            onClick={() => setZoom(window.innerWidth < 640 ? 0.55 : 1)}
-            className="text-[9px] font-bold bg-slate-100 hover:bg-slate-200 px-1.5 py-1 rounded border text-slate-500"
-          >
-            リセット
-          </button>
-        </div>
-      </div>
+      <FloorSelector
+        floors={floors}
+        currentFloor={currentFloor}
+        setCurrentFloor={setCurrentFloor}
+        mode={mode}
+        onAddUpperFloor={handleAddUpperFloor}
+        onAddLowerFloor={handleAddLowerFloor}
+        onDeleteCurrentFloor={handleDeleteCurrentFloor}
+        getFloorName={getFloorName}
+        zoom={zoom}
+        setZoom={setZoom}
+      />
 
       {/* キャンバス外周スクロール枠 */}
-      <div 
+      <MapCanvas
+        containerRef={containerRef}
+        zoom={zoom}
+        houseSize={houseSize}
+        rooms={rooms}
+        traps={traps}
+        currentFloor={currentFloor}
+        mode={mode}
+        onRoomClick={handleRoomClick}
+        onRoomPointerDown={handleRoomPointerDown}
+        onTrapPointerDown={handleTrapPointerDown}
+        onHandlePointerDown={handleHandlePointerDown}
+        onTrapClick={handleTrapClick}
+        onDeleteRoom={handleDeleteRoomClick}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className="w-full overflow-auto border border-slate-300 bg-slate-200/60 rounded-3xl p-4 max-h-[62vh] shadow-inner flex justify-center items-start min-h-[300px]"
-      >
-        <div
-          style={{
-            width: `${houseSize.width * zoom}px`,
-            height: `${houseSize.height * zoom}px`,
-            overflow: "hidden",
-            position: "relative",
-            transition: "width 0.1s ease, height 0.1s ease",
-          }}
-          className="flex-shrink-0"
-        >
-          <div 
-            ref={containerRef}
-            className="relative bg-white rounded-2xl border border-slate-300 shadow-xl"
-            style={{
-              width: `${houseSize.width}px`,
-              height: `${houseSize.height}px`,
-              transform: `scale(${zoom})`,
-              transformOrigin: "top left",
-              touchAction: "none",
-            }}
-          >
-            {/* 各部屋の描画 */}
-            {currentFloorRooms.map((room) => (
-              <div
-                key={room.id}
-                onClick={(e) => handleRoomClick(room, e)}
-                onPointerDown={(e) => handleRoomPointerDown(room, e)}
-                className={`absolute border-2 rounded-2xl shadow-sm flex items-center justify-center select-none touch-none ${
-                  mode === "edit"
-                    ? "bg-indigo-50/80 border-indigo-500/70 cursor-move hover:bg-indigo-50"
-                    : "bg-teal-50/50 border-teal-600/30 cursor-crosshair hover:bg-teal-50"
-                }`}
-                style={{
-                  left: `${room.x}%`,
-                  top: `${room.y}%`,
-                  width: `${room.w}%`,
-                  height: `${room.h}%`,
-                  touchAction: "none",
-                }}
-              >
-                {/* 部屋名表示（編集モード時は削除ゴミ箱を併記） */}
-                <div className="flex flex-col items-center gap-1 pointer-events-none select-none">
-                  <span className={`text-[10px] font-black select-none ${mode === "edit" ? "text-indigo-900" : "text-teal-900"}`}>
-                    {room.name}
-                  </span>
-                  {mode === "edit" && (
-                    <button
-                      onClick={(e) => handleDeleteRoomClick(room.id, room.name, e)}
-                      className="pointer-events-auto bg-red-100 hover:bg-red-200 text-red-700 w-10 h-5 flex items-center justify-center rounded-lg text-[9px] font-bold transition z-30"
-                      title="この部屋を削除"
-                    >
-                      削除
-                    </button>
-                  )}
-                </div>
-
-                {/* リサイズ掴み手（編集モード用） */}
-                {mode === "edit" && (
-                  <>
-                    <div data-resize-dir="n" onPointerDown={(e) => handleHandlePointerDown(room, "n", e)} className="absolute top-0 left-3 right-3 h-3 cursor-n-resize -top-1.5 bg-transparent" />
-                    <div data-resize-dir="s" onPointerDown={(e) => handleHandlePointerDown(room, "s", e)} className="absolute bottom-0 left-3 right-3 h-3 cursor-s-resize -bottom-1.5 bg-transparent" />
-                    <div data-resize-dir="e" onPointerDown={(e) => handleHandlePointerDown(room, "e", e)} className="absolute right-0 top-3 bottom-3 w-3 cursor-e-resize -right-1.5 bg-transparent" />
-                    <div data-resize-dir="w" onPointerDown={(e) => handleHandlePointerDown(room, "w", e)} className="absolute left-0 top-3 bottom-3 w-3 cursor-w-resize -left-1.5 bg-transparent" />
-                    <div data-resize-dir="nw" onPointerDown={(e) => handleHandlePointerDown(room, "nw", e)} className="absolute top-0 left-0 w-3.5 h-3.5 cursor-nw-resize -top-1 -left-1 bg-transparent" />
-                    <div data-resize-dir="ne" onPointerDown={(e) => handleHandlePointerDown(room, "ne", e)} className="absolute top-0 right-0 w-3.5 h-3.5 cursor-ne-resize -top-1 -right-1 bg-transparent" />
-                    <div data-resize-dir="sw" onPointerDown={(e) => handleHandlePointerDown(room, "sw", e)} className="absolute bottom-0 left-0 w-3.5 h-3.5 cursor-sw-resize -bottom-1 -left-1 bg-transparent" />
-                    <div data-resize-dir="se" onPointerDown={(e) => handleHandlePointerDown(room, "se", e)} className="absolute bottom-0 right-0 w-3.5 h-3.5 cursor-se-resize -bottom-1 -right-1 bg-transparent" />
-                  </>
-                )}
-
-                {/* 設置グッズのピン（トラップ）の描画 */}
-                {traps.filter(t => t.roomId === room.id).map((trap) => (
-                  <button
-                    key={trap.id}
-                    onPointerDown={(e) => handleTrapPointerDown(trap, room.id, e)}
-                    onClick={(e) => handleTrapClick(trap, e)}
-                    className="absolute trap-marker z-20 pointer-events-auto p-1 bg-white rounded-xl border border-slate-200 hover:border-slate-350 shadow flex items-center justify-center transition active:scale-95 cursor-grab touch-none"
-                    style={{
-                      left: `calc(${trap.x * 100}% - 14px)`,
-                      top: `calc(${trap.y * 100}% - 14px)`,
-                      width: "28px",
-                      height: "28px",
-                      touchAction: "none"
-                    }}
-                    title={`${trap.name}: ${trap.placedLocation}`}
-                  >
-                    <TrapIcon id={trap.name} size={20} />
-                  </button>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      />
     </div>
   );
 }

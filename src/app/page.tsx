@@ -4,9 +4,14 @@ import Link from "next/link";
 import { useTraps } from "@/hooks/usetraps";
 import { useFcmToken } from "@/hooks/useFcmToken";
 import { detectJapanRegion } from "@/lib/utils";
-import { TrapIcon, PestIcon } from "@/components/vector-icons";
 import { auth } from "@/lib/firebase/config";
 import { onAuthStateChanged } from "firebase/auth";
+
+// 新しく作成したサブコンポーネントをインポート
+import { GeoNotificationPanel } from "@/components/home/GeoNotificationPanel";
+import { PestAlertCard } from "@/components/home/PestAlertCard";
+import { ExpiredTrapsList } from "@/components/home/ExpiredTrapsList";
+import { ActiveTrapsList } from "@/components/home/ActiveTrapsList";
 
 const REGION_NAMES: Record<string, string> = {
   hokkaido: "北海道エリア",
@@ -39,13 +44,11 @@ export default function HomePage() {
     rooms,
     traps,
     deleteTrap,
-    getTrapIcon,
     isInitialized,
   } = useTraps(userId);
 
   const {
     permission,
-    isSupported,
     requestNotificationPermission,
     triggerTestNotification,
   } = useFcmToken();
@@ -134,39 +137,6 @@ export default function HomePage() {
     window.dispatchEvent(new Event("safeModeChanged"));
     setShowWelcomeModal(false);
   };
-
-  // 2. 地域と言動シーズンに合わせたリアルタイム害虫活動指数
-  const pestAlertInfo = useMemo(() => {
-    if (region === "hokkaido") {
-      return {
-        title: "アカイエカ・コバエ活動期 (北海道)",
-        desc: "北海道エリア：気温上昇に伴い、蚊やコバエが発生しやすい環境になります。生ゴミの密閉や水回りのこまめな換気が有効です。",
-        bg: "from-sky-50 to-blue-50 border-sky-100 text-sky-900",
-        btnText: "対策情報を確認",
-      };
-    } else if (region === "okinawa") {
-      return {
-        title: "ゴキブリ・ムカデ活性期 (沖縄)",
-        desc: "沖縄エリア：温暖な気候のため通年で害虫発生リスクがあります。キッチン下や浴室配管の隙間など、侵入口の点検と防虫グッズの再配置を行ってください。",
-        bg: "from-red-50 to-orange-50 border-red-150 text-red-950",
-        btnText: "対策情報を確認",
-      };
-    } else if (currentMonth >= 6 && currentMonth <= 9) {
-      return {
-        title: "梅雨・夏季の害虫活動警戒アラート",
-        desc: "夏季警戒アラート：高温多湿の環境に入りました。ダニやゴキブリの活動期になりますので、寝具や水回りの対策グッズの設置・交換をお勧めします。",
-        bg: "from-amber-50 to-orange-50 border-amber-100 text-amber-950",
-        btnText: "推奨対策を確認",
-      };
-    } else {
-      return {
-        title: "秋冬の隙間侵入予防アラート",
-        desc: "秋冬予防アラート：外気温の低下に伴い、暖かい室内への害虫の侵入が増加します。エアコン配管口やサッシの隙間の点検が有効です。",
-        bg: "from-slate-50 to-zinc-50 border-slate-200 text-slate-900",
-        btnText: "予防対策を確認",
-      };
-    }
-  }, [region, currentMonth]);
 
   // 3. 期限切れ（あと7日以内）グッズをフィルタリング
   const alertTraps = useMemo(() => {
@@ -264,93 +234,15 @@ export default function HomePage() {
       </div>
 
       {/* 📡 高級コントロールパネル: 位置情報と通知の許可設定 */}
-      <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-200/60 mb-5 text-slate-800">
-        <h2 className="text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
-          位置情報と通知の設定
-        </h2>
-        <p className="text-[10px] text-slate-400 mb-3 leading-normal">
-          アプリの天気予報や交換期限のリマインダー通知を正しく受け取るため、許可設定を有効にしてください。
-        </p>
-        
-        <div className="grid grid-cols-2 gap-3">
-          {/* 位置情報パーミッション */}
-          <div className="bg-slate-50 border border-slate-100 p-3 rounded-xl flex flex-col justify-between">
-            <div>
-              <span className="text-[9px] text-slate-400 font-bold block">位置情報 (GPS)</span>
-              <span className={`text-xs font-black mt-0.5 block ${geoPermission === "granted" ? "text-emerald-600" : "text-amber-600"}`}>
-                {geoPermission === "granted" ? "許可済み" : "未許可"}
-              </span>
-            </div>
-            {geoPermission !== "granted" ? (
-              <button
-                onClick={requestGeoPermission}
-                className="mt-3 w-full py-1.5 bg-teal-600 hover:bg-teal-700 text-white text-[10px] font-bold rounded-lg transition shadow"
-              >
-                許可する
-              </button>
-            ) : (
-              <span className="text-[8px] text-slate-400 mt-3 font-bold text-right block">自動測位中</span>
-            )}
-          </div>
-
-          {/* 通知パーミッション */}
-          <div className="bg-slate-50 border border-slate-100 p-3 rounded-xl flex flex-col justify-between">
-            <div>
-              <span className="text-[9px] text-slate-400 font-bold block">プッシュ通知</span>
-              <span className={`text-xs font-black mt-0.5 block ${permission === "granted" ? "text-emerald-600" : "text-amber-600"}`}>
-                {permission === "granted" ? "受信可能" : "未設定"}
-              </span>
-            </div>
-            {permission === "denied" ? (
-              <span className="text-[8px] text-red-600 mt-3 font-bold text-right block">ブラウザでブロック中</span>
-            ) : (
-              <button
-                onClick={triggerTestNotification}
-                className={`mt-3 w-full py-1.5 text-white text-[10px] font-bold rounded-lg transition shadow ${
-                  permission === "granted" ? "bg-slate-800 hover:bg-slate-900" : "bg-teal-600 hover:bg-teal-700"
-                }`}
-              >
-                {permission === "granted" ? "テスト通知を送信" : "通知を設定してテスト"}
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
+      <GeoNotificationPanel
+        geoPermission={geoPermission}
+        requestGeoPermission={requestGeoPermission}
+        permission={permission}
+        triggerTestNotification={triggerTestNotification}
+      />
 
       {/* 1. 日本防虫気象協会風 リアルタイム害虫警報 */}
-      <div className={`bg-gradient-to-br border p-5 rounded-3xl shadow-md mb-5 flex items-center justify-between gap-4 transition-all duration-300 hover:shadow-lg ${pestAlertInfo.bg}`}>
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1.5">
-            <h2 className="font-extrabold text-sm tracking-tight">{pestAlertInfo.title}</h2>
-          </div>
-          <p className="text-[11px] leading-relaxed font-medium opacity-90 text-slate-700">
-            {pestAlertInfo.desc}
-          </p>
-          <Link
-            href="/encyclopedia"
-            className="inline-flex items-center mt-3 text-[10px] font-black text-teal-700 bg-white/80 hover:bg-white px-3 py-1.5 rounded-xl border border-teal-200/50 shadow-sm transition"
-          >
-            {pestAlertInfo.btnText} →
-          </Link>
-        </div>
-        
-        {/* 大型ベクターアイコンイラストの挿入（絵文字を完全排除） */}
-        <div className="bg-white/40 p-2.5 rounded-2xl border border-white/60 shadow-inner flex-shrink-0">
-          <PestIcon 
-            id={
-              region === "hokkaido" 
-                ? "mosquito" 
-                : region === "okinawa" 
-                ? "cockroach" 
-                : currentMonth >= 6 && currentMonth <= 9 
-                ? "tick" 
-                : "stinkbug"
-            } 
-            size={56} 
-            className="animate-wiggle"
-          />
-        </div>
-      </div>
+      <PestAlertCard region={region} currentMonth={currentMonth} />
 
       {/* 🛠️ オリジナルグッズ作製アピール */}
       <div className="bg-gradient-to-r from-teal-500/10 to-emerald-500/10 border border-teal-200/50 p-5 rounded-3xl shadow-sm mb-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -359,7 +251,7 @@ export default function HomePage() {
             自分専用の防衛グッズを作製
           </h2>
           <p className="text-[10px] text-teal-950/80 leading-relaxed font-medium">
-            市販の防虫シートや独自の対策グッズをオリジナル名・持続期間で登録し、マイ間取りに美しく設置して一元管理できます。
+            市販 of 防虫シートや独自の対策グッズをオリジナル名・持続期間で登録し、マイ間取りに美しく設置して一元管理できます。
           </p>
         </div>
         <Link
@@ -371,105 +263,18 @@ export default function HomePage() {
       </div>
 
       {/* 要交換グッズ */}
-      <div className="mb-5">
-        <h2 className="text-xs font-extrabold text-slate-400 mb-2 tracking-wider uppercase flex items-center gap-1">
-          要交換のグッズ ({alertTraps.length})
-        </h2>
-        {alertTraps.length === 0 ? (
-          <div className="bg-white p-6 rounded-3xl text-center border border-slate-200/60 shadow-sm text-xs text-slate-400 leading-relaxed">
-            現在、期限が切れている、または7日以内に切れるグッズはありません。<br />家の中は安全に防衛されています。
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {alertTraps.map((trap) => (
-              <div key={trap.id} className="bg-red-50/50 border border-red-100 p-3.5 rounded-2xl flex justify-between items-center shadow-sm hover:bg-red-50/80 transition-all duration-200">
-                <div className="flex items-center gap-3">
-                  <span className="p-1 bg-white rounded-xl shadow-inner border border-red-100/50 flex items-center justify-center flex-shrink-0">
-                    <TrapIcon id={trap.name} size={32} />
-                  </span>
-                  <div>
-                    <p className="text-xs font-black text-red-950">{trap.name}</p>
-                    <p className="text-[10px] text-red-800 font-bold">
-                      場所: {getRoomName(trap.roomId)} ({trap.placedLocation})
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[9px] font-black text-red-600 bg-white px-2 py-1 rounded-lg border border-red-200 animate-pulse">
-                    期限切れ間近！
-                  </span>
-                  <button
-                    onClick={() => handleRemoveTrap(trap.id, trap.name)}
-                    className="p-1.5 px-3 bg-white hover:bg-red-50 text-red-600 hover:text-red-700 rounded-xl border border-red-200 hover:border-red-300 transition text-[10px] font-bold shadow-sm"
-                  >
-                    回収
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <ExpiredTrapsList
+        alertTraps={alertTraps}
+        getRoomName={getRoomName}
+        onRemoveTrap={handleRemoveTrap}
+      />
 
-      {/* 4. 現在設置中の全グッズリスト */}
-      <div className="flex-1 mb-6">
-        <h2 className="text-xs font-extrabold text-slate-400 mb-2 tracking-wider uppercase flex items-center gap-1">
-          現在の防衛状況 ({traps.length}個設置中)
-        </h2>
-        {traps.length === 0 ? (
-          <div className="bg-white p-8 rounded-2xl text-center border border-slate-100 shadow-sm flex flex-col items-center gap-3">
-            <p className="text-xs text-slate-400 leading-normal max-w-xs">
-              現在、家の中に防衛グッズが配置されていません。間取りマップから配置しましょう。
-            </p>
-            <Link
-              href="/map"
-              className="inline-block bg-teal-600 hover:bg-teal-700 text-white text-xs font-black px-4 py-2.5 rounded-xl shadow-md transition"
-            >
-              配置マップを開いて設置する
-            </Link>
-          </div>
-        ) : (
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 divide-y divide-slate-50 overflow-hidden">
-            {traps.map((trap) => {
-              const diffTime = new Date(trap.expirationDate).getTime() - new Date().getTime();
-              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-              const isClose = diffDays <= 7;
-
-              return (
-                <div key={trap.id} className="p-3.5 flex justify-between items-center text-xs hover:bg-slate-50/50 transition-all duration-150">
-                  <div className="flex items-center gap-3">
-                    <span className="p-1 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-center flex-shrink-0 shadow-inner">
-                      <TrapIcon id={trap.name} size={32} />
-                    </span>
-                    <div>
-                      <p className="font-extrabold text-slate-800 text-[12px]">{trap.name}</p>
-                      <p className="text-slate-400 text-[10px] font-bold">
-                        場所: {getRoomName(trap.roomId)} ({trap.placedLocation})
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 text-right">
-                    <div>
-                      <p className="text-slate-500 font-mono text-[10px]">
-                        期限: {trap.expirationDate}
-                      </p>
-                      <p className={`text-[9px] font-black mt-0.5 ${isClose ? "text-red-500 animate-pulse" : "text-slate-400"}`}>
-                        {diffDays <= 0 ? "期限切れ！" : `残り ${diffDays}日`}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => handleRemoveTrap(trap.id, trap.name)}
-                      className="p-1.5 px-3 hover:bg-red-50 text-slate-500 hover:text-red-600 rounded-xl border border-slate-100 hover:border-red-200 transition text-[10px] font-bold shadow-sm bg-slate-50/50"
-                    >
-                      回収
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+      {/* 現在設置中の全グッズリスト */}
+      <ActiveTrapsList
+        traps={traps}
+        getRoomName={getRoomName}
+        onRemoveTrap={handleRemoveTrap}
+      />
     </div>
   );
 }
