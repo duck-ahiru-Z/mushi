@@ -380,8 +380,7 @@ export default function MapPage() {
       alert("グッズの名前を入力してください。");
       return;
     }
-    // オリジナルグッズの基本（デフォルト値）は3ヶ月とする
-    const success = addCustomTrapType(customName, 3, customIcon);
+    const success = addCustomTrapType(customName, customMonths, customIcon);
     if (success) {
       setSelectedTrapType(customName);
       setCustomName("");
@@ -452,6 +451,8 @@ export default function MapPage() {
         onClose={() => setShowCustomModal(false)}
         customName={customName}
         setCustomName={setCustomName}
+        customMonths={customMonths}
+        setCustomMonths={setCustomMonths}
         customIcon={customIcon}
         setCustomIcon={setCustomIcon}
         onCreateCustom={handleCreateCustomType}

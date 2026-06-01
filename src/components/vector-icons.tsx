@@ -304,20 +304,83 @@ export const TrapIcon: React.FC<IconProps> = ({ id, className = "", size = 32 })
     xmlns: "http://www.w3.org/2000/svg"
   };
 
-  // マイルドモード時は強制的にシールドを描画
-  if (isMild) {
-    return (
-      <svg {...svgProps}>
-        <path d="M24 6L6 14V26C6 36 14 41 24 44C34 41 42 36 42 26V14L24 6Z" fill="#10B981" stroke="#059669" strokeWidth="2.5" />
-        <path d="M24 16L27 22H33L29 26L31 32L24 28L17 32L19 26L15 22H21L24 16Z" fill="#FFFFFF" />
-      </svg>
-    );
-  }
-
   // アクティブなアイコン識別キー（カスタムグッズのアイコンキーがある場合はそれを優先）
   const activeIconKey = customIconKey || id;
 
   switch (activeIconKey) {
+    case "🛡️-red":
+      return (
+        <svg {...svgProps}>
+          <path d="M24 6L6 14V26C6 36 14 41 24 44C34 41 42 36 42 26V14L24 6Z" fill="#EF4444" stroke="#DC2626" strokeWidth="2.5" />
+          <path d="M24 16L27 22H33L29 26L31 32L24 28L17 32L19 26L15 22H21L24 16Z" fill="#FFFFFF" />
+        </svg>
+      );
+    case "🛡️-blue":
+      return (
+        <svg {...svgProps}>
+          <path d="M24 6L6 14V26C6 36 14 41 24 44C34 41 42 36 42 26V14L24 6Z" fill="#3B82F6" stroke="#2563EB" strokeWidth="2.5" />
+          <path d="M24 16L27 22H33L29 26L31 32L24 28L17 32L19 26L15 22H21L24 16Z" fill="#FFFFFF" />
+        </svg>
+      );
+    case "🛡️-purple":
+      return (
+        <svg {...svgProps}>
+          <path d="M24 6L6 14V26C6 36 14 41 24 44C34 41 42 36 42 26V14L24 6Z" fill="#8B5CF6" stroke="#7C3AED" strokeWidth="2.5" />
+          <path d="M24 16L27 22H33L29 26L31 32L24 28L17 32L19 26L15 22H21L24 16Z" fill="#FFFFFF" />
+        </svg>
+      );
+    case "🛡️-gold":
+      return (
+        <svg {...svgProps}>
+          <path d="M24 6L6 14V26C6 36 14 41 24 44C34 41 42 36 42 26V14L24 6Z" fill="#F59E0B" stroke="#D97706" strokeWidth="2.5" />
+          <path d="M24 16L27 22H33L29 26L31 32L24 28L17 32L19 26L15 22H21L24 16Z" fill="#FFFFFF" />
+        </svg>
+      );
+    case "🛡️-green":
+      return (
+        <svg {...svgProps}>
+          <path d="M24 6L6 14V26C6 36 14 41 24 44C34 41 42 36 42 26V14L24 6Z" fill="#10B981" stroke="#059669" strokeWidth="2.5" />
+          <path d="M24 16L27 22H33L29 26L31 32L24 28L17 32L19 26L15 22H21L24 16Z" fill="#FFFFFF" />
+        </svg>
+      );
+    case "🧴-blue":
+      return (
+        <svg {...svgProps}>
+          <rect x="18" y="18" width="12" height="24" rx="3" fill="#3B82F6" stroke="#2563EB" strokeWidth="2.5" />
+          <path d="M21 18V12H27V18" stroke="#2563EB" strokeWidth="2.5" />
+          <path d="M27 10L29 12" stroke="#2563EB" strokeWidth="2.5" />
+          <circle cx="34" cy="10" r="2" fill="#60A5FA" />
+          <circle cx="39" cy="8" r="3" fill="#60A5FA" />
+          <circle cx="38" cy="14" r="1.5" fill="#60A5FA" />
+        </svg>
+      );
+    case "🧴-red":
+      return (
+        <svg {...svgProps}>
+          <rect x="18" y="18" width="12" height="24" rx="3" fill="#EF4444" stroke="#DC2626" strokeWidth="2.5" />
+          <path d="M21 18V12H27V18" stroke="#DC2626" strokeWidth="2.5" />
+          <path d="M27 10L29 12" stroke="#DC2626" strokeWidth="2.5" />
+          <circle cx="34" cy="10" r="2" fill="#FCA5A5" />
+          <circle cx="39" cy="8" r="3" fill="#FCA5A5" />
+          <circle cx="38" cy="14" r="1.5" fill="#FCA5A5" />
+        </svg>
+      );
+    case "❄️":
+      return (
+        <svg {...svgProps}>
+          <circle cx="24" cy="24" r="18" fill="#E0F2FE" stroke="#0EA5E9" strokeWidth="2.5" />
+          <path d="M24 12V36M12 24H36" stroke="#0EA5E9" strokeWidth="2.5" strokeLinecap="round" />
+          <path d="M16 16L32 32M16 32L32 16" stroke="#0EA5E9" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+      );
+    case "🔥":
+      return (
+        <svg {...svgProps}>
+          <circle cx="24" cy="24" r="18" fill="#FEF2F2" stroke="#EF4444" strokeWidth="2.5" />
+          <path d="M24 12C24 12 29 18 29 23C29 28 26.5 32 24 32C21.5 32 19 28 19 23C19 18 24 12 24 12Z" fill="#EF4444" />
+          <path d="M24 18C24 18 27 22 27 25C27 28 25.5 30 24 30C22.5 30 21 28 21 25C21 22 24 18 24 18Z" fill="#FBBF24" />
+        </svg>
+      );
     case "ゴキブリホイホイ":
     case "🪳":
     case "cockroach":
