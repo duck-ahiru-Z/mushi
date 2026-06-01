@@ -47,17 +47,17 @@ export function CustomTrapModal({
 
           <div>
             <label className="text-[10px] font-bold text-slate-400 block mb-1">有効期限（持続月数）</label>
-            <select
-              value={customMonths}
-              onChange={(e) => setCustomMonths(Number(e.target.value))}
-              className="w-full p-2.5 bg-slate-50 border rounded-xl text-xs"
-            >
-              <option value="1">1ヶ月 (例: コバエ用)</option>
-              <option value="2">2ヶ月</option>
-              <option value="3">3ヶ月 (例: 一般ホイホイ)</option>
-              <option value="6">6ヶ月 (例: 毒餌剤)</option>
-              <option value="12">12ヶ月 (1年持続)</option>
-            </select>
+            <div className="relative flex items-center">
+              <input
+                type="number"
+                min="1"
+                max="36"
+                value={customMonths}
+                onChange={(e) => setCustomMonths(Math.max(1, Number(e.target.value)))}
+                className="w-full p-2.5 pr-8 bg-slate-50 border rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-teal-500 focus:outline-none"
+              />
+              <span className="absolute right-3 text-[9px] font-black text-slate-400 pointer-events-none">ヶ月</span>
+            </div>
           </div>
 
           <div>

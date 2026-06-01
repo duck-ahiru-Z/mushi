@@ -263,6 +263,23 @@ export const PestIcon: React.FC<IconProps> = ({ id, className = "", size = 48 })
  * 📦 6種類の防虫対策グッズ用の美しく機能的なベクターイラスト
  */
 export const TrapIcon: React.FC<IconProps> = ({ id, className = "", size = 32 }) => {
+  const [isMild, setIsMild] = useState(false);
+
+  useEffect(() => {
+    const checkMild = () => {
+      if (typeof window !== "undefined") {
+        const val = localStorage.getItem("bug_illustrations_disabled");
+        setIsMild(val === "true");
+      }
+    };
+    checkMild();
+
+    window.addEventListener("safeModeChanged", checkMild);
+    return () => {
+      window.removeEventListener("safeModeChanged", checkMild);
+    };
+  }, []);
+
   const svgProps = {
     className: `transition-transform duration-200 ${className}`,
     width: size,
@@ -272,7 +289,10 @@ export const TrapIcon: React.FC<IconProps> = ({ id, className = "", size = 32 })
     xmlns: "http://www.w3.org/2000/svg"
   };
 
-  switch (id) {
+  // マイルドモード時は強制的にデフォルトのシールドを描画！
+  const activeId = isMild ? "default" : id;
+
+  switch (activeId) {
     case "ゴキブリホイホイ":
       return (
         <svg {...svgProps}>
