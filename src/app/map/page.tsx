@@ -46,6 +46,7 @@ export default function MapPage() {
     deleteTrap,
     allTrapTypes,
     addCustomTrapType,
+    deleteCustomTrapType,
     updateTrapPosition,
     isInitialized,
   } = useTraps(userId);
@@ -390,6 +391,16 @@ export default function MapPage() {
     }
   };
 
+  const handleDeleteCustomType = (name: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm(`オリジナルグッズ「${name}」を削除しますか？`)) {
+      deleteCustomTrapType(name);
+      if (selectedTrapType === name) {
+        setSelectedTrapType("ゴキブリホイホイ");
+      }
+    }
+  };
+
   const handleTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length === 2) {
       const dist = Math.hypot(
@@ -494,6 +505,7 @@ export default function MapPage() {
           placementMonths={placementMonths}
           setPlacementMonths={setPlacementMonths}
           onRequestCustomModal={() => setShowCustomModal(true)}
+          onDeleteCustomType={handleDeleteCustomType}
         />
       ) : (
         <RoomEditor

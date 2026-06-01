@@ -13,6 +13,7 @@ interface TrapSelectorProps {
   placementMonths: number;
   setPlacementMonths: (val: number) => void;
   onRequestCustomModal: () => void;
+  onDeleteCustomType?: (name: string, e: React.MouseEvent) => void;
 }
 
 export function TrapSelector({
@@ -24,6 +25,7 @@ export function TrapSelector({
   placementMonths,
   setPlacementMonths,
   onRequestCustomModal,
+  onDeleteCustomType,
 }: TrapSelectorProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -69,24 +71,41 @@ export function TrapSelector({
         {/* ドロップダウンメニュー */}
         {isDropdownOpen && (
           <div className="absolute top-[46px] left-0 right-0 bg-white border border-slate-200/80 rounded-2xl shadow-xl z-50 overflow-hidden divide-y divide-slate-50 max-h-60 overflow-y-auto animate-scale-up">
-            {allTrapTypes.map((type) => (
-              <button
-                key={type.name}
-                type="button"
-                onClick={() => handleSelect(type.name)}
-                className={`w-full p-3 text-xs font-bold flex items-center justify-between transition hover:bg-slate-50/80 ${
-                  selectedTrapType === type.name ? "bg-teal-50/40 text-teal-700" : "text-slate-700"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="p-1 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-center flex-shrink-0 shadow-sm">
-                    <TrapIcon id={type.name} size={24} />
-                  </span>
-                  <span className="text-left font-black">{type.name}</span>
+            {allTrapTypes.map((type) => {
+              const isPreset = ["ゴキブリホイホイ", "ブラックキャップ", "ダニよけシート", "コバエがいなくなるスプレー", "アリの巣コロリ"].includes(type.name);
+              return (
+                <div
+                  key={type.name}
+                  className={`w-full flex items-center justify-between transition hover:bg-slate-50/80 ${
+                    selectedTrapType === type.name ? "bg-teal-50/40 text-teal-700" : "text-slate-700"
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => handleSelect(type.name)}
+                    className="flex-1 p-3 text-xs font-bold flex items-center gap-3 text-left focus:outline-none"
+                  >
+                    <span className="p-1 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-center flex-shrink-0 shadow-sm">
+                      <TrapIcon id={type.name} size={24} />
+                    </span>
+                    <span className="font-black break-all">{type.name}</span>
+                  </button>
+                  <div className="flex items-center gap-2 pr-3.5 flex-shrink-0 select-none">
+                    <span className="text-[10px] text-slate-400 font-mono">基本: {type.months}ヶ月</span>
+                    {!isPreset && onDeleteCustomType && (
+                      <button
+                        type="button"
+                        onClick={(e) => onDeleteCustomType(type.name, e)}
+                        className="p-1 hover:bg-red-50 text-red-500 rounded-lg transition active:scale-90 font-black text-sm flex items-center justify-center w-5 h-5 focus:outline-none"
+                        title="このオリジナルグッズを削除"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <span className="text-[10px] text-slate-400 font-mono">基本: {type.months}ヶ月</span>
-              </button>
-            ))}
+              );
+            })}
           </div>
         )}
         
