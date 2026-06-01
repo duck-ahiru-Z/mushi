@@ -227,13 +227,13 @@ export default function RegisterPage() {
         </div>
       )}
 
-      {/* 📱 PWAインストールガイド */}
+      {/* PWAインストールガイド */}
       <PwaInstallGuide detectedOS={detectedOS} />
 
-      {/* 📍 地域設定セクション */}
+      {/* 地域設定セクション */}
       <RegionSettings region={region} onRegionChange={handleRegionChange} />
 
-      {/* 🛡️ イラスト＆通知設定セクション */}
+      {/* イラスト＆通知設定セクション */}
       <NotificationSettings
         bugIllustrationsDisabled={bugIllustrationsDisabled}
         onToggleIllustrations={handleToggleIllustrations}

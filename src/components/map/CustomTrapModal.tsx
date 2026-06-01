@@ -1,4 +1,5 @@
 "use client";
+import { TrapIcon } from "@/components/vector-icons";
 
 interface CustomTrapModalProps {
   isOpen: boolean;
@@ -46,33 +47,45 @@ export function CustomTrapModal({
           </div>
 
           <div>
-            <label className="text-[10px] font-bold text-slate-400 block mb-1">有効期限（持続月数）</label>
-            <select
-              value={customMonths}
-              onChange={(e) => setCustomMonths(Number(e.target.value))}
-              className="w-full p-2.5 bg-slate-50 border rounded-xl text-xs"
-            >
-              <option value="1">1ヶ月 (例: コバエ用)</option>
-              <option value="2">2ヶ月</option>
-              <option value="3">3ヶ月 (例: 一般ホイホイ)</option>
-              <option value="6">6ヶ月 (例: 毒餌剤)</option>
-              <option value="12">12ヶ月 (1年持続)</option>
-            </select>
+            <label className="text-[10px] font-bold text-slate-400 block mb-1">基本の有効期限（持続月数）</label>
+            <div className="relative flex items-center">
+              <input
+                type="number"
+                min="1"
+                max="36"
+                value={customMonths === 0 ? "" : customMonths}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "") {
+                    setCustomMonths("" as any);
+                  } else {
+                    setCustomMonths(Math.max(1, Math.min(36, Number(val))));
+                  }
+                }}
+                className="w-full p-2.5 pr-8 bg-slate-50 border rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-teal-500 focus:outline-none"
+              />
+              <span className="absolute right-3 text-[9px] font-black text-slate-400 pointer-events-none">ヶ月</span>
+            </div>
           </div>
 
           <div>
             <label className="text-[10px] font-bold text-slate-400 block mb-1">マップ表示アイコン</label>
-            <div className="flex gap-2 flex-wrap bg-slate-50 p-2.5 rounded-xl justify-between">
-              {["🪳", "🕷️", "🦟", "🐜", "🌿", "🧴", "📦", "🪙", "🛡️"].map((emoji) => (
+            <div className="flex gap-2 flex-wrap bg-slate-50 p-2.5 rounded-xl justify-start max-h-36 overflow-y-auto shadow-inner border border-slate-100">
+              {[
+                "🛡️", "🛡️-red", "🛡️-blue", "🛡️-purple", "🛡️-gold", "🛡️-green",
+                "🧴", "🧴-blue", "🧴-red", "❄️", "🔥",
+                "🌿", "📦", "🪳", "🕷️", "🦟", "🐜", "🪙"
+              ].map((emojiOrKey) => (
                 <button
-                  key={emoji}
+                  key={emojiOrKey}
                   type="button"
-                  onClick={() => setCustomIcon(emoji)}
-                  className={`w-8 h-8 rounded-lg text-lg flex items-center justify-center transition border ${
-                    customIcon === emoji ? "bg-slate-800 border-slate-800 text-white shadow" : "bg-white hover:bg-slate-100 border-slate-200"
+                  onClick={() => setCustomIcon(emojiOrKey)}
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center transition border ${
+                    customIcon === emojiOrKey ? "bg-teal-50 border-teal-500 shadow-inner scale-95" : "bg-white hover:bg-slate-50 border-slate-200"
                   }`}
+                  title={emojiOrKey}
                 >
-                  {emoji}
+                  <TrapIcon id={emojiOrKey} size={22} />
                 </button>
               ))}
             </div>

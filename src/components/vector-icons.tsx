@@ -263,6 +263,38 @@ export const PestIcon: React.FC<IconProps> = ({ id, className = "", size = 48 })
  * 📦 6種類の防虫対策グッズ用の美しく機能的なベクターイラスト
  */
 export const TrapIcon: React.FC<IconProps> = ({ id, className = "", size = 32 }) => {
+  const [isMild, setIsMild] = useState(false);
+  const [customIconKey, setCustomIconKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    const checkSettings = () => {
+      if (typeof window !== "undefined") {
+        const val = localStorage.getItem("bug_illustrations_disabled");
+        setIsMild(val === "true");
+
+        // カスタムグッズ種類リストから、id(トラップ名)に一致するアイコンキーを取得
+        try {
+          const savedCustomTypes = localStorage.getItem("custom_trap_types");
+          if (savedCustomTypes) {
+            const customTypes = JSON.parse(savedCustomTypes);
+            const found = customTypes.find((t: any) => t.name === id);
+            if (found) {
+              setCustomIconKey(found.icon);
+            }
+          }
+        } catch {}
+      }
+    };
+    checkSettings();
+
+    window.addEventListener("safeModeChanged", checkSettings);
+    window.addEventListener("trapsChanged", checkSettings);
+    return () => {
+      window.removeEventListener("safeModeChanged", checkSettings);
+      window.removeEventListener("trapsChanged", checkSettings);
+    };
+  }, [id]);
+
   const svgProps = {
     className: `transition-transform duration-200 ${className}`,
     width: size,
@@ -272,8 +304,86 @@ export const TrapIcon: React.FC<IconProps> = ({ id, className = "", size = 32 })
     xmlns: "http://www.w3.org/2000/svg"
   };
 
-  switch (id) {
+  // アクティブなアイコン識別キー（カスタムグッズのアイコンキーがある場合はそれを優先）
+  const activeIconKey = customIconKey || id;
+
+  switch (activeIconKey) {
+    case "🛡️-red":
+      return (
+        <svg {...svgProps}>
+          <path d="M24 6L6 14V26C6 36 14 41 24 44C34 41 42 36 42 26V14L24 6Z" fill="#EF4444" stroke="#DC2626" strokeWidth="2.5" />
+          <path d="M24 16L27 22H33L29 26L31 32L24 28L17 32L19 26L15 22H21L24 16Z" fill="#FFFFFF" />
+        </svg>
+      );
+    case "🛡️-blue":
+      return (
+        <svg {...svgProps}>
+          <path d="M24 6L6 14V26C6 36 14 41 24 44C34 41 42 36 42 26V14L24 6Z" fill="#3B82F6" stroke="#2563EB" strokeWidth="2.5" />
+          <path d="M24 16L27 22H33L29 26L31 32L24 28L17 32L19 26L15 22H21L24 16Z" fill="#FFFFFF" />
+        </svg>
+      );
+    case "🛡️-purple":
+      return (
+        <svg {...svgProps}>
+          <path d="M24 6L6 14V26C6 36 14 41 24 44C34 41 42 36 42 26V14L24 6Z" fill="#8B5CF6" stroke="#7C3AED" strokeWidth="2.5" />
+          <path d="M24 16L27 22H33L29 26L31 32L24 28L17 32L19 26L15 22H21L24 16Z" fill="#FFFFFF" />
+        </svg>
+      );
+    case "🛡️-gold":
+      return (
+        <svg {...svgProps}>
+          <path d="M24 6L6 14V26C6 36 14 41 24 44C34 41 42 36 42 26V14L24 6Z" fill="#F59E0B" stroke="#D97706" strokeWidth="2.5" />
+          <path d="M24 16L27 22H33L29 26L31 32L24 28L17 32L19 26L15 22H21L24 16Z" fill="#FFFFFF" />
+        </svg>
+      );
+    case "🛡️-green":
+      return (
+        <svg {...svgProps}>
+          <path d="M24 6L6 14V26C6 36 14 41 24 44C34 41 42 36 42 26V14L24 6Z" fill="#10B981" stroke="#059669" strokeWidth="2.5" />
+          <path d="M24 16L27 22H33L29 26L31 32L24 28L17 32L19 26L15 22H21L24 16Z" fill="#FFFFFF" />
+        </svg>
+      );
+    case "🧴-blue":
+      return (
+        <svg {...svgProps}>
+          <rect x="18" y="18" width="12" height="24" rx="3" fill="#3B82F6" stroke="#2563EB" strokeWidth="2.5" />
+          <path d="M21 18V12H27V18" stroke="#2563EB" strokeWidth="2.5" />
+          <path d="M27 10L29 12" stroke="#2563EB" strokeWidth="2.5" />
+          <circle cx="34" cy="10" r="2" fill="#60A5FA" />
+          <circle cx="39" cy="8" r="3" fill="#60A5FA" />
+          <circle cx="38" cy="14" r="1.5" fill="#60A5FA" />
+        </svg>
+      );
+    case "🧴-red":
+      return (
+        <svg {...svgProps}>
+          <rect x="18" y="18" width="12" height="24" rx="3" fill="#EF4444" stroke="#DC2626" strokeWidth="2.5" />
+          <path d="M21 18V12H27V18" stroke="#DC2626" strokeWidth="2.5" />
+          <path d="M27 10L29 12" stroke="#DC2626" strokeWidth="2.5" />
+          <circle cx="34" cy="10" r="2" fill="#FCA5A5" />
+          <circle cx="39" cy="8" r="3" fill="#FCA5A5" />
+          <circle cx="38" cy="14" r="1.5" fill="#FCA5A5" />
+        </svg>
+      );
+    case "❄️":
+      return (
+        <svg {...svgProps}>
+          <circle cx="24" cy="24" r="18" fill="#E0F2FE" stroke="#0EA5E9" strokeWidth="2.5" />
+          <path d="M24 12V36M12 24H36" stroke="#0EA5E9" strokeWidth="2.5" strokeLinecap="round" />
+          <path d="M16 16L32 32M16 32L32 16" stroke="#0EA5E9" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+      );
+    case "🔥":
+      return (
+        <svg {...svgProps}>
+          <circle cx="24" cy="24" r="18" fill="#FEF2F2" stroke="#EF4444" strokeWidth="2.5" />
+          <path d="M24 12C24 12 29 18 29 23C29 28 26.5 32 24 32C21.5 32 19 28 19 23C19 18 24 12 24 12Z" fill="#EF4444" />
+          <path d="M24 18C24 18 27 22 27 25C27 28 25.5 30 24 30C22.5 30 21 28 21 25C21 22 24 18 24 18Z" fill="#FBBF24" />
+        </svg>
+      );
     case "ゴキブリホイホイ":
+    case "🪳":
+    case "cockroach":
       return (
         <svg {...svgProps}>
           {/* 3D風の段ボールハウス型トラップ */}
@@ -287,6 +397,8 @@ export const TrapIcon: React.FC<IconProps> = ({ id, className = "", size = 32 })
       );
 
     case "ブラックキャップ":
+    case "🪙":
+    case "coin":
       return (
         <svg {...svgProps}>
           {/* 漆黒のスマートな円形ドーム型ベイト剤 */}
@@ -309,6 +421,8 @@ export const TrapIcon: React.FC<IconProps> = ({ id, className = "", size = 32 })
       );
 
     case "ダニよけシート":
+    case "📦":
+    case "box":
       return (
         <svg {...svgProps}>
           {/* グリッド加工された水色の不織布ダニ捕りシート */}
@@ -324,6 +438,8 @@ export const TrapIcon: React.FC<IconProps> = ({ id, className = "", size = 32 })
       );
 
     case "コバエがいなくなるスプレー":
+    case "🧴":
+    case "spray":
       return (
         <svg {...svgProps}>
           {/* スプレーボトルスプレーミスト */}
@@ -338,6 +454,8 @@ export const TrapIcon: React.FC<IconProps> = ({ id, className = "", size = 32 })
       );
 
     case "アリの巣コロリ":
+    case "🐜":
+    case "ant":
       return (
         <svg {...svgProps}>
           {/* アリの侵入口付き緑の薄型トレイ */}
@@ -351,12 +469,47 @@ export const TrapIcon: React.FC<IconProps> = ({ id, className = "", size = 32 })
         </svg>
       );
 
+    case "🕷️":
+    case "spider":
+    case "tick":
+      return (
+        <svg {...svgProps}>
+          <circle cx="24" cy="24" r="18" fill="#ECFDF5" stroke="#10B981" strokeWidth="2.5" />
+          <path d="M24 10V38M10 24H38" stroke="#10B981" strokeWidth="1.5" strokeDasharray="2 2" />
+          <circle cx="24" cy="24" r="8" fill="#10B981" />
+          <path d="M20 20L14 14M28 20L34 14M20 28L14 34M28 28L34 34" stroke="#10B981" strokeWidth="2.5" strokeLinecap="round" />
+        </svg>
+      );
+
+    case "🌿":
+    case "herb":
+      return (
+        <svg {...svgProps}>
+          <circle cx="24" cy="24" r="18" fill="#F0FDF4" stroke="#22C55E" strokeWidth="2.5" />
+          <path d="M24 34C24 34 20 28 20 24C20 20 24 14 24 14C24 14 28 20 28 24C28 28 24 34 24 34Z" fill="#22C55E" />
+          <path d="M24 34V14" stroke="#15803D" strokeWidth="1.5" />
+          <path d="M24 24C24 24 17 21 16 18C15 15 20 16 20 16" stroke="#22C55E" strokeWidth="2" strokeLinecap="round" />
+          <path d="M24 28C24 28 31 25 32 22C33 19 28 20 28 20" stroke="#22C55E" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      );
+
+    case "🦟":
+    case "mosquito":
+    case "fly":
+      return (
+        <svg {...svgProps}>
+          <circle cx="24" cy="24" r="18" fill="#F0FDFA" stroke="#0D9488" strokeWidth="2.5" />
+          <circle cx="24" cy="24" r="6" fill="#0D9488" />
+          <path d="M18 20C18 16 24 18 24 18C24 18 30 16 30 20" stroke="#0D9488" strokeWidth="2" strokeLinecap="round" />
+          <path d="M14 24H34" stroke="#0D9488" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+      );
+
     default:
       return (
         <svg {...svgProps}>
-          {/* カスタム・一般防虫用のメタリック防衛シールドアイコン */}
+          {/* デフォルトのスタイリッシュな盾マーク */}
           <path d="M24 6L6 14V26C6 36 14 41 24 44C34 41 42 36 42 26V14L24 6Z" fill="#14B8A6" stroke="#0D9488" strokeWidth="2.5" />
-          {/* 中央の星印 */}
           <path d="M24 16L27 22H33L29 26L31 32L24 28L17 32L19 26L15 22H21L24 16Z" fill="#FFFFFF" />
         </svg>
       );

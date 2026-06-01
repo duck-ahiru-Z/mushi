@@ -287,6 +287,11 @@ export function useTraps(userId: string | null = null) {
     return true;
   }, [customTrapTypes]);
 
+  // カスタムグッズ種類の削除
+  const deleteCustomTrapType = useCallback((name: string) => {
+    setCustomTrapTypes((prev) => prev.filter((t) => t.name !== name));
+  }, []);
+
   // 全グッズの種類リスト（プリセット＋カスタム）
   const allTrapTypes = [
     ...PRESET_TRAP_TYPES,
@@ -339,6 +344,7 @@ export function useTraps(userId: string | null = null) {
     setCurrentFloor,
     customTrapTypes,
     addCustomTrapType,
+    deleteCustomTrapType,
     allTrapTypes,
     getTrapIcon,
     isInitialized,
