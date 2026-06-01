@@ -1,4 +1,4 @@
-"use client";
+import { LAYOUT_TEMPLATES } from "@/hooks/usetraps";
 
 interface RoomEditorProps {
   houseSize: { width: number; height: number };
@@ -9,6 +9,7 @@ interface RoomEditorProps {
   newRoomType: string;
   setNewRoomType: (type: string) => void;
   onAddRoom: () => void;
+  onApplyTemplate: (templateId: string) => void;
 }
 
 export function RoomEditor({
@@ -20,9 +21,29 @@ export function RoomEditor({
   newRoomType,
   setNewRoomType,
   onAddRoom,
+  onApplyTemplate,
 }: RoomEditorProps) {
   return (
-    <div className="bg-white p-4 rounded-2xl shadow-sm mb-4 border border-slate-100 space-y-3">
+    <div className="bg-white p-4 rounded-2xl shadow-sm mb-4 border border-slate-100 space-y-3 text-slate-800">
+      <div>
+        <h2 className="text-xs font-bold text-slate-400 mb-2">間取りテンプレートを適用</h2>
+        <p className="text-[10px] text-slate-400 mb-2.5 leading-relaxed">
+          よくある家構成の間取り図をワンタップで作成できます。（既存の配置部屋・グッズはリセットされます）
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          {LAYOUT_TEMPLATES.map((tpl) => (
+            <button
+              key={tpl.id}
+              onClick={() => onApplyTemplate(tpl.id)}
+              className="p-2.5 text-[10px] font-black bg-slate-50 border border-slate-200/80 hover:bg-teal-50 hover:border-teal-500 hover:text-teal-700 text-slate-700 rounded-xl transition text-center active:scale-[0.98] leading-tight flex flex-col justify-center items-center gap-1 shadow-sm"
+              title={tpl.description}
+            >
+              <span>{tpl.name}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+      <hr className="border-slate-100" />
       <div>
         <h2 className="text-xs font-bold text-slate-400 mb-2">全体のキャンバスサイズ（微調整用）</h2>
         <div className="flex items-center gap-4 text-xs bg-slate-50 p-2 rounded-xl w-fit">

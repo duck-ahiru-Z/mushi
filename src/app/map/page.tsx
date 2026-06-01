@@ -47,6 +47,7 @@ export default function MapPage() {
     allTrapTypes,
     addCustomTrapType,
     deleteCustomTrapType,
+    applyLayoutTemplate,
     updateTrapPosition,
     isInitialized,
   } = useTraps(userId);
@@ -401,6 +402,16 @@ export default function MapPage() {
     }
   };
 
+  const handleApplyTemplate = (templateId: string) => {
+    const confirmMsg = "間取りテンプレートを適用しますか？\n現在配置されている部屋とグッズがすべて削除され、新しいテンプレートに置き換わります。";
+    if (confirm(confirmMsg)) {
+      traps.forEach((trap) => {
+        deleteTrap(trap.id);
+      });
+      applyLayoutTemplate(templateId);
+    }
+  };
+
   const handleTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length === 2) {
       const dist = Math.hypot(
@@ -517,6 +528,7 @@ export default function MapPage() {
           newRoomType={newRoomType}
           setNewRoomType={setNewRoomType}
           onAddRoom={handleAddRoomClick}
+          onApplyTemplate={handleApplyTemplate}
         />
       )}
 

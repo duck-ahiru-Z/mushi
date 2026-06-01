@@ -10,8 +10,78 @@ export interface CustomTrapType {
 }
 
 const DEFAULT_ROOMS: ExtendedRoom[] = [
-  { id: "room-1", name: "キッチン", type: "kitchen", x: 10, y: 10, w: 35, h: 40, floor: 1 },
-  { id: "room-2", name: "リビング", type: "living", x: 50, y: 10, w: 40, h: 60, floor: 1 },
+  { id: "room-1", name: "玄関・廊下", type: "entrance", x: 40, y: 80, w: 20, h: 20, floor: 1 },
+  { id: "room-2", name: "リビングダイニング", type: "living", x: 10, y: 35, w: 45, h: 45, floor: 1 },
+  { id: "room-3", name: "キッチン", type: "kitchen", x: 10, y: 10, w: 25, h: 25, floor: 1 },
+  { id: "room-4", name: "浴室・洗面所", type: "bathroom", x: 40, y: 10, w: 25, h: 25, floor: 1 },
+  { id: "room-5", name: "トイレ", type: "toilet", x: 40, y: 40, w: 15, h: 15, floor: 1 },
+  { id: "room-6", name: "洋室（寝室）", type: "bedroom", x: 70, y: 10, w: 25, h: 35, floor: 1 },
+  { id: "room-7", name: "洋室・子供部屋", type: "bedroom", x: 70, y: 50, w: 25, h: 35, floor: 1 },
+];
+
+export interface LayoutTemplate {
+  id: string;
+  name: string;
+  description: string;
+  rooms: ExtendedRoom[];
+  floors: number[];
+}
+
+export const LAYOUT_TEMPLATES: LayoutTemplate[] = [
+  {
+    id: "2ldk",
+    name: "標準的な 2LDK (マンション)",
+    description: "LDKと洋室2部屋、水回りがコンパクトにまとまった一般的な配置です。",
+    floors: [1],
+    rooms: DEFAULT_ROOMS
+  },
+  {
+    id: "1k",
+    name: "一人暮らし向け 1K",
+    description: "単身者向けのシンプルで無駄のないコンパクトな配置です。",
+    floors: [1],
+    rooms: [
+      { id: "room-1k-1", name: "玄関・ミニキッチン", type: "kitchen", x: 35, y: 65, w: 30, h: 30, floor: 1 },
+      { id: "room-1k-2", name: "洋室 (居室)", type: "living", x: 20, y: 15, w: 60, h: 45, floor: 1 },
+      { id: "room-1k-3", name: "ユニットバス", type: "bathroom", x: 65, y: 65, w: 20, h: 25, floor: 1 },
+      { id: "room-1k-4", name: "バルコニー", type: "balcony", x: 20, y: 5, w: 60, h: 8, floor: 1 },
+    ]
+  },
+  {
+    id: "3ldk",
+    name: "広々 3LDK (ファミリー)",
+    description: "家族向けの部屋数が多いスタンダードなマンション・平屋向け配置です。",
+    floors: [1],
+    rooms: [
+      { id: "room-3f-1", name: "玄関・廊下", type: "entrance", x: 45, y: 75, w: 15, h: 25, floor: 1 },
+      { id: "room-3f-2", name: "リビングダイニング", type: "living", x: 5, y: 35, w: 40, h: 45, floor: 1 },
+      { id: "room-3f-3", name: "対面キッチン", type: "kitchen", x: 5, y: 10, w: 25, h: 25, floor: 1 },
+      { id: "room-3f-4", name: "浴室・脱衣所", type: "bathroom", x: 35, y: 10, w: 25, h: 25, floor: 1 },
+      { id: "room-3f-5", name: "トイレ", type: "toilet", x: 35, y: 40, w: 15, h: 15, floor: 1 },
+      { id: "room-3f-6", name: "主寝室", type: "bedroom", x: 65, y: 10, w: 30, h: 30, floor: 1 },
+      { id: "room-3f-7", name: "子供部屋1", type: "bedroom", x: 65, y: 45, w: 30, h: 25, floor: 1 },
+      { id: "room-3f-8", name: "子供部屋2 / 和室", type: "bedroom", x: 65, y: 75, w: 30, h: 20, floor: 1 },
+    ]
+  },
+  {
+    id: "2story",
+    name: "一戸建て 2階建てスタイル",
+    description: "1階に共有LDKと水回り、2階にプライベート寝室を集約した一軒家タイプです。",
+    floors: [1, 2],
+    rooms: [
+      { id: "room-2s-1", name: "玄関・ホール", type: "entrance", x: 10, y: 65, w: 25, h: 30, floor: 1 },
+      { id: "room-2s-2", name: "リビング・ダイニング", type: "living", x: 40, y: 30, w: 50, h: 65, floor: 1 },
+      { id: "room-2s-3", name: "キッチン", type: "kitchen", x: 40, y: 5, w: 30, h: 25, floor: 1 },
+      { id: "room-2s-4", name: "洗面脱衣所", type: "bathroom", x: 10, y: 5, w: 25, h: 25, floor: 1 },
+      { id: "room-2s-5", name: "浴室", type: "bathroom", x: 10, y: 30, w: 25, h: 25, floor: 1 },
+      { id: "room-2s-6", name: "1Fトイレ", type: "toilet", x: 75, y: 5, w: 15, h: 15, floor: 1 },
+      { id: "room-2s-7", name: "主寝室", type: "bedroom", x: 10, y: 10, w: 40, h: 40, floor: 2 },
+      { id: "room-2s-8", name: "子供部屋A", type: "bedroom", x: 55, y: 10, w: 35, h: 35, floor: 2 },
+      { id: "room-2s-9", name: "子供部屋B", type: "bedroom", x: 55, y: 50, w: 35, h: 45, floor: 2 },
+      { id: "room-2s-10", name: "2F廊下・階段", type: "entrance", x: 10, y: 55, w: 40, h: 20, floor: 2 },
+      { id: "room-2s-11", name: "2Fトイレ", type: "toilet", x: 10, y: 80, w: 15, h: 15, floor: 2 },
+    ]
+  }
 ];
 
 export const PRESET_TRAP_TYPES: CustomTrapType[] = [
@@ -292,6 +362,17 @@ export function useTraps(userId: string | null = null) {
     setCustomTrapTypes((prev) => prev.filter((t) => t.name !== name));
   }, []);
 
+  // 間取りテンプレートの適用
+  const applyLayoutTemplate = useCallback((templateId: string) => {
+    const template = LAYOUT_TEMPLATES.find((t) => t.id === templateId);
+    if (!template) return false;
+    
+    setRooms(template.rooms);
+    setFloors(template.floors);
+    setCurrentFloor(template.floors[0]);
+    return true;
+  }, []);
+
   // 全グッズの種類リスト（プリセット＋カスタム）
   const allTrapTypes = [
     ...PRESET_TRAP_TYPES,
@@ -345,6 +426,7 @@ export function useTraps(userId: string | null = null) {
     customTrapTypes,
     addCustomTrapType,
     deleteCustomTrapType,
+    applyLayoutTemplate,
     allTrapTypes,
     getTrapIcon,
     isInitialized,
