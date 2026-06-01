@@ -98,7 +98,7 @@ export function AuthSettings({
         )}
       </div>
 
-      {/* ⚠️ 危険ゾーン（データ初期化） */}
+      {/* 危険ゾーン（データ初期化） */}
       <div className="border-t border-slate-100 pt-5 mt-6">
         <h3 className="text-xs font-bold text-red-600 mb-2">危険エリア</h3>
         <p className="text-[10px] text-slate-400 mb-3 leading-relaxed">

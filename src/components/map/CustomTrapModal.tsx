@@ -1,12 +1,11 @@
 "use client";
+import { TrapIcon } from "@/components/vector-icons";
 
 interface CustomTrapModalProps {
   isOpen: boolean;
   onClose: () => void;
   customName: string;
   setCustomName: (val: string) => void;
-  customMonths: number;
-  setCustomMonths: (val: number) => void;
   customIcon: string;
   setCustomIcon: (val: string) => void;
   onCreateCustom: () => void;
@@ -17,8 +16,6 @@ export function CustomTrapModal({
   onClose,
   customName,
   setCustomName,
-  customMonths,
-  setCustomMonths,
   customIcon,
   setCustomIcon,
   onCreateCustom,
@@ -46,21 +43,6 @@ export function CustomTrapModal({
           </div>
 
           <div>
-            <label className="text-[10px] font-bold text-slate-400 block mb-1">有効期限（持続月数）</label>
-            <div className="relative flex items-center">
-              <input
-                type="number"
-                min="1"
-                max="36"
-                value={customMonths}
-                onChange={(e) => setCustomMonths(Math.max(1, Number(e.target.value)))}
-                className="w-full p-2.5 pr-8 bg-slate-50 border rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-teal-500 focus:outline-none"
-              />
-              <span className="absolute right-3 text-[9px] font-black text-slate-400 pointer-events-none">ヶ月</span>
-            </div>
-          </div>
-
-          <div>
             <label className="text-[10px] font-bold text-slate-400 block mb-1">マップ表示アイコン</label>
             <div className="flex gap-2 flex-wrap bg-slate-50 p-2.5 rounded-xl justify-between">
               {["🪳", "🕷️", "🦟", "🐜", "🌿", "🧴", "📦", "🪙", "🛡️"].map((emoji) => (
@@ -68,11 +50,12 @@ export function CustomTrapModal({
                   key={emoji}
                   type="button"
                   onClick={() => setCustomIcon(emoji)}
-                  className={`w-8 h-8 rounded-lg text-lg flex items-center justify-center transition border ${
-                    customIcon === emoji ? "bg-slate-800 border-slate-800 text-white shadow" : "bg-white hover:bg-slate-100 border-slate-200"
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center transition border ${
+                    customIcon === emoji ? "bg-teal-50 border-teal-500 shadow-inner scale-95" : "bg-white hover:bg-slate-50 border-slate-200"
                   }`}
+                  title={emoji}
                 >
-                  {emoji}
+                  <TrapIcon id={emoji} size={22} />
                 </button>
               ))}
             </div>

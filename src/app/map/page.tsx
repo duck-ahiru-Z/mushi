@@ -53,7 +53,7 @@ export default function MapPage() {
   const [mode, setMode] = useState<"place" | "edit">("place");
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // 📐 ズーム状態
+  // ズーム状態
   const [zoom, setZoom] = useState(1);
 
   // マップ表示ベースサイズ
@@ -141,7 +141,7 @@ export default function MapPage() {
     return floor > 0 ? `${floor}F` : `B${Math.abs(floor)}F`;
   };
 
-  // 💡 ドラッグ＆リサイズ時の座標計算処理
+  // ドラッグ＆リサイズ時の座標計算処理
   useEffect(() => {
     const handleGlobalMove = (e: PointerEvent) => {
       const state = dragStateRef.current;
@@ -343,7 +343,7 @@ export default function MapPage() {
     const clickX = (e.clientX - rect.left) / rect.width;
     const clickY = (e.clientY - rect.top) / rect.height;
 
-    const months = placementMonths;
+    const months = Number(placementMonths) || 3;
 
     try {
       await addTrap(
@@ -380,7 +380,8 @@ export default function MapPage() {
       alert("グッズの名前を入力してください。");
       return;
     }
-    const success = addCustomTrapType(customName, customMonths, customIcon);
+    // オリジナルグッズの基本（デフォルト値）は3ヶ月とする
+    const success = addCustomTrapType(customName, 3, customIcon);
     if (success) {
       setSelectedTrapType(customName);
       setCustomName("");
@@ -425,7 +426,7 @@ export default function MapPage() {
   return (
     <div className="p-4 flex flex-col min-h-screen bg-slate-50 text-slate-800 relative">
       
-      {/* ⚠️ Undo 復元トースト */}
+      {/* Undo 復元トースト */}
       {showUndoToast && (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 text-white text-xs px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 backdrop-blur-md animate-slide-up">
           <span>部屋を削除しました（設置済みの防衛も一時解除）</span>
@@ -438,21 +439,19 @@ export default function MapPage() {
         </div>
       )}
 
-      {/* 📍 設置グッズの詳細ポップアップ（モーダル） */}
+      {/* 設置グッズの詳細ポップアップ（モーダル） */}
       <TrapDetailModal
         trap={selectedTrap}
         onClose={() => setSelectedTrap(null)}
         onRemove={handleRemoveTrap}
       />
 
-      {/* 🛡️ オリジナルカスタムグッズ追加モーダル */}
+      {/* オリジナルカスタムグッズ追加モーダル */}
       <CustomTrapModal
         isOpen={showCustomModal}
         onClose={() => setShowCustomModal(false)}
         customName={customName}
         setCustomName={setCustomName}
-        customMonths={customMonths}
-        setCustomMonths={setCustomMonths}
         customIcon={customIcon}
         setCustomIcon={setCustomIcon}
         onCreateCustom={handleCreateCustomType}
@@ -508,7 +507,7 @@ export default function MapPage() {
         />
       )}
 
-      {/* 🏢 階層＆ズーム管理バー */}
+      {/* 階層＆ズーム管理バー */}
       <FloorSelector
         floors={floors}
         currentFloor={currentFloor}

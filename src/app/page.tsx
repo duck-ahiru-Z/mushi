@@ -174,7 +174,7 @@ export default function HomePage() {
   return (
     <div className="p-5 flex flex-col min-h-screen bg-slate-50 text-slate-800">
       
-      {/* 🛡️ 初回起動時ウェルカム・イラスト非表示選択モーダル */}
+      {/* 初回起動時ウェルカム・イラスト非表示選択モーダル */}
       {showWelcomeModal && (
         <div className="fixed inset-0 bg-slate-950/60 z-50 flex items-center justify-center p-5 backdrop-blur-md">
           <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-6 border border-slate-100 flex flex-col gap-5 text-slate-800 animate-scale-up">
@@ -233,7 +233,7 @@ export default function HomePage() {
         </Link>
       </div>
 
-      {/* 📡 高級コントロールパネル: 位置情報と通知の許可設定 */}
+      {/* 高級コントロールパネル: 位置情報と通知の許可設定 */}
       <GeoNotificationPanel
         geoPermission={geoPermission}
         requestGeoPermission={requestGeoPermission}
@@ -244,7 +244,7 @@ export default function HomePage() {
       {/* 1. 日本防虫気象協会風 リアルタイム害虫警報 */}
       <PestAlertCard region={region} currentMonth={currentMonth} />
 
-      {/* 🛠️ オリジナルグッズ作製アピール */}
+      {/* オリジナルグッズ作製アピール */}
       <div className="bg-gradient-to-r from-teal-500/10 to-emerald-500/10 border border-teal-200/50 p-5 rounded-3xl shadow-sm mb-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex-1">
           <h2 className="text-xs font-extrabold text-teal-800 mb-1 flex items-center gap-1.5">

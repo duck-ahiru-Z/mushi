@@ -8,7 +8,7 @@ export function PwaInstallGuide({ detectedOS }: PwaInstallGuideProps) {
   return (
     <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 text-slate-800 mb-6">
       <h2 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1.5">
-        📱 ホーム画面へのアプリアイコン追加 (PWA)
+        ホーム画面へのアプリアイコン追加 (PWA)
       </h2>
       <p className="text-xs text-slate-400 mb-4 leading-relaxed">
         G-Endをスマホのホーム画面にアプリアイコンとして登録（インストール）することで、全画面で使いやすくなり、ブラウザを閉じている際にも期限切れのプッシュ通知を確実に受け取れるようになります。
