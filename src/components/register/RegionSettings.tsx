@@ -19,7 +19,7 @@ const REGIONS = [
 
 export function RegionSettings({ region, onRegionChange }: RegionSettingsProps) {
   return (
-    <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 mb-6">
+    <div className="bg-white p-5 rounded-md border border-slate-200 mb-6">
       <h2 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1.5">
         警報・予報用の地域設定
       </h2>
@@ -30,7 +30,7 @@ export function RegionSettings({ region, onRegionChange }: RegionSettingsProps) 
         <select
           value={region}
           onChange={(e) => onRegionChange(e.target.value)}
-          className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-none text-slate-800"
+          className="w-full p-3 bg-slate-50 border border-slate-200 rounded-md text-xs font-bold focus:outline-none focus:ring-1 focus:ring-teal-700 appearance-none text-slate-800"
         >
           {REGIONS.map((r) => (
             <option key={r.id} value={r.id}>

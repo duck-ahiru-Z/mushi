@@ -47,7 +47,7 @@ export function MapCanvas({
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
-      className="w-full overflow-auto border border-slate-300 bg-slate-200/60 rounded-3xl p-4 max-h-[62vh] shadow-inner flex justify-center items-start min-h-[300px]"
+      className="w-full overflow-auto border border-slate-200 bg-slate-50 rounded-md p-4 max-h-[62vh] flex justify-center items-start min-h-[300px]"
     >
       <div
         style={{
@@ -61,7 +61,7 @@ export function MapCanvas({
       >
         <div 
           ref={containerRef}
-          className="relative bg-white rounded-2xl border border-slate-300 shadow-xl"
+          className="relative bg-white rounded-md border border-slate-300 shadow-sm"
           style={{
             width: `${houseSize.width}px`,
             height: `${houseSize.height}px`,
@@ -76,10 +76,10 @@ export function MapCanvas({
               key={room.id}
               onClick={(e) => onRoomClick(room, e)}
               onPointerDown={(e) => onRoomPointerDown(room, e)}
-              className={`absolute border-2 rounded-2xl shadow-sm flex items-center justify-center select-none touch-none ${
+              className={`absolute border rounded-md flex items-center justify-center select-none touch-none ${
                 mode === "edit"
-                  ? "bg-indigo-50/80 border-indigo-500/70 cursor-move hover:bg-indigo-50"
-                  : "bg-teal-50/50 border-teal-600/30 cursor-crosshair hover:bg-teal-50"
+                  ? "bg-slate-50 border-slate-400 cursor-move hover:bg-slate-100/80"
+                  : "bg-teal-50/20 border-teal-700/30 cursor-crosshair hover:bg-teal-50/40"
               }`}
               style={{
                 left: `${room.x}%`,
@@ -91,20 +91,20 @@ export function MapCanvas({
             >
               {/* 部屋名表示（編集モード時は削除ボタンを併記） */}
               <div className="flex flex-col items-center gap-1 pointer-events-none select-none">
-                <span className={`text-[10px] font-black select-none ${mode === "edit" ? "text-indigo-900" : "text-teal-900"}`}>
+                <span className={`text-[10px] font-bold select-none ${mode === "edit" ? "text-slate-700" : "text-teal-900"}`}>
                   {room.name}
                 </span>
                 {mode === "edit" && (
                   <button
                     onClick={(e) => onDeleteRoom(room.id, room.name, e)}
-                    className="pointer-events-auto bg-red-100 hover:bg-red-200 text-red-700 w-10 h-5 flex items-center justify-center rounded-lg text-[9px] font-bold transition z-30"
+                    className="pointer-events-auto bg-red-50 hover:bg-red-100 text-red-700 w-10 h-5 flex items-center justify-center rounded text-[9px] font-bold border border-red-200 transition z-30"
                     title="この部屋を削除"
                   >
                     削除
                   </button>
                 )}
               </div>
-
+ 
               {/* リサイズ掴み手（編集モード用） */}
               {mode === "edit" && (
                 <>
@@ -119,14 +119,14 @@ export function MapCanvas({
                   <div data-resize-dir="se" onPointerDown={(e) => onHandlePointerDown(room, "se", e)} className="absolute bottom-0 right-0 w-3.5 h-3.5 cursor-se-resize -bottom-1 -right-1 bg-transparent" />
                 </>
               )}
-
+ 
               {/* 設置グッズのピン（トラップ）の描画 */}
               {traps.filter(t => t.roomId === room.id).map((trap) => (
                 <button
                   key={trap.id}
                   onPointerDown={(e) => onTrapPointerDown(trap, room.id, e)}
                   onClick={(e) => onTrapClick(trap, e)}
-                  className="absolute trap-marker z-20 pointer-events-auto p-1 bg-white rounded-xl border border-slate-200 hover:border-slate-350 shadow flex items-center justify-center transition active:scale-95 cursor-grab touch-none"
+                  className="absolute trap-marker z-20 pointer-events-auto p-1 bg-white rounded border border-slate-350 hover:border-slate-400 shadow-sm flex items-center justify-center transition active:scale-95 cursor-grab touch-none"
                   style={{
                     left: `calc(${trap.x * 100}% - 14px)`,
                     top: `calc(${trap.y * 100}% - 14px)`,
