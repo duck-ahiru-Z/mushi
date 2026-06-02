@@ -30,7 +30,32 @@ export async function POST(request: Request) {
     console.log("Title:", title);
     console.log("Body:", body);
 
-    // Schedule notification in the background using Node.js setTimeout
+    // 10秒以下の場合は、サーバーレス環境（Vercel等）のコールドスタート・即時終了対策として、
+    // HTTPレスポンスを返す前にスリープ待機して確実に送信処理を実行させます。
+    if (delay <= 10) {
+      await new Promise((resolve) => setTimeout(resolve, delay * 1000));
+      try {
+        const payload = JSON.stringify({
+          title: title || "🛡️ G-End 防衛リマインダー",
+          body: body || "対策グッズの交換期限が近づいています！",
+          icon: "/favicon.ico",
+          tag: "gend-push-alert"
+        });
+
+        await webpush.sendNotification(subscription, payload);
+        console.log("G-End: Sent push via serverless blocking wait successfully!");
+      } catch (err) {
+        console.error("G-End: Failed to send push via serverless blocking wait:", err);
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: `Notification sent after ${delay} seconds (serverless optimized).`,
+        scheduledSeconds: delay
+      });
+    }
+
+    // 10秒を超える場合は、通常のバックグラウンド setTimeout でスケジュール（常時稼働サーバー用）
     setTimeout(async () => {
       try {
         const payload = JSON.stringify({

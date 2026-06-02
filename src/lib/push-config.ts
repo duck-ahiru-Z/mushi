@@ -10,6 +10,18 @@ export interface VapidKeys {
 }
 
 export function getOrGenerateVapidKeys(): VapidKeys {
+  // 1. デプロイ環境用：環境変数があれば最優先で取得（Vercel等の本番サーバーで安定稼働させるために必須）
+  const envPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || process.env.VAPID_PUBLIC_KEY;
+  const envPrivateKey = process.env.VAPID_PRIVATE_KEY;
+
+  if (envPublicKey && envPrivateKey) {
+    return {
+      publicKey: envPublicKey,
+      privateKey: envPrivateKey
+    };
+  }
+
+  // 2. ローカル開発環境用：ファイルがあれば読み込む
   if (fs.existsSync(KEYS_FILE)) {
     try {
       const data = fs.readFileSync(KEYS_FILE, "utf-8");
@@ -19,7 +31,7 @@ export function getOrGenerateVapidKeys(): VapidKeys {
     }
   }
 
-  // Generate new keys
+  // 3. ローカル開発環境用：ファイルがなければ新規生成して保存
   const keys = webpush.generateVAPIDKeys();
   try {
     fs.writeFileSync(KEYS_FILE, JSON.stringify(keys, null, 2), "utf-8");
