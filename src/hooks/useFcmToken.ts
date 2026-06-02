@@ -154,6 +154,75 @@ export function useFcmToken() {
     }, 8000); // 8秒後にデモ通知
   }, [permission]);
 
+  // 5. バックグラウンド用（閉じていても届く）の通知スケジュール
+  const scheduleBackgroundNotification = useCallback(async (delaySeconds: number, title: string, body: string) => {
+    if (!isSupported) {
+      alert("お使いのブラウザやデバイスはプッシュ通知に対応していません。");
+      return false;
+    }
+
+    let currentPermission = permission;
+    if (currentPermission !== "granted") {
+      const result = await requestNotificationPermission();
+      currentPermission = result;
+      if (result !== "granted") {
+        alert("通知許可が得られなかったため、スケジュールできませんでした。");
+        return false;
+      }
+    }
+
+    try {
+      // 1. 公開キーをサーバーから取得
+      const keyRes = await fetch("/api/push");
+      const { publicKey } = await keyRes.json();
+
+      if (!publicKey) {
+        throw new Error("VAPID public key not generated");
+      }
+
+      // 2. サービスワーカーが準備できているか確認
+      if (!("serviceWorker" in navigator)) {
+        throw new Error("Service Worker is not supported by this browser");
+      }
+
+      const registration = await navigator.serviceWorker.ready;
+      
+      // 3. プッシュ通知への登録（購読）
+      let subscription = await registration.pushManager.getSubscription();
+      if (!subscription) {
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(publicKey)
+        });
+      }
+
+      // 4. バックグラウンドサーバーへ送信してスケジュール
+      const scheduleRes = await fetch("/api/push", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          subscription,
+          delaySeconds,
+          title,
+          body
+        })
+      });
+
+      const resData = await scheduleRes.json();
+      if (resData.success) {
+        return true;
+      } else {
+        throw new Error(resData.error || "Failed to schedule on server");
+      }
+    } catch (error: any) {
+      console.error("G-End scheduleBackgroundNotification error:", error);
+      alert("スケジュール通知設定中にエラーが発生しました: " + error.message);
+      return false;
+    }
+  }, [permission, isSupported, requestNotificationPermission]);
+
   return {
     permission,
     token,
@@ -162,5 +231,23 @@ export function useFcmToken() {
     requestNotificationPermission,
     triggerTestNotification,
     scheduleReminder,
+    scheduleBackgroundNotification,
   };
 }
+
+// Utility to convert Base64 VAPID public key to Uint8Array required by PushManager
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding)
+    .replace(/-/g, "+")
+    .replace(/_/g, "/");
+
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+

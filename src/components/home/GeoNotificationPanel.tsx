@@ -1,10 +1,12 @@
 "use client";
+import { useState } from "react";
 
 interface GeoNotificationPanelProps {
   geoPermission: "granted" | "prompt" | "denied";
   requestGeoPermission: () => void;
   permission: NotificationPermission;
   triggerTestNotification: () => void;
+  scheduleBackgroundNotification?: (delaySeconds: number, title: string, body: string) => Promise<boolean>;
 }
 
 export function GeoNotificationPanel({
@@ -12,7 +14,30 @@ export function GeoNotificationPanel({
   requestGeoPermission,
   permission,
   triggerTestNotification,
+  scheduleBackgroundNotification,
 }: GeoNotificationPanelProps) {
+  const [scheduledText, setScheduledText] = useState<string | null>(null);
+  const [isScheduling, setIsScheduling] = useState(false);
+
+  const handleSchedule = async (seconds: number, label: string) => {
+    if (!scheduleBackgroundNotification) return;
+    setIsScheduling(true);
+    setScheduledText(null);
+
+    const title = "🛡️ G-End 防衛バックグラウンド通知";
+    const body = `お待たせしました！スケジュールされたテスト通知です。(${label}に設定)`;
+
+    const success = await scheduleBackgroundNotification(seconds, title, body);
+    setIsScheduling(false);
+    if (success) {
+      setScheduledText(`${label}にプッシュ通知を設定しました！今すぐアプリを閉じてお待ちください。`);
+      // Auto clear after 8 seconds
+      setTimeout(() => {
+        setScheduledText(null);
+      }, 8000);
+    }
+  };
+
   return (
     <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-200/60 mb-5 text-slate-800">
       <h2 className="text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
@@ -65,6 +90,56 @@ export function GeoNotificationPanel({
           )}
         </div>
       </div>
+
+      {/* バックグラウンド（閉じていても届く）検証スケジュールパネル */}
+      {permission === "granted" && scheduleBackgroundNotification && (
+        <div className="mt-4 pt-4 border-t border-slate-100">
+          <span className="text-[10px] font-bold text-slate-700 block mb-1">
+            ⏳ バックグラウンド通知スケジュール（閉じて検証用）
+          </span>
+          <p className="text-[9px] text-slate-400 mb-3 leading-normal">
+            スケジュール設定後、<strong>ブラウザタブやアプリを完全に閉じて</strong>動作を確認できます。ローカル開発サーバーからプッシュ配信されます。
+          </p>
+
+          {scheduledText && (
+            <div className="mb-3 p-2 bg-emerald-50 border border-emerald-100 text-[10px] text-emerald-800 rounded font-bold leading-relaxed animate-fade-in">
+              🎉 {scheduledText}
+            </div>
+          )}
+
+          <div className="grid grid-cols-4 gap-2">
+            <button
+              disabled={isScheduling}
+              onClick={() => handleSchedule(10, "10秒後")}
+              className="py-1.5 bg-slate-850 hover:bg-slate-900 text-white text-[9px] font-bold rounded shadow-sm disabled:opacity-50 transition active:scale-95 text-center"
+            >
+              10秒後
+            </button>
+            <button
+              disabled={isScheduling}
+              onClick={() => handleSchedule(60, "1分後")}
+              className="py-1.5 bg-slate-850 hover:bg-slate-900 text-white text-[9px] font-bold rounded shadow-sm disabled:opacity-50 transition active:scale-95 text-center"
+            >
+              1分後
+            </button>
+            <button
+              disabled={isScheduling}
+              onClick={() => handleSchedule(600, "10分後")}
+              className="py-1.5 bg-slate-850 hover:bg-slate-900 text-white text-[9px] font-bold rounded shadow-sm disabled:opacity-50 transition active:scale-95 text-center"
+            >
+              10分後
+            </button>
+            <button
+              disabled={isScheduling}
+              onClick={() => handleSchedule(86400, "1日後")}
+              className="py-1.5 bg-slate-850 hover:bg-slate-900 text-white text-[9px] font-bold rounded shadow-sm disabled:opacity-50 transition active:scale-95 text-center"
+            >
+              1日後
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
