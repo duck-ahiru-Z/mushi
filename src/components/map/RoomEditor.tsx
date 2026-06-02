@@ -24,7 +24,7 @@ export function RoomEditor({
   onApplyTemplate,
 }: RoomEditorProps) {
   return (
-    <div className="bg-white p-4 rounded-2xl shadow-sm mb-4 border border-slate-100 space-y-3 text-slate-800">
+    <div className="bg-white p-4 rounded-md border border-slate-200 space-y-3 text-slate-800 shadow-sm">
       <div>
         <h2 className="text-xs font-bold text-slate-400 mb-2">間取りテンプレートを適用</h2>
         <p className="text-[10px] text-slate-400 mb-2.5 leading-relaxed">
@@ -35,7 +35,7 @@ export function RoomEditor({
             <button
               key={tpl.id}
               onClick={() => onApplyTemplate(tpl.id)}
-              className="p-2.5 text-[10px] font-black bg-slate-50 border border-slate-200/80 hover:bg-teal-50 hover:border-teal-500 hover:text-teal-700 text-slate-700 rounded-xl transition text-center active:scale-[0.98] leading-tight flex flex-col justify-center items-center gap-1 shadow-sm"
+              className="p-2.5 text-[10px] font-bold bg-slate-50 border border-slate-200 hover:bg-teal-50/50 hover:border-teal-700 hover:text-teal-700 text-slate-700 rounded-md transition text-center active:scale-[0.98] leading-tight flex flex-col justify-center items-center gap-1 shadow-sm"
               title={tpl.description}
             >
               <span>{tpl.name}</span>
@@ -43,10 +43,10 @@ export function RoomEditor({
           ))}
         </div>
       </div>
-      <hr className="border-slate-100" />
+      <hr className="border-slate-200" />
       <div>
         <h2 className="text-xs font-bold text-slate-400 mb-2">全体のキャンバスサイズ（微調整用）</h2>
-        <div className="flex items-center gap-4 text-xs bg-slate-50 p-2 rounded-xl w-fit">
+        <div className="flex items-center gap-4 text-xs bg-slate-50 p-2 rounded-md w-fit border border-slate-200">
           <label>
             横幅:{" "}
             <input
@@ -55,7 +55,7 @@ export function RoomEditor({
               step="50"
               value={houseSize.width}
               onChange={(e) => setHouseSize({ ...houseSize, width: Math.max(200, Number(e.target.value)) })}
-              className="w-16 p-1 border rounded bg-white text-center font-mono"
+              className="w-16 p-1 border border-slate-200 rounded-md bg-white text-center font-mono focus:outline-none focus:ring-1 focus:ring-teal-700"
             />{" "}
             px
           </label>
@@ -67,13 +67,13 @@ export function RoomEditor({
               step="50"
               value={houseSize.height}
               onChange={(e) => setHouseSize({ ...houseSize, height: Math.max(200, Number(e.target.value)) })}
-              className="w-16 p-1 border rounded bg-white text-center font-mono"
+              className="w-16 p-1 border border-slate-200 rounded-md bg-white text-center font-mono focus:outline-none focus:ring-1 focus:ring-teal-700"
             />{" "}
             px
           </label>
         </div>
       </div>
-      <hr className="border-slate-100" />
+      <hr className="border-slate-200" />
       <div>
         <h2 className="text-xs font-bold text-slate-400 mb-2">{currentFloorName} に新しい部屋を追加</h2>
         <div className="flex gap-2">
@@ -82,11 +82,11 @@ export function RoomEditor({
             placeholder="部屋名 (例: トイレ, 脱衣所)"
             value={newRoomName}
             onChange={(e) => setNewRoomName(e.target.value)}
-            className="flex-1 p-2 border rounded-xl text-xs bg-slate-50 font-bold text-slate-800"
+            className="flex-1 p-2 border border-slate-200 rounded-md text-xs bg-slate-50 font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-teal-700"
           />
           <button
             onClick={onAddRoom}
-            className="px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition"
+            className="px-4 bg-slate-800 hover:bg-slate-900 text-white rounded-md text-xs font-bold transition"
           >
             追加
           </button>
