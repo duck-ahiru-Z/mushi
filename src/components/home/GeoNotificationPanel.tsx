@@ -39,7 +39,7 @@ export function GeoNotificationPanel({
   };
 
   return (
-    <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-200/60 mb-5 text-slate-800">
+    <div className="bg-white p-5 rounded-md border border-slate-200 mb-5 text-slate-800 shadow-sm">
       <h2 className="text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
         位置情報と通知の設定
       </h2>
@@ -49,17 +49,17 @@ export function GeoNotificationPanel({
       
       <div className="grid grid-cols-2 gap-3">
         {/* 位置情報パーミッション */}
-        <div className="bg-slate-50 border border-slate-100 p-3 rounded-xl flex flex-col justify-between">
+        <div className="bg-slate-50 border border-slate-200 p-3 rounded-md flex flex-col justify-between">
           <div>
             <span className="text-[9px] text-slate-400 font-bold block">位置情報 (GPS)</span>
-            <span className={`text-xs font-black mt-0.5 block ${geoPermission === "granted" ? "text-emerald-600" : "text-amber-600"}`}>
+            <span className={`text-xs font-bold mt-0.5 block ${geoPermission === "granted" ? "text-emerald-600" : "text-amber-600"}`}>
               {geoPermission === "granted" ? "許可済み" : "未許可"}
             </span>
           </div>
           {geoPermission !== "granted" ? (
             <button
               onClick={requestGeoPermission}
-              className="mt-3 w-full py-1.5 bg-teal-600 hover:bg-teal-700 text-white text-[10px] font-bold rounded-lg transition shadow"
+              className="mt-3 w-full py-1.5 bg-teal-650 hover:bg-teal-700 text-white text-[10px] font-bold rounded transition shadow-sm"
             >
               許可する
             </button>
@@ -69,20 +69,20 @@ export function GeoNotificationPanel({
         </div>
 
         {/* 通知パーミッション */}
-        <div className="bg-slate-50 border border-slate-100 p-3 rounded-xl flex flex-col justify-between">
+        <div className="bg-slate-50 border border-slate-200 p-3 rounded-md flex flex-col justify-between">
           <div>
             <span className="text-[9px] text-slate-400 font-bold block">プッシュ通知</span>
-            <span className={`text-xs font-black mt-0.5 block ${permission === "granted" ? "text-emerald-600" : "text-amber-600"}`}>
+            <span className={`text-xs font-bold mt-0.5 block ${permission === "granted" ? "text-emerald-600" : "text-amber-600"}`}>
               {permission === "granted" ? "受信可能" : "未設定"}
             </span>
           </div>
           {permission === "denied" ? (
-            <span className="text-[8px] text-red-600 mt-3 font-bold text-right block">ブラウザでブロック中</span>
+            <span className="text-[8px] text-red-650 mt-3 font-bold text-right block">ブラウザでブロック中</span>
           ) : (
             <button
               onClick={triggerTestNotification}
-              className={`mt-3 w-full py-1.5 text-white text-[10px] font-bold rounded-lg transition shadow ${
-                permission === "granted" ? "bg-slate-800 hover:bg-slate-900" : "bg-teal-600 hover:bg-teal-700"
+              className={`mt-3 w-full py-1.5 text-white text-[10px] font-bold rounded transition shadow-sm ${
+                permission === "granted" ? "bg-slate-800 hover:bg-slate-900" : "bg-teal-650 hover:bg-teal-700"
               }`}
             >
               {permission === "granted" ? "テスト通知を送信" : "通知を設定してテスト"}
@@ -93,7 +93,7 @@ export function GeoNotificationPanel({
 
       {/* バックグラウンド（閉じていても届く）検証スケジュールパネル */}
       {permission === "granted" && scheduleBackgroundNotification && (
-        <div className="mt-4 pt-4 border-t border-slate-100">
+        <div className="mt-4 pt-4 border-t border-slate-200">
           <span className="text-[10px] font-bold text-slate-700 block mb-1">
             ⏳ バックグラウンド通知スケジュール（閉じて検証用）
           </span>
@@ -111,28 +111,28 @@ export function GeoNotificationPanel({
             <button
               disabled={isScheduling}
               onClick={() => handleSchedule(10, "10秒後")}
-              className="py-1.5 bg-slate-850 hover:bg-slate-900 text-white text-[9px] font-bold rounded shadow-sm disabled:opacity-50 transition active:scale-95 text-center"
+              className="py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-[9px] font-bold rounded disabled:opacity-50 transition active:scale-95 text-center shadow-sm"
             >
               10秒後
             </button>
             <button
               disabled={isScheduling}
               onClick={() => handleSchedule(60, "1分後")}
-              className="py-1.5 bg-slate-850 hover:bg-slate-900 text-white text-[9px] font-bold rounded shadow-sm disabled:opacity-50 transition active:scale-95 text-center"
+              className="py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-[9px] font-bold rounded disabled:opacity-50 transition active:scale-95 text-center shadow-sm"
             >
               1分後
             </button>
             <button
               disabled={isScheduling}
               onClick={() => handleSchedule(600, "10分後")}
-              className="py-1.5 bg-slate-850 hover:bg-slate-900 text-white text-[9px] font-bold rounded shadow-sm disabled:opacity-50 transition active:scale-95 text-center"
+              className="py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-[9px] font-bold rounded disabled:opacity-50 transition active:scale-95 text-center shadow-sm"
             >
               10分後
             </button>
             <button
               disabled={isScheduling}
               onClick={() => handleSchedule(86400, "1日後")}
-              className="py-1.5 bg-slate-850 hover:bg-slate-900 text-white text-[9px] font-bold rounded shadow-sm disabled:opacity-50 transition active:scale-95 text-center"
+              className="py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-[9px] font-bold rounded disabled:opacity-50 transition active:scale-95 text-center shadow-sm"
             >
               1日後
             </button>
