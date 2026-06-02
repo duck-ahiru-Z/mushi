@@ -17,23 +17,23 @@ export function ActiveTrapsList({
 }: ActiveTrapsListProps) {
   return (
     <div className="flex-1 mb-6">
-      <h2 className="text-xs font-extrabold text-slate-400 mb-2 tracking-wider uppercase flex items-center gap-1">
+      <h2 className="text-xs font-bold text-slate-400 mb-2 tracking-wider uppercase flex items-center gap-1">
         現在の防衛状況 ({traps.length}個設置中)
       </h2>
       {traps.length === 0 ? (
-        <div className="bg-white p-8 rounded-2xl text-center border border-slate-100 shadow-sm flex flex-col items-center gap-3">
+        <div className="bg-white p-8 rounded-md text-center border border-slate-200 flex flex-col items-center gap-3">
           <p className="text-xs text-slate-400 leading-normal max-w-xs">
             現在、家の中に防衛グッズが配置されていません。間取りマップから配置しましょう。
           </p>
           <Link
             href="/map"
-            className="inline-block bg-teal-600 hover:bg-teal-700 text-white text-xs font-black px-4 py-2.5 rounded-xl shadow-md transition"
+            className="inline-block bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2.5 rounded-md shadow-sm transition"
           >
             配置マップを開いて設置する
           </Link>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 divide-y divide-slate-50 overflow-hidden">
+        <div className="bg-white rounded-md border border-slate-200 divide-y divide-slate-100 overflow-hidden shadow-sm">
           {traps.map((trap) => {
             const diffTime = new Date(trap.expirationDate).getTime() - new Date().getTime();
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -45,12 +45,12 @@ export function ActiveTrapsList({
                 className="p-3.5 flex justify-between items-center text-xs hover:bg-slate-50/50 transition-all duration-150"
               >
                 <div className="flex items-center gap-3">
-                  <span className="p-1 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-center flex-shrink-0 shadow-inner">
+                  <span className="p-1 bg-slate-50 rounded border border-slate-200 flex items-center justify-center flex-shrink-0">
                     <TrapIcon id={trap.name} size={32} />
                   </span>
                   <div>
-                    <p className="font-extrabold text-slate-800 text-[12px]">{trap.name}</p>
-                    <p className="text-slate-400 text-[10px] font-bold">
+                    <p className="font-bold text-slate-800 text-[12px]">{trap.name}</p>
+                    <p className="text-slate-400 text-[10px] font-semibold">
                       場所: {getRoomName(trap.roomId)} ({trap.placedLocation})
                     </p>
                   </div>
@@ -60,13 +60,13 @@ export function ActiveTrapsList({
                     <p className="text-slate-500 font-mono text-[10px]">
                       期限: {trap.expirationDate}
                     </p>
-                    <p className={`text-[9px] font-black mt-0.5 ${isClose ? "text-red-500 animate-pulse" : "text-slate-400"}`}>
+                    <p className={`text-[9px] font-bold mt-0.5 ${isClose ? "text-red-650" : "text-slate-400"}`}>
                       {diffDays <= 0 ? "期限切れ！" : `残り ${diffDays}日`}
                     </p>
                   </div>
                   <button
                     onClick={() => onRemoveTrap(trap.id, trap.name)}
-                    className="p-1.5 px-3 hover:bg-red-50 text-slate-500 hover:text-red-600 rounded-xl border border-slate-100 hover:border-red-200 transition text-[10px] font-bold shadow-sm bg-slate-50/50"
+                    className="p-1.5 px-3 hover:bg-red-50 text-slate-500 hover:text-red-600 rounded border border-slate-200 hover:border-red-300 transition text-[10px] font-bold bg-slate-50/50"
                   >
                     回収
                   </button>
@@ -79,3 +79,4 @@ export function ActiveTrapsList({
     </div>
   );
 }
+
