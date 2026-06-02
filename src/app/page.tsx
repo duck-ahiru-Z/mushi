@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useTraps } from "@/hooks/usetraps";
 import { useFcmToken } from "@/hooks/useFcmToken";
-import { detectJapanRegion } from "@/lib/utils";
+import { detectArea } from "@/lib/utils";
 import { auth } from "@/lib/firebase/config";
 import { onAuthStateChanged } from "firebase/auth";
 
@@ -93,11 +93,11 @@ export default function HomePage() {
         (position) => {
           const lat = position.coords.latitude;
           const lon = position.coords.longitude;
-          const detected = detectJapanRegion(lat, lon);
+          const closestArea = detectArea(lat, lon);
           
-          setRegion(detected);
-          localStorage.setItem("user_region", detected);
-          setLocationLabel(`${REGION_NAMES[detected]} (GPS自動判定)`);
+          setRegion(closestArea.id);
+          localStorage.setItem("user_region", closestArea.id);
+          setLocationLabel(`${REGION_NAMES[closestArea.id]} (GPS自動判定)`);
           setGeoPermission("granted");
           window.dispatchEvent(new Event("regionChanged"));
         },

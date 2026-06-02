@@ -45,9 +45,9 @@ export function TrapSelector({
 
       <button
         onClick={onRequestCustomModal}
-        className="w-full py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-md text-xs font-bold transition flex items-center justify-center gap-1.5 active:scale-[0.98]"
+        className="w-full py-2.5 bg-teal-700 hover:bg-teal-800 text-white rounded-md text-xs font-bold transition flex items-center justify-center gap-1.5 active:scale-[0.98]"
       >
-        自分専用のオリジナル防衛グッズを作製する
+        自分専用のオリジナル防衛グッズを作成する
       </button>
 
       <div className="flex flex-col gap-2 relative">
@@ -140,7 +140,7 @@ export function TrapSelector({
           </div>
         </div>
       </div>
-      <p className="text-[10px] text-teal-700 font-bold bg-slate-50 p-2 rounded border border-slate-200 leading-normal">
+      <p className="text-[10px] text-teal-700 font-bold bg-slate-50 p-2 rounded-md border border-slate-200 leading-normal">
         <strong>配置方法:</strong> 設置するグッズを選択し、間取り図の配置したい場所をタップしてください。
       </p>
     </div>

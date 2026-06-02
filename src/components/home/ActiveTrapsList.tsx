@@ -27,7 +27,7 @@ export function ActiveTrapsList({
           </p>
           <Link
             href="/map"
-            className="inline-block bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2.5 rounded-md shadow-sm transition"
+            className="inline-block bg-teal-700 hover:bg-teal-800 text-white text-xs font-bold px-4 py-2.5 rounded-md shadow-sm transition"
           >
             配置マップを開いて設置する
           </Link>

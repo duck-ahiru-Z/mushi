@@ -168,7 +168,7 @@ export default function RegisterPage() {
       const current = auth.currentUser;
       if (current) {
         await migrateLocalDataToFirebase(current.uid);
-        setSuccess("同期完了。ローカル of 部屋・グッズデータをクラウドと完全に同期しました！");
+        setSuccess("同期が完了しました。ローカルの部屋・対策グッズデータをクラウドと完全に同期しました！");
       }
     } catch (err: any) {
       console.error("Firebase Auth Error:", err);
@@ -217,12 +217,12 @@ export default function RegisterPage() {
 
       {/* エラー / 成功通知トースト */}
       {error && (
-        <div className="bg-red-50 border border-red-100 text-red-800 text-xs p-3 rounded-xl mb-4 font-semibold">
+        <div className="bg-red-50 border border-red-100 text-red-800 text-xs p-3 rounded-md mb-4 font-semibold">
           エラー: {error}
         </div>
       )}
       {success && (
-        <div className="bg-emerald-50 border border-emerald-100 text-emerald-800 text-xs p-3 rounded-xl mb-4 font-semibold">
+        <div className="bg-emerald-50 border border-emerald-100 text-emerald-800 text-xs p-3 rounded-md mb-4 font-semibold">
           完了: {success}
         </div>
       )}

@@ -5,7 +5,7 @@ import BottomNav from "@/components/layouts/bottom-nav";
 import Link from "next/link";
 import Image from "next/image";
 
-// 💡 同じ app フォルダ内（同じ階層）にある「G-END logo.png」を正しくインポートするで！
+// 💡 同じ app ディレクトリ内に格納されている「G-END logo.png」をインポートします。
 import mainLogo from "./G-END logo.png"; 
 
 const inter = Inter({ subsets: ["latin"] });
