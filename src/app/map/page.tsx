@@ -449,11 +449,11 @@ export default function MapPage() {
       
       {/* Undo 復元トースト */}
       {showUndoToast && (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 text-white text-xs px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 backdrop-blur-md animate-slide-up">
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 text-white text-xs px-4 py-3 rounded-md shadow-lg flex items-center gap-3">
           <span>部屋を削除しました（設置済みの防衛も一時解除）</span>
           <button
             onClick={handleUndoRoom}
-            className="bg-teal-500 hover:bg-teal-600 text-slate-950 font-black px-2.5 py-1 rounded-lg transition"
+            className="bg-teal-600 hover:bg-teal-700 text-white font-bold px-2.5 py-1 rounded transition"
           >
             元に戻す
           </button>
@@ -489,16 +489,16 @@ export default function MapPage() {
       <div className="flex gap-2 mb-4">
         <button
           onClick={() => setMode("place")}
-          className={`flex-1 py-2 rounded-xl text-xs font-extrabold border transition-all ${
-            mode === "place" ? "bg-teal-600 text-white border-teal-600 shadow" : "bg-white text-slate-600 border-slate-200"
+          className={`flex-1 py-2 rounded-md text-xs font-bold border transition-all ${
+            mode === "place" ? "bg-teal-600 text-white border-teal-600 shadow-sm" : "bg-white text-slate-600 border-slate-200"
           }`}
         >
           グッズを配置する (配置モード)
         </button>
         <button
           onClick={() => setMode("edit")}
-          className={`flex-1 py-2 rounded-xl text-xs font-extrabold border transition-all ${
-            mode === "edit" ? "bg-indigo-600 text-white border-indigo-600 shadow" : "bg-white text-slate-600 border-slate-200"
+          className={`flex-1 py-2 rounded-md text-xs font-bold border transition-all ${
+            mode === "edit" ? "bg-slate-800 text-white border-slate-800 shadow-sm" : "bg-white text-slate-600 border-slate-200"
           }`}
         >
           間取りを編集する (編集モード)
