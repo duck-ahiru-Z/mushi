@@ -51,6 +51,7 @@ export default function HomePage() {
     permission,
     requestNotificationPermission,
     triggerTestNotification,
+    scheduleBackgroundNotification,
   } = useFcmToken();
 
   const [region, setRegion] = useState("kinki");
@@ -239,6 +240,7 @@ export default function HomePage() {
         requestGeoPermission={requestGeoPermission}
         permission={permission}
         triggerTestNotification={triggerTestNotification}
+        scheduleBackgroundNotification={scheduleBackgroundNotification}
       />
 
       {/* 1. 日本防虫気象協会風 リアルタイム害虫警報 */}
