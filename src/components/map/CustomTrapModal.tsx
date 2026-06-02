@@ -95,7 +95,7 @@ export function CustomTrapModal({
         <div className="flex gap-2 mt-2">
           <button
             onClick={onCreateCustom}
-            className="flex-1 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-md text-xs font-bold transition shadow-sm active:scale-[0.98]"
+            className="flex-1 py-2 bg-teal-700 hover:bg-teal-800 text-white rounded-md text-xs font-bold transition shadow-sm active:scale-[0.98]"
           >
             登録して選択する
           </button>
