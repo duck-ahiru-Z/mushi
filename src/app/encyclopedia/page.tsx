@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import { detectPrefecture, PREFECTURE_COORDINATES } from "@/lib/utils";
+import { detectArea } from "@/lib/utils";
 import { PestIcon, TrapIcon } from "@/components/vector-icons";
 
 interface BugProfile {
@@ -298,23 +298,13 @@ export default function EncyclopediaPage() {
   const [selectedBugId, setSelectedBugId] = useState<string>("cockroach");
   const [currentMonth, setCurrentMonth] = useState<number>(new Date().getMonth() + 1);
   const [region, setRegion] = useState<string>("kinki");
-  const [prefectureName, setPrefectureName] = useState<string>("大阪府");
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     setIsInitialized(true);
     const savedRegion = localStorage.getItem("user_region");
-    const savedPref = localStorage.getItem("user_prefecture");
     if (savedRegion) {
       setRegion(savedRegion);
-    }
-    if (savedPref) {
-      setPrefectureName(savedPref);
-    } else {
-      if (savedRegion) {
-        const found = PREFECTURE_COORDINATES.find(p => p.region === savedRegion);
-        if (found) setPrefectureName(found.name);
-      }
     }
   }, []);
 
@@ -324,12 +314,10 @@ export default function EncyclopediaPage() {
         (position) => {
           const lat = position.coords.latitude;
           const lon = position.coords.longitude;
-          const closestPref = detectPrefecture(lat, lon);
+          const closestArea = detectArea(lat, lon);
           
-          setRegion(closestPref.region);
-          setPrefectureName(closestPref.name);
-          localStorage.setItem("user_region", closestPref.region);
-          localStorage.setItem("user_prefecture", closestPref.name);
+          setRegion(closestArea.id);
+          localStorage.setItem("user_region", closestArea.id);
           
           window.dispatchEvent(new Event("regionChanged"));
         },
@@ -421,13 +409,13 @@ export default function EncyclopediaPage() {
         <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
           地域・季節連動 害虫対策図鑑
         </h1>
-        <p className="text-xs text-slate-400 mt-1">選択された都道府県と時期に最も注意すべき害虫を自動ソートします。</p>
+        <p className="text-xs text-slate-400 mt-1">選択された地域と時期に最も注意すべき害虫を自動ソートします。</p>
       </div>
 
       <div className="bg-white p-4 rounded-md border border-slate-200 mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <div className="flex justify-between items-center mb-1.5">
-            <label className="text-xs font-bold text-slate-500 block">対象都道府県</label>
+            <label className="text-xs font-bold text-slate-500 block">対象地域（エリア）</label>
             <button
               onClick={handleDetectLocation}
               className="text-[10px] font-bold text-teal-700 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-200 hover:bg-slate-100 transition flex items-center gap-1 active:scale-[0.98]"
@@ -436,32 +424,18 @@ export default function EncyclopediaPage() {
             </button>
           </div>
           <select
-            value={prefectureName}
+            value={region}
             onChange={(e) => {
-              const prefName = e.target.value;
-              setPrefectureName(prefName);
-              const found = PREFECTURE_COORDINATES.find(p => p.name === prefName);
-              if (found) {
-                setRegion(found.region);
-                localStorage.setItem("user_region", found.region);
-                localStorage.setItem("user_prefecture", found.name);
-                window.dispatchEvent(new Event("regionChanged"));
-              }
+              const selectedRegionId = e.target.value;
+              setRegion(selectedRegionId);
+              localStorage.setItem("user_region", selectedRegionId);
+              window.dispatchEvent(new Event("regionChanged"));
             }}
             className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-md text-xs font-bold focus:outline-none focus:ring-1 focus:ring-teal-700 text-slate-800"
           >
-            {PREFECTURE_COORDINATES.map((p) => (
-              <option key={p.name} value={p.name}>
-                {p.name} ({
-                  p.region === "hokkaido" ? "北海道エリア" :
-                  p.region === "tohoku" ? "東北エリア" :
-                  p.region === "kanto" ? "関東エリア" :
-                  p.region === "chubu" ? "中部エリア" :
-                  p.region === "kinki" ? "近畿・関西エリア" :
-                  p.region === "chugoku" ? "中国エリア" :
-                  p.region === "shikoku" ? "四国エリア" :
-                  p.region === "kyushu" ? "九州エリア" : "沖縄エリア"
-                })
+            {REGIONS.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name}
               </option>
             ))}
           </select>
@@ -484,7 +458,7 @@ export default function EncyclopediaPage() {
       </div>
 
       <div className="bg-slate-50 border border-slate-200 p-3 rounded-md text-[11px] text-slate-700 leading-relaxed mb-6 font-medium">
-        {prefectureName}における{currentMonth}月の気候データを元に計算：
+        {activeRegionObj.name}における{currentMonth}月の気候データを元に計算：
         現在、{scoredBugs.filter(b => b.threatLevel === "high" || b.threatLevel === "medium").length}種類の害虫が警戒・要注意レベルに達しています。
       </div>
 
