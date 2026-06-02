@@ -177,14 +177,14 @@ export default function HomePage() {
       
       {/* 初回起動時ウェルカム・イラスト非表示選択モーダル */}
       {showWelcomeModal && (
-        <div className="fixed inset-0 bg-slate-950/60 z-50 flex items-center justify-center p-5 backdrop-blur-md">
-          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-6 border border-slate-100 flex flex-col gap-5 text-slate-800 animate-scale-up">
+        <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-5">
+          <div className="bg-white w-full max-w-md rounded-md shadow-lg p-6 border border-slate-200 flex flex-col gap-5 text-slate-800">
             <div className="text-center space-y-2">
-              <h2 className="text-sm font-black text-slate-900">G-End へお越しいただきありがとうございます</h2>
+              <h2 className="text-sm font-bold text-slate-900">G-End へお越しいただきありがとうございます</h2>
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">安心で快適な暮らしの防衛パートナー</p>
             </div>
             
-            <div className="bg-slate-50 p-4 rounded-2xl text-[11px] space-y-3 leading-relaxed text-slate-600">
+            <div className="bg-slate-50 p-4 rounded-md border border-slate-250 text-[11px] space-y-3 leading-relaxed text-slate-600">
               <p>
                 本アプリでは、家の中の防虫効果をマップ上で視覚的に可視化・管理するため、各種害虫のイラストを使用しています。
               </p>
@@ -199,13 +199,13 @@ export default function HomePage() {
             <div className="flex flex-col gap-2 mt-2">
               <button
                 onClick={() => handleWelcomeSelection(true)}
-                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-[11px] font-black shadow-md transition flex items-center justify-center gap-2"
+                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-[11px] font-bold transition flex items-center justify-center gap-2"
               >
                 優しいシールドで表示する (マイルドモード)
               </button>
               <button
                 onClick={() => handleWelcomeSelection(false)}
-                className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl text-[11px] font-bold transition flex items-center justify-center gap-2"
+                className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md text-[11px] font-bold transition flex items-center justify-center gap-2"
               >
                 そのまま表示する (標準モード)
               </button>
@@ -215,12 +215,12 @@ export default function HomePage() {
       )}
 
       {/* ヘッダー */}
-      <div className="flex justify-between items-center border-b pb-3 mb-5">
+      <div className="flex justify-between items-center border-b border-slate-200 pb-3 mb-5">
         <div>
-          <h1 className="text-2xl font-black text-teal-600 tracking-tight flex items-center gap-1">
+          <h1 className="text-xl font-bold text-teal-700 tracking-tight flex items-center gap-1">
             G-End
           </h1>
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+          <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">
             管理ダッシュボード • 2026年 {currentMonth}月
           </p>
         </div>
@@ -228,7 +228,7 @@ export default function HomePage() {
         {/* 地域表示ショートカット */}
         <Link
           href="/register"
-          className="text-[11px] bg-white border hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-full transition-all flex items-center gap-1 font-extrabold shadow-sm"
+          className="text-[10px] bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-2.5 py-1.5 rounded-md transition-all flex items-center gap-1 font-bold shadow-sm"
         >
           {locationLabel}
         </Link>
@@ -247,18 +247,18 @@ export default function HomePage() {
       <PestAlertCard region={region} currentMonth={currentMonth} />
 
       {/* オリジナルグッズ作製アピール */}
-      <div className="bg-gradient-to-r from-teal-500/10 to-emerald-500/10 border border-teal-200/50 p-5 rounded-3xl shadow-sm mb-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="bg-slate-50 border border-slate-200 p-5 rounded-md mb-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex-1">
-          <h2 className="text-xs font-extrabold text-teal-800 mb-1 flex items-center gap-1.5">
+          <h2 className="text-xs font-bold text-slate-800 mb-1">
             自分専用の防衛グッズを作製
           </h2>
-          <p className="text-[10px] text-teal-950/80 leading-relaxed font-medium">
-            市販 of 防虫シートや独自の対策グッズをオリジナル名・持続期間で登録し、マイ間取りに美しく設置して一元管理できます。
+          <p className="text-[10px] text-slate-500 leading-relaxed font-medium">
+            市販の防虫シートや独自の対策グッズをオリジナル名・持続期間で登録し、マイ間取りに美しく設置して一元管理できます。
           </p>
         </div>
         <Link
           href="/map?createCustom=true"
-          className="w-full sm:w-auto px-4 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white text-[11px] font-black rounded-xl text-center shadow-md transition-all whitespace-nowrap active:scale-[0.98]"
+          className="w-full sm:w-auto px-4 py-2 bg-teal-650 hover:bg-teal-750 text-white text-[11px] font-bold rounded-md text-center transition-all whitespace-nowrap active:scale-[0.98]"
         >
           オリジナルグッズを作製する
         </Link>
