@@ -31,17 +31,17 @@ export function FloorSelector({
       <div className="flex items-center gap-1.5 flex-wrap">
         <button
           onClick={onAddLowerFloor}
-          className="px-2.5 py-1.5 rounded text-[10px] font-bold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition"
+          className="px-2.5 py-1.5 rounded-md text-[10px] font-bold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition"
         >
           地下階を追加
         </button>
         
-        <div className="flex items-center gap-1 bg-white p-1 rounded border border-slate-200 overflow-x-auto max-w-[150px] sm:max-w-none">
+        <div className="flex items-center gap-1 bg-white p-1 rounded-md border border-slate-200 overflow-x-auto max-w-[150px] sm:max-w-none">
           {floors.sort((a, b) => a - b).map((floor) => (
             <button
               key={floor}
               onClick={() => setCurrentFloor(floor)}
-              className={`px-3 py-1 rounded text-xs font-bold transition ${
+              className={`px-3 py-1 rounded-md text-xs font-bold transition ${
                 currentFloor === floor ? "bg-slate-800 text-white shadow-sm" : "text-slate-500 hover:bg-slate-50"
               }`}
             >
@@ -52,7 +52,7 @@ export function FloorSelector({
         
         <button
           onClick={onAddUpperFloor}
-          className="px-2.5 py-1.5 rounded text-[10px] font-bold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition"
+          className="px-2.5 py-1.5 rounded-md text-[10px] font-bold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition"
         >
           地上階を追加
         </button>
@@ -60,7 +60,7 @@ export function FloorSelector({
         {mode === "edit" && floors.length > 1 && (
           <button
             onClick={onDeleteCurrentFloor}
-            className="px-2.5 py-1.5 rounded text-[10px] font-bold bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition"
+            className="px-2.5 py-1.5 rounded-md text-[10px] font-bold bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition"
           >
             この階を削除
           </button>
@@ -68,11 +68,11 @@ export function FloorSelector({
       </div>
 
       {/* 右: ズーム調整ボタン */}
-      <div className="flex items-center gap-1 bg-white p-1.5 rounded border border-slate-200 shadow-sm ml-auto">
+      <div className="flex items-center gap-1 bg-white p-1.5 rounded-md border border-slate-200 shadow-sm ml-auto">
         <span className="text-[10px] font-bold text-slate-400 px-1">ズーム:</span>
         <button
           onClick={() => setZoom(Math.max(0.4, Number((zoom - 0.1).toFixed(2))))}
-          className="w-6 h-6 flex items-center justify-center bg-slate-50 hover:bg-slate-200 border border-slate-200 rounded text-xs font-bold"
+          className="w-6 h-6 flex items-center justify-center bg-slate-50 hover:bg-slate-200 border border-slate-200 rounded-md text-xs font-bold"
         >
           -
         </button>
@@ -81,13 +81,13 @@ export function FloorSelector({
         </span>
         <button
           onClick={() => setZoom(Math.min(1.6, Number((zoom + 0.1).toFixed(2))))}
-          className="w-6 h-6 flex items-center justify-center bg-slate-50 hover:bg-slate-200 border border-slate-200 rounded text-xs font-bold"
+          className="w-6 h-6 flex items-center justify-center bg-slate-50 hover:bg-slate-200 border border-slate-200 rounded-md text-xs font-bold"
         >
           +
         </button>
         <button
           onClick={() => setZoom(typeof window !== "undefined" && window.innerWidth < 640 ? 0.55 : 1)}
-          className="text-[9px] font-bold bg-slate-100 hover:bg-slate-200 px-1.5 py-1 rounded border border-slate-200 text-slate-500"
+          className="text-[9px] font-bold bg-slate-100 hover:bg-slate-200 px-1.5 py-1 rounded-md border border-slate-200 text-slate-500"
         >
           リセット
         </button>
