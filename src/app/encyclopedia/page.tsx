@@ -424,13 +424,13 @@ export default function EncyclopediaPage() {
         <p className="text-xs text-slate-400 mt-1">選択された都道府県と時期に最も注意すべき害虫を自動ソートします。</p>
       </div>
 
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="bg-white p-4 rounded-md border border-slate-200 mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <div className="flex justify-between items-center mb-1.5">
             <label className="text-xs font-bold text-slate-500 block">対象都道府県</label>
             <button
               onClick={handleDetectLocation}
-              className="text-[10px] font-black text-teal-600 bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-100 hover:bg-teal-100 transition flex items-center gap-1 active:scale-[0.98]"
+              className="text-[10px] font-bold text-teal-700 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-200 hover:bg-slate-100 transition flex items-center gap-1 active:scale-[0.98]"
             >
               GPS自動検出
             </button>
@@ -448,7 +448,7 @@ export default function EncyclopediaPage() {
                 window.dispatchEvent(new Event("regionChanged"));
               }
             }}
-            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 text-slate-800"
+            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-md text-xs font-bold focus:outline-none focus:ring-1 focus:ring-teal-700 text-slate-800"
           >
             {PREFECTURE_COORDINATES.map((p) => (
               <option key={p.name} value={p.name}>
@@ -470,7 +470,7 @@ export default function EncyclopediaPage() {
         <div>
           <div className="flex justify-between items-center mb-1">
             <label className="text-xs font-bold text-slate-500">対象月</label>
-            <span className="text-xs font-black text-teal-600 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-100">{currentMonth}月</span>
+            <span className="text-xs font-bold text-teal-700 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-200">{currentMonth}月</span>
           </div>
           <input
             type="range"
@@ -478,18 +478,18 @@ export default function EncyclopediaPage() {
             max="12"
             value={currentMonth}
             onChange={(e) => setCurrentMonth(Number(e.target.value))}
-            className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-teal-600 my-3"
+            className="w-full h-1.5 bg-slate-200 rounded-md appearance-none cursor-pointer accent-teal-700 my-3"
           />
         </div>
       </div>
 
-      <div className="bg-teal-50/50 border border-teal-100 p-3 rounded-2xl text-[11px] text-teal-900 leading-relaxed mb-6 font-medium">
+      <div className="bg-slate-50 border border-slate-200 p-3 rounded-md text-[11px] text-slate-700 leading-relaxed mb-6 font-medium">
         {prefectureName}における{currentMonth}月の気候データを元に計算：
         現在、{scoredBugs.filter(b => b.threatLevel === "high" || b.threatLevel === "medium").length}種類の害虫が警戒・要注意レベルに達しています。
       </div>
 
       <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-        <div className="md:col-span-5 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm max-h-[60vh] md:max-h-[75vh] overflow-y-auto space-y-1">
+        <div className="md:col-span-5 bg-white p-3 rounded-md border border-slate-200 max-h-[60vh] md:max-h-[75vh] overflow-y-auto space-y-1">
           <h2 className="text-xs font-bold text-slate-400 px-2 pb-2 border-b mb-2">害虫リスト (注意度順)</h2>
           {sortedBugs.map((bug) => {
             const isSelected = bug.id === selectedBugId;
@@ -510,15 +510,15 @@ export default function EncyclopediaPage() {
               <button
                 key={bug.id}
                 onClick={() => setSelectedBugId(bug.id)}
-                className={`w-full p-2.5 rounded-xl flex items-center justify-between text-left transition-all duration-150 ${
-                  isSelected ? "bg-slate-800 text-white shadow-md scale-[1.01]" : "hover:bg-slate-50 text-slate-700"
+                className={`w-full p-2.5 rounded-md flex items-center justify-between text-left transition-all duration-150 ${
+                  isSelected ? "bg-slate-800 text-white" : "hover:bg-slate-50 text-slate-700"
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <PestIcon id={bug.id} size={28} className={isSelected ? "brightness-200" : ""} />
                   <span className="text-xs font-bold">{bug.name}</span>
                 </div>
-                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded border ${isSelected ? "bg-white/20 text-white border-transparent" : badgeBg}`}>
+                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${isSelected ? "bg-white/20 text-white border-transparent" : badgeBg}`}>
                   {badgeText}
                 </span>
               </button>
@@ -527,33 +527,33 @@ export default function EncyclopediaPage() {
         </div>
 
         {/* 右側：選択された害虫の詳細カード */}
-        <div className="md:col-span-7 bg-white rounded-3xl border border-slate-100 shadow-md overflow-hidden flex flex-col min-h-[450px]">
+        <div className="md:col-span-7 bg-white rounded-md border border-slate-200 overflow-hidden flex flex-col min-h-[450px]">
           {/* カード上部 */}
-          <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-5 text-white flex justify-between items-center gap-4">
+          <div className="bg-slate-900 p-5 text-white flex justify-between items-center gap-4">
             <div>
-              <h2 className="text-base font-black">{selectedBug.name}</h2>
+              <h2 className="text-base font-bold">{selectedBug.name}</h2>
               <p className="text-[10px] text-slate-300 mt-1">
                 標準警戒月: {selectedBug.activeMonths.join(", ")}月
               </p>
               
               <div className="mt-3">
                 {selectedBug.threatLevel === "high" && (
-                  <span className="text-[10px] font-black bg-red-600 border border-red-500 text-white px-2.5 py-1 rounded-full block text-center w-fit">
+                  <span className="text-[10px] font-bold bg-red-600 border border-red-500 text-white px-2.5 py-1 rounded block text-center w-fit">
                     厳重警戒害虫
                   </span>
                 )}
                 {selectedBug.threatLevel === "medium" && (
-                  <span className="text-[10px] font-black bg-amber-500 text-slate-950 px-2.5 py-1 rounded-full block text-center w-fit">
+                  <span className="text-[10px] font-bold bg-amber-500 text-slate-950 px-2.5 py-1 rounded block text-center w-fit">
                     要注意害虫
                   </span>
                 )}
                 {selectedBug.threatLevel === "low" && (
-                  <span className="text-[10px] font-black bg-sky-500 text-white px-2.5 py-1 rounded-full block text-center w-fit">
+                  <span className="text-[10px] font-bold bg-sky-500 text-white px-2.5 py-1 rounded block text-center w-fit">
                     低警戒状態
                   </span>
                 )}
                 {selectedBug.threatLevel === "none" && (
-                  <span className="text-[10px] font-bold bg-slate-600 text-slate-200 px-2.5 py-1 rounded-full block text-center w-fit">
+                  <span className="text-[10px] font-bold bg-slate-600 text-slate-200 px-2.5 py-1 rounded block text-center w-fit">
                     シーズン外
                   </span>
                 )}
@@ -561,7 +561,7 @@ export default function EncyclopediaPage() {
             </div>
             
             {/* 右側大型ベクターアイコン */}
-            <div className="bg-white/10 p-2.5 rounded-2xl backdrop-blur-sm shadow-inner flex-shrink-0">
+            <div className="bg-slate-800 p-2 rounded-md border border-slate-700 flex-shrink-0">
               <PestIcon id={selectedBug.id} size={64} />
             </div>
           </div>
@@ -569,20 +569,20 @@ export default function EncyclopediaPage() {
           {/* カードボディ */}
           <div className="p-5 flex-1 flex flex-col gap-4 text-xs">
             <div>
-              <h3 className="font-black text-slate-400 text-[10px] uppercase tracking-wider mb-1">生態と被害</h3>
+              <h3 className="font-bold text-slate-400 text-[10px] uppercase tracking-wider mb-1">生態と被害</h3>
               <p className="text-slate-600 leading-relaxed text-xs">{selectedBug.description}</p>
             </div>
 
-            <div className="border-t pt-3">
-              <h3 className="font-black text-slate-400 text-[10px] uppercase tracking-wider mb-1">潜みやすい場所（防衛ポイント）</h3>
+            <div className="border-t border-slate-200 pt-3">
+              <h3 className="font-bold text-slate-400 text-[10px] uppercase tracking-wider mb-1">潜みやすい場所（防衛ポイント）</h3>
               <p className="text-slate-700 font-semibold leading-relaxed text-xs">{selectedBug.hidingSpot}</p>
             </div>
 
-            <div className="border-t pt-3">
-              <h3 className="font-black text-slate-400 text-[10px] uppercase tracking-wider mb-1.5">有効な市販の対策グッズ</h3>
+            <div className="border-t border-slate-200 pt-3">
+              <h3 className="font-bold text-slate-400 text-[10px] uppercase tracking-wider mb-1.5">有効な市販の対策グッズ</h3>
               <div className="flex flex-wrap gap-2">
                 {selectedBug.goods.map((g, idx) => (
-                  <span key={idx} className="bg-slate-50 border border-slate-200/60 text-slate-700 px-3 py-1.5 rounded-xl font-bold text-[10px] flex items-center gap-1.5 shadow-sm">
+                  <span key={idx} className="bg-slate-50 border border-slate-200 text-slate-700 px-3 py-1.5 rounded-md font-bold text-[10px] flex items-center gap-1.5">
                     <TrapIcon id={getTrapIdFromText(g)} size={18} />
                     {g}
                   </span>
@@ -591,11 +591,11 @@ export default function EncyclopediaPage() {
             </div>
 
             {/* プロのコツ */}
-            <div className="border-t pt-3 mt-auto bg-teal-50/50 -mx-5 -mb-5 p-5 rounded-b-2xl border-t-teal-100/50">
-              <h3 className="font-black text-teal-800 text-[11px] mb-1">
+            <div className="border-t border-slate-200 pt-3 mt-auto bg-slate-50 -mx-5 -mb-5 p-5 rounded-b-md">
+              <h3 className="font-bold text-slate-800 text-[11px] mb-1">
                 設置のプロのコツ
               </h3>
-              <p className="text-teal-950 leading-relaxed text-[11px] font-medium">{selectedBug.tips}</p>
+              <p className="text-slate-600 leading-relaxed text-[11px] font-medium">{selectedBug.tips}</p>
             </div>
           </div>
         </div>
