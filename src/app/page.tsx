@@ -168,10 +168,7 @@ export default function HomePage() {
     return "部屋の隅";
   };
 
-  if (!isInitialized) {
-    return <div className="p-5 text-slate-500 text-sm">防衛システム起動中...</div>;
-  }
-
+  // 初回ロードのダサいテキストを廃止し、UIを即時描画（スケルトン的な振る舞い）にするためブロック処理を削除
   return (
     <div className="p-5 flex flex-col min-h-screen bg-slate-50 text-slate-800">
       

@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import webpush from "web-push";
 import { configureWebPush } from "@/lib/push-config";
-
-// Route: /api/push
-// Handles VAPID public key fetching and notification scheduling
+import { db } from "@/lib/firebase/config";
+import { collection, addDoc } from "firebase/firestore";
 
 export async function GET() {
   try {
@@ -27,11 +26,8 @@ export async function POST(request: Request) {
     const delay = Number(delaySeconds) || 0;
 
     console.log(`G-End: Scheduling push notification in ${delay} seconds...`);
-    console.log("Title:", title);
-    console.log("Body:", body);
 
-    // 10秒以下の場合は、サーバーレス環境（Vercel等）のコールドスタート・即時終了対策として、
-    // HTTPレスポンスを返す前にスリープ待機して確実に送信処理を実行させます。
+    // 10秒以下の場合は、即時テストとしてレスポンスをブロックして送信（Vercel対応）
     if (delay <= 10) {
       await new Promise((resolve) => setTimeout(resolve, delay * 1000));
       try {
@@ -43,7 +39,6 @@ export async function POST(request: Request) {
         });
 
         await webpush.sendNotification(subscription, payload);
-        console.log("G-End: Sent push via serverless blocking wait successfully!");
       } catch (err) {
         console.error("G-End: Failed to send push via serverless blocking wait:", err);
       }
@@ -51,34 +46,33 @@ export async function POST(request: Request) {
       return NextResponse.json({
         success: true,
         message: `Notification sent after ${delay} seconds (serverless optimized).`,
-        scheduledSeconds: delay
       });
     }
 
-    // 10秒を超える場合は、通常のバックグラウンド setTimeout でスケジュール（常時稼働サーバー用）
-    setTimeout(async () => {
-      try {
-        const payload = JSON.stringify({
-          title: title || "🛡️ G-End 防衛リマインダー",
-          body: body || "対策グッズの交換期限が近づいています！",
-          icon: "/favicon.ico",
-          tag: "gend-push-alert"
-        });
-
-        await webpush.sendNotification(subscription, payload);
-        console.log("G-End: Background push notification sent successfully!");
-      } catch (err) {
-        console.error("G-End: Failed to send background push notification:", err);
-      }
-    }, delay * 1000);
+    // 10秒を超える場合（例：1日後）はFirestoreに保存して、Vercel Cronに任せる
+    const targetDate = new Date(Date.now() + delay * 1000);
+    
+    try {
+      await addDoc(collection(db, "push_subscriptions"), {
+        subscription,
+        title: title || "🛡️ G-End 防衛リマインダー",
+        body: body || "対策グッズの交換期限が近づいています！",
+        targetDate: targetDate.toISOString(), // クエリしやすいようにISO文字列で保存
+        createdAt: new Date().toISOString(),
+      });
+      console.log(`G-End: Saved scheduled push to Firestore. Target: ${targetDate.toISOString()}`);
+    } catch (err) {
+      console.error("G-End: Failed to save subscription to Firestore:", err);
+      throw new Error("Failed to save to database");
+    }
 
     return NextResponse.json({
       success: true,
-      message: `Notification scheduled successfully. It will arrive in ${delay} seconds.`,
-      scheduledSeconds: delay
+      message: `Notification scheduled successfully for ${targetDate.toLocaleString()}.`,
     });
   } catch (error: any) {
     console.error("Failed to schedule background notification:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
