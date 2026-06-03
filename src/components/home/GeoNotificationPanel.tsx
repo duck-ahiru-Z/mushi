@@ -95,10 +95,10 @@ export function GeoNotificationPanel({
       {permission === "granted" && scheduleBackgroundNotification && (
         <div className="mt-4 pt-4 border-t border-slate-200">
           <span className="text-[10px] font-bold text-slate-700 block mb-1">
-            ⏳ バックグラウンド通知スケジュール（閉じて検証用）
+            ⏳ バックグラウンド通知テスト（アプリを閉じて検証）
           </span>
           <p className="text-[9px] text-slate-400 mb-3 leading-normal">
-            スケジュール設定後、<strong>ブラウザタブやアプリを完全に閉じて</strong>動作を確認できます。ローカル開発サーバーからプッシュ配信されます。
+            サーバーレス環境でも確実に届くかテストします。設定後は<strong>アプリやブラウザを完全に閉じて</strong>お待ちください。
           </p>
 
           {scheduledText && (
@@ -107,34 +107,20 @@ export function GeoNotificationPanel({
             </div>
           )}
 
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <button
               disabled={isScheduling}
               onClick={() => handleSchedule(10, "10秒後")}
               className="py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-[9px] font-bold rounded-md disabled:opacity-50 transition active:scale-95 text-center shadow-sm"
             >
-              10秒後
+              10秒後 (即時テスト)
             </button>
             <button
               disabled={isScheduling}
-              onClick={() => handleSchedule(60, "1分後")}
-              className="py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-[9px] font-bold rounded-md disabled:opacity-50 transition active:scale-95 text-center shadow-sm"
+              onClick={() => handleSchedule(60, "明日 (定期チェック時)")}
+              className="py-1.5 bg-teal-700 hover:bg-teal-800 text-white text-[9px] font-bold rounded-md disabled:opacity-50 transition active:scale-95 text-center shadow-sm"
             >
-              1分後
-            </button>
-            <button
-              disabled={isScheduling}
-              onClick={() => handleSchedule(600, "10分後")}
-              className="py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-[9px] font-bold rounded-md disabled:opacity-50 transition active:scale-95 text-center shadow-sm"
-            >
-              10分後
-            </button>
-            <button
-              disabled={isScheduling}
-              onClick={() => handleSchedule(86400, "1日後")}
-              className="py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-[9px] font-bold rounded-md disabled:opacity-50 transition active:scale-95 text-center shadow-sm"
-            >
-              1日後
+              明日テスト (次回Cron)
             </button>
           </div>
         </div>

@@ -27,6 +27,7 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="theme-color" content="#0d9488" />
       </head>
       <body className={`${inter.className} bg-slate-50 text-slate-900 min-h-screen flex flex-col antialiased`}>
         
@@ -68,13 +69,13 @@ export default function RootLayout({
           <BottomNav />
         </div>
 
-        {/* PWA サービスワーカー自動登録用スクリプト */}
+        {/* PWA サービスワーカー自動登録用スクリプト (Serwist) */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
               if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/firebase-messaging-sw.js')
+                  navigator.serviceWorker.register('/sw.js')
                     .then(function(reg) {
                       console.log('G-End Service Worker registered with scope:', reg.scope);
                     })
