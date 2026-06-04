@@ -230,7 +230,7 @@ export default function HomePage() {
             自分専用の防衛グッズを作製
           </h2>
           <p className="text-[10px] text-teal-950/80 leading-relaxed font-medium">
-            市販 of 防虫シートや独自の対策グッズをオリジナル名・持続期間で登録し、マイ間取りに美しく設置して一元管理できます。
+            市販商品や独自の対策グッズをオリジナル名・持続期間で登録し、自分の間取りに設置して一元管理できます。
           </p>
         </div>
         <Link

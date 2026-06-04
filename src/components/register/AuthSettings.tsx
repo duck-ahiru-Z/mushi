@@ -102,7 +102,7 @@ export function AuthSettings({
       <div className="border-t border-slate-100 pt-5 mt-6">
         <h3 className="text-xs font-bold text-red-600 mb-2">危険エリア</h3>
         <p className="text-[10px] text-slate-400 mb-3 leading-relaxed">
-          スマホやブラウザをリセットしたい場合、保存されているすべてのデータ（部屋構成・設置したグッズ）を初期化できます。
+          ブラウザでのデータをリセットしたい場合、保存されているすべてのデータ（部屋構成・設置したグッズ）を初期化できます。
         </p>
         <button
           onClick={onResetData}

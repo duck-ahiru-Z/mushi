@@ -23,7 +23,7 @@ const BUG_DATABASE: BugProfile[] = [
     activeMonths: [5, 6, 7, 8, 9, 10],
     danger: "high",
     description: "暗く、暖かく、湿気の多い隙間を好みます。1匹見かけると数十匹潜んでいる可能性があり、繁殖力が極めて高い衛生害虫です。",
-    hidingSpot: "キッチンのシンク下、冷蔵庫の裏、電子レンジ of 底、洗面台 of 配管隙間",
+    hidingSpot: "キッチンのシンク下、冷蔵庫の裏、電子レンジの底、洗面台の配管隙間",
     goods: ["ゴキブリホイホイ（捕獲用）", "ブラックキャップ（毒餌剤・巣ごと退治）", "ゴキジェットプロ（即効スプレー）"],
     tips: "ブラックキャップを「壁際」や「家電の温かい裏」に多めに置くことで、巣に持ち帰らせて全滅を狙うのが最も効果的です。"
   },
@@ -469,7 +469,7 @@ export default function EncyclopediaPage() {
 
         <div>
           <div className="flex justify-between items-center mb-1">
-            <label className="text-xs font-bold text-slate-500">対象月</label>
+            <label className="text-xs font-bold text-slate-500">対象の月</label>
             <span className="text-xs font-black text-teal-600 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-100">{currentMonth}月</span>
           </div>
           <input
