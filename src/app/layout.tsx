@@ -1,3 +1,4 @@
+// app/layout.tsx
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -5,7 +6,8 @@ import BottomNav from "@/components/layouts/bottom-nav";
 import Link from "next/link";
 import Image from "next/image";
 
-// 💡 同じ app ディレクトリ内に格納されている「G-END logo.png」をインポートします。
+// 💡 先ほど作った地域表示ボタンをインポートします
+import RegionBadge from "@/components/layouts/region-badge"; 
 import mainLogo from "./G-END logo.png"; 
 
 const inter = Inter({ subsets: ["latin"] });
@@ -35,15 +37,14 @@ export default function RootLayout({
         <header className="hidden md:block bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
           <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
             <div className="flex items-center gap-8">
-              {/* 🎨 インポートした本物の横長ロゴ画像をここにセット！ */}
               <Link href="/" className="flex items-center hover:opacity-80 transition-opacity select-none">
                 <Image 
                   src={mainLogo}  
                   alt="G-End ロゴ" 
-                  width={140} // 横長ロゴが綺麗に収まるサイズ
+                  width={140} 
                   height={45} 
                   className="object-contain"
-                  priority // ロゴ画像を最優先で爆速読み込みさせる設定
+                  priority 
                 />
               </Link>
               <nav className="flex items-center gap-6 text-sm font-bold text-slate-500">
@@ -51,10 +52,12 @@ export default function RootLayout({
                 <Link href="/map" className="hover:text-teal-700 transition-colors py-2">配置マップ</Link>
                 <Link href="/encyclopedia" className="hover:text-teal-700 transition-colors py-2">対策図鑑</Link>
                 <Link href="/register" className="hover:text-teal-700 transition-colors py-2">アカウント連携</Link>
+                
+                {/* 🎨 アカウント連携のすぐ右隣に地域表示ボタンを設置！ */}
               </nav>
             </div>
-            <div className="text-xs font-bold text-slate-400 bg-slate-100 px-3 py-1.5 rounded-md border border-slate-200">
-              防衛システム稼働中
+            <div>
+              <RegionBadge />
             </div>
           </div>
         </header>
@@ -69,7 +72,7 @@ export default function RootLayout({
           <BottomNav />
         </div>
 
-        {/* PWA サービスワーカー自動登録用スクリプト (Serwist) */}
+        {/* PWA サービスワーカー自動登録用スクリプト */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
