@@ -168,7 +168,6 @@ export default function HomePage() {
     return "部屋の隅";
   };
 
-  // 初回ロードのダサいテキストを廃止し、UIを即時描画（スケルトン的な振る舞い）にするためブロック処理を削除
   return (
     <div className="p-5 flex flex-col min-h-screen bg-slate-50 text-slate-800">
       
@@ -211,26 +210,7 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* ヘッダー */}
-      <div className="flex justify-between items-center border-b border-slate-200 pb-3 mb-5">
-        <div>
-          <h1 className="text-xl font-bold text-teal-700 tracking-tight flex items-center gap-1">
-            G-End
-          </h1>
-          <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">
-            管理ダッシュボード • 2026年 {currentMonth}月
-          </p>
-        </div>
-        
-        {/* 地域表示ショートカット */}
-        <Link
-          href="/register"
-          className="text-[10px] bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-2.5 py-1.5 rounded-md transition-all flex items-center gap-1 font-bold shadow-sm"
-        >
-          {locationLabel}
-        </Link>
-      </div>
-
+     
       {/* 高級コントロールパネル: 位置情報と通知の許可設定 */}
       <GeoNotificationPanel
         geoPermission={geoPermission}
