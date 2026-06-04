@@ -1,11 +1,12 @@
-import type { Metadata } from "next";
+import { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import BottomNav from "@/components/layouts/bottom-nav";
+import RegionBadge from "@/components/layouts/region-badge"; // 💡 さっき作った部品をインポート！
 import Link from "next/link";
 import Image from "next/image";
 
-// 💡 同じ app フォルダ内（同じ階層）にある「G-END logo.png」を正しくインポートするで！
+// 同じ app フォルダ内（同じ階層）にある「G-END logo.png」を正しくインポートするで！
 import mainLogo from "./G-END logo.png"; 
 
 const inter = Inter({ subsets: ["latin"] });
@@ -35,18 +36,19 @@ export default function RootLayout({
           <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
             <div className="flex items-center gap-8">
               
-              {/* 🎨 インポートした本物の横長ロゴ画像をここにセット！ */}
+              {/* ロゴ画像 */}
               <Link href="/" className="flex items-center hover:opacity-80 transition-opacity select-none">
                 <Image 
                   src={mainLogo}  
                   alt="G-End ロゴ" 
-                  width={140} // 横長ロゴが綺麗に収まるサイズ
+                  width={140} 
                   height={45} 
                   className="object-contain"
-                  priority // ロゴ画像を最優先で爆速読み込みさせる設定
+                  priority 
                 />
               </Link>
               
+              {/* ナビゲーションリンク */}
               <nav className="flex items-center gap-6 text-sm font-bold text-slate-500">
                 <Link href="/" className="hover:text-teal-600 transition-colors py-2">ホーム</Link>
                 <Link href="/map" className="hover:text-teal-600 transition-colors py-2">配置マップ</Link>
@@ -54,9 +56,15 @@ export default function RootLayout({
                 <Link href="/register" className="hover:text-teal-600 transition-colors py-2">アカウント連携</Link>
               </nav>
             </div>
-            <div className="text-xs font-bold text-slate-400 bg-slate-100 px-3 py-1.5 rounded-full">
-              防衛システム稼働中
+
+            {/* 💡 右側のエリア：地域バッジと防衛システムステータスを横並びにする */}
+            <div className="flex items-center gap-3">
+              <RegionBadge /> {/* 🗺️ ここに引っ越してきた地域ボタンが入る！ */}
+              <div className="text-xs font-bold text-slate-400 bg-slate-100 px-3 py-1.5 rounded-full select-none">
+                防衛システム稼働中
+              </div>
             </div>
+
           </div>
         </header>
 

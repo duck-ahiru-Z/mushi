@@ -55,7 +55,6 @@ export default function HomePage() {
   } = useFcmToken();
 
   const [region, setRegion] = useState("kinki");
-  const [locationLabel, setLocationLabel] = useState<string>("位置情報：未取得");
   const [currentMonth] = useState<number>(new Date().getMonth() + 1);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
@@ -80,7 +79,6 @@ export default function HomePage() {
     const saved = localStorage.getItem("user_region");
     if (saved) {
       setRegion(saved);
-      setLocationLabel(REGION_NAMES[saved]);
       return;
     }
 
@@ -97,13 +95,11 @@ export default function HomePage() {
           
           setRegion(detected);
           localStorage.setItem("user_region", detected);
-          setLocationLabel(`${REGION_NAMES[detected]} (GPS自動判定)`);
           setGeoPermission("granted");
           window.dispatchEvent(new Event("regionChanged"));
         },
         (error) => {
           console.warn("Geolocation error, using default region:", error);
-          setLocationLabel("近畿・関西エリア (デフォルト)");
           setGeoPermission("denied");
         }
       );
@@ -124,7 +120,6 @@ export default function HomePage() {
       const saved = localStorage.getItem("user_region");
       if (saved) {
         setRegion(saved);
-        setLocationLabel(REGION_NAMES[saved]);
       }
     };
 
@@ -214,25 +209,7 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* ヘッダー */}
-      <div className="flex justify-between items-center border-b pb-3 mb-5">
-        <div>
-          <h1 className="text-2xl font-black text-teal-600 tracking-tight flex items-center gap-1">
-            G-End
-          </h1>
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-            管理ダッシュボード • 2026年 {currentMonth}月
-          </p>
-        </div>
-        
-        {/* 地域表示ショートカット */}
-        <Link
-          href="/register"
-          className="text-[11px] bg-white border hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-full transition-all flex items-center gap-1 font-extrabold shadow-sm"
-        >
-          {locationLabel}
-        </Link>
-      </div>
+      {/* 旧ヘッダー領域を完全に削除し、ここからコンテンツを開始 */}
 
       {/* 高級コントロールパネル: 位置情報と通知の許可設定 */}
       <GeoNotificationPanel
