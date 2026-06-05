@@ -34,7 +34,7 @@ export function AuthSettings({
     <div className="bg-white p-5 rounded-md border border-slate-200 mb-6 flex-1 flex flex-col justify-between">
       <div>
         <h2 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1.5">
-          データベース同期 (Firebase)
+          データベース同期
         </h2>
 
         {isUserLoggedIn ? (
@@ -45,7 +45,7 @@ export function AuthSettings({
               ログインアカウント: {userEmail}
             </p>
             <p className="text-[10px] text-slate-400 mt-2.5 leading-relaxed font-semibold">
-              間取りや設置したグッズの期限は安全に同期されています。別のデバイスからログインしても防衛状況を再現できます。
+              間取りや設置したグッズの期限は安全に同期されています。別のデバイスからログインしても管理状況を再現できます。
             </p>
             <button
               onClick={onLogout}
@@ -58,7 +58,7 @@ export function AuthSettings({
           // 未ログインUI
           <div>
             <p className="text-xs text-slate-400 mb-4 leading-relaxed">
-              アカウントを作成してサインインすると、間取り図や設置グッズのデータをFirebase Cloudにバックアップし、他端末やブラウザ再インストール時にも引き継ぐことができます。
+              アカウントを作成してサインインすると、間取り図や設置グッズのデータをクラウドにバックアップし、他端末やブラウザ再インストール時にも引き継ぐことができます。
             </p>
 
             <form onSubmit={onAuthSubmit} className="space-y-3">
