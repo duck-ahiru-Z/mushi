@@ -31,7 +31,7 @@ export function NotificationSettings({
   return (
     <div className="bg-white p-5 rounded-md border border-slate-200 mb-6">
       <h2 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1.5">
-        表示と防衛アラート設定
+        表示と通知アラート設定
       </h2>
       
       {/* イラスト表示トグル */}
@@ -55,7 +55,7 @@ export function NotificationSettings({
         <h3 className="text-xs font-bold text-slate-800 flex items-center gap-1">
           期限切れ警告通知タイミング
         </h3>
-        <p className="text-[10px] text-slate-400">設置した対策グッズの交換期限が近づいた際に、通知するしきい値を選択できます。</p>
+        <p className="text-[10px] text-slate-400">設置した対策グッズの交換期限が近づいた際に、通知するタイミングを設定できます。</p>
         
         <div className="grid grid-cols-2 gap-3 pt-1">
           <label className="flex items-center gap-2 p-2.5 bg-slate-50 hover:bg-slate-100 rounded-md border border-slate-200 cursor-pointer transition select-none text-[11px] font-bold text-slate-700">
