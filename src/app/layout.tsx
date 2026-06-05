@@ -62,7 +62,6 @@ export default function RootLayout({
                 システム稼働中
               </div>
             </div>
-            </div>
           </div>
         </header>
 
