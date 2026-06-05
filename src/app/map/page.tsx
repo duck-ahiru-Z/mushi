@@ -450,7 +450,7 @@ export default function MapPage() {
       {/* Undo 復元トースト */}
       {showUndoToast && (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 text-white text-xs px-4 py-3 rounded-md shadow-lg flex items-center gap-3">
-          <span>部屋を削除しました（設置済みの防衛も一時解除）</span>
+          <span>部屋を削除しました（設置済みの対策も一時解除）</span>
           <button
             onClick={handleUndoRoom}
             className="bg-teal-600 hover:bg-teal-700 text-white font-bold px-2.5 py-1 rounded transition"
@@ -482,7 +482,7 @@ export default function MapPage() {
 
       {/* ヘッダー */}
       <h1 className="text-xl font-bold border-b pb-2 mb-4 text-slate-900 flex items-center gap-2">
-        マイ間取り・防衛グッズ配置
+        マイ間取り・対策グッズ配置
       </h1>
 
       {/* モード切り替え */}

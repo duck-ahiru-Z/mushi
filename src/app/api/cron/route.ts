@@ -30,7 +30,7 @@ export async function GET(request: Request) {
       if (data.targetDate && data.targetDate <= nowISO) {
         if (data.subscription) {
           const payload = JSON.stringify({
-            title: data.title || "🛡️ G-End 防衛リマインダー",
+            title: data.title || "🛡️ G-End 対策リマインダー",
             body: data.body || "対策グッズの交換期限が到来しました！",
             icon: "/favicon.ico",
             tag: "gend-push-alert"

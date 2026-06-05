@@ -18,12 +18,12 @@ export function ActiveTrapsList({
   return (
     <div className="flex-1 mb-6">
       <h2 className="text-xs font-bold text-slate-400 mb-2 tracking-wider uppercase flex items-center gap-1">
-        現在の防衛状況 ({traps.length}個設置中)
+        現在の対策状況 ({traps.length}個設置中)
       </h2>
       {traps.length === 0 ? (
         <div className="bg-white p-8 rounded-md text-center border border-slate-200 flex flex-col items-center gap-3">
           <p className="text-xs text-slate-400 leading-normal max-w-xs">
-            現在、家の中に防衛グッズが配置されていません。間取りマップから配置しましょう。
+            現在、家の中に対策グッズが配置されていません。間取りマップから配置しましょう。
           </p>
           <Link
             href="/map"

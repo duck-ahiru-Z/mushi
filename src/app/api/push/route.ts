@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       await new Promise((resolve) => setTimeout(resolve, delay * 1000));
       try {
         const payload = JSON.stringify({
-          title: title || "🛡️ G-End 防衛リマインダー",
+          title: title || "🛡️ G-End 対策リマインダー",
           body: body || "対策グッズの交換期限が近づいています！",
           icon: "/favicon.ico",
           tag: "gend-push-alert"

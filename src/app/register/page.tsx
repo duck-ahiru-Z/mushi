@@ -114,6 +114,12 @@ export default function RegisterPage() {
       notifySeasonalAlert: updates.notifySeasonalAlert !== undefined ? updates.notifySeasonalAlert : notifySeasonalAlert,
     };
     
+    if (updates.notifyOnDay !== undefined) setNotifyOnDay(updates.notifyOnDay);
+    if (updates.notify3DaysBefore !== undefined) setNotify3DaysBefore(updates.notify3DaysBefore);
+    if (updates.notify7DaysBefore !== undefined) setNotify7DaysBefore(updates.notify7DaysBefore);
+    if (updates.notify30DaysBefore !== undefined) setNotify30DaysBefore(updates.notify30DaysBefore);
+    if (updates.notifySeasonalAlert !== undefined) setNotifySeasonalAlert(updates.notifySeasonalAlert);
+
     localStorage.setItem("bug_guard_notification_settings", JSON.stringify(newConfig));
     setSuccess("通知設定を更新しました。");
     setTimeout(() => setSuccess(""), 3000);
@@ -192,7 +198,7 @@ export default function RegisterPage() {
 
   // 6. ローカルデータの一括初期化（リセット）
   const handleResetData = () => {
-    if (!confirm("警告: すべての間取り（部屋）と防衛グッズのデータが完全に削除されます。よろしいですか？")) {
+    if (!confirm("警告: すべての間取り（部屋）と対策グッズのデータが完全に削除されます。よろしいですか？")) {
       return;
     }
     localStorage.removeItem("map_rooms_data");
@@ -249,7 +255,7 @@ export default function RegisterPage() {
         }}
       />
 
-      {/* クラウド同期 (Firebase) セクション */}
+      {/* クラウド同期セクション */}
       <AuthSettings
         user={user}
         email={email}

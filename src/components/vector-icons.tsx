@@ -40,7 +40,7 @@ export const PestIcon: React.FC<IconProps> = ({ id, className = "", size = 48 })
   if (isDisabled) {
     return (
       <svg {...svgProps}>
-        {/* セーフシールド：優しい緑の防衛シールド */}
+        {/* セーフシールド：優しい緑の対策シールド */}
         <path d="M32 8L12 18V34C12 46 24 52 32 56C40 52 52 46 52 34V18L32 8Z" fill="#10B981" fillOpacity="0.9" stroke="#059669" strokeWidth="3" />
         {/* 内側の白いチェックマーク */}
         <path d="M24 32L30 38L40 26" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none" />

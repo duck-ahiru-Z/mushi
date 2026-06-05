@@ -99,6 +99,7 @@ export function useTraps(userId: string | null = null) {
   const [currentFloor, setCurrentFloor] = useState<number>(1);
   const [customTrapTypes, setCustomTrapTypes] = useState<CustomTrapType[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [initializedUserId, setInitializedUserId] = useState<string | null>(null);
 
   // Undo (部屋削除の復元) 用のスタック
   const [lastDeletedRoom, setLastDeletedRoom] = useState<{
@@ -177,6 +178,7 @@ export function useTraps(userId: string | null = null) {
       }
 
       setIsInitialized(true);
+      setInitializedUserId(userId);
     };
 
     initializeData();
@@ -184,28 +186,28 @@ export function useTraps(userId: string | null = null) {
 
   // 2. 部屋・階層・カスタム種類の同期 (Local ＆ Firestore)
   useEffect(() => {
-    if (isInitialized) {
+    if (isInitialized && initializedUserId === userId) {
       localStorage.setItem("map_rooms_data", JSON.stringify(rooms));
       if (userId) {
         saveRoomsData(rooms, userId).catch(err => console.error("Failed to sync rooms to firestore:", err));
       }
     }
-  }, [rooms, isInitialized, userId]);
+  }, [rooms, isInitialized, initializedUserId, userId]);
 
   useEffect(() => {
-    if (isInitialized) {
+    if (isInitialized && initializedUserId === userId) {
       localStorage.setItem("map_floors_data", JSON.stringify(floors));
       if (userId) {
         saveFloorsData(floors, userId).catch(err => console.error("Failed to sync floors to firestore:", err));
       }
     }
-  }, [floors, isInitialized, userId]);
+  }, [floors, isInitialized, initializedUserId, userId]);
 
   useEffect(() => {
-    if (isInitialized) {
+    if (isInitialized && initializedUserId === userId) {
       localStorage.setItem("custom_trap_types", JSON.stringify(customTrapTypes));
     }
-  }, [customTrapTypes, isInitialized]);
+  }, [customTrapTypes, isInitialized, initializedUserId, userId]);
 
 
   // 3. 部屋の追加

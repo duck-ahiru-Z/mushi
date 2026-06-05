@@ -27,7 +27,7 @@ self.addEventListener("push", (event) => {
   console.log("G-End Service Worker: Push message received", event);
   
   let data = {
-    title: "🛡️ G-End 防衛アラート",
+    title: "🛡️ G-End 対策アラート",
     body: "対策グッズの交換期限が到来しました！",
     icon: "/favicon.ico",
     tag: "gend-push-alert",

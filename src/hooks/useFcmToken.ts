@@ -91,7 +91,7 @@ export function useFcmToken() {
     const alertsText = activeAlerts.length > 0 ? activeAlerts.join(", ") : "なし";
 
     // ネイティブ通知オプション
-    const title = "G-End 防衛通知テスト";
+    const title = "G-End 通知テスト";
     const options: any = {
       body: `期限切れ警告のリマインダー通知は正常に動作しています！(通知スケジュール: ${alertsText})`,
       icon: "/favicon.ico",
@@ -140,7 +140,7 @@ export function useFcmToken() {
     setTimeout(() => {
       const title = "G-End 交換リマインダー";
       const options: any = {
-        body: `「${trapName}」の交換期限まで残り ${daysLeft} 日です。家全体の防衛効果を維持するために交換しましょう。`,
+        body: `「${trapName}」の交換期限まで残り ${daysLeft} 日です。家全体の対策効果を維持するために交換しましょう。`,
         icon: "/favicon.ico",
         tag: "g-end-reminder",
         vibrate: [100, 50, 100],
