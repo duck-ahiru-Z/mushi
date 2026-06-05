@@ -67,14 +67,6 @@ export function GeoNotificationPanel({
           )}
         </div>
       </div>
-              className="py-1.5 bg-teal-700 hover:bg-teal-800 text-white text-[9px] font-bold rounded-md disabled:opacity-50 transition active:scale-95 text-center shadow-sm"
-            >
-              明日テスト (次回Cron)
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
-
