@@ -21,7 +21,7 @@ export function ExpiredTrapsList({
       </h2>
       {alertTraps.length === 0 ? (
         <div className="bg-white p-6 rounded-md text-center border border-slate-200 text-xs text-slate-400 leading-relaxed">
-          現在、期限が切れている、または7日以内に切れるグッズはありません。<br />家の中は安全に防衛されています。
+          現在、期限が切れている、または7日以内に切れるグッズはありません。<br />家の中は適切に対策されています。
         </div>
       ) : (
         <div className="flex flex-col gap-2">

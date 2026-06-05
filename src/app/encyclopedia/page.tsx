@@ -548,7 +548,7 @@ export default function EncyclopediaPage() {
             </div>
 
             <div className="border-t border-slate-200 pt-3">
-              <h3 className="font-bold text-slate-400 text-[10px] uppercase tracking-wider mb-1">潜みやすい場所（防衛ポイント）</h3>
+              <h3 className="font-bold text-slate-400 text-[10px] uppercase tracking-wider mb-1">潜みやすい場所（対策ポイント）</h3>
               <p className="text-slate-700 font-semibold leading-relaxed text-xs">{selectedBug.hidingSpot}</p>
             </div>
 

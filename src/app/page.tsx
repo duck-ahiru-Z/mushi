@@ -177,7 +177,7 @@ export default function HomePage() {
           <div className="bg-white w-full max-w-md rounded-md shadow-lg p-6 border border-slate-200 flex flex-col gap-5 text-slate-800">
             <div className="text-center space-y-2">
               <h2 className="text-sm font-bold text-slate-900">G-End へお越しいただきありがとうございます</h2>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">安心で快適な暮らしの防衛パートナー</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">安心で快適な暮らしのパートナー</p>
             </div>
             
             <div className="bg-slate-50 p-4 rounded-md border border-slate-250 text-[11px] space-y-3 leading-relaxed text-slate-600">
@@ -217,7 +217,6 @@ export default function HomePage() {
         requestGeoPermission={requestGeoPermission}
         permission={permission}
         triggerTestNotification={triggerTestNotification}
-        scheduleBackgroundNotification={scheduleBackgroundNotification}
       />
 
       {/* 1. 日本防虫気象協会風 リアルタイム害虫警報 */}
@@ -227,7 +226,7 @@ export default function HomePage() {
       <div className="bg-slate-50 border border-slate-200 p-5 rounded-md mb-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex-1">
           <h2 className="text-xs font-bold text-slate-800 mb-1">
-            自分専用の防衛グッズを作製
+            自分専用の対策グッズを作製
           </h2>
           <p className="text-[10px] text-slate-500 leading-relaxed font-medium">
             市販の防虫シートや独自の対策グッズをオリジナル名・持続期間で登録し、マイ間取りに美しく設置して一元管理できます。

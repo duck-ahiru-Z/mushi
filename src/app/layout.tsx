@@ -56,8 +56,12 @@ export default function RootLayout({
                 {/* 🎨 アカウント連携のすぐ右隣に地域表示ボタンを設置！ */}
               </nav>
             </div>
-            <div>
+            <div className="flex items-center gap-3">
               <RegionBadge />
+              <div className="text-xs font-bold text-slate-400 bg-slate-100 px-3 py-1.5 rounded-md border border-slate-200">
+                システム稼働中
+              </div>
+            </div>
             </div>
           </div>
         </header>

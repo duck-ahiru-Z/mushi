@@ -47,7 +47,7 @@ export function TrapSelector({
         onClick={onRequestCustomModal}
         className="w-full py-2.5 bg-teal-700 hover:bg-teal-800 text-white rounded-md text-xs font-bold transition flex items-center justify-center gap-1.5 active:scale-[0.98]"
       >
-        自分専用のオリジナル防衛グッズを作成する
+        自分専用のオリジナル対策グッズを作成する
       </button>
 
       <div className="flex flex-col gap-2 relative">
